@@ -25,10 +25,10 @@ const ACCESS_BADGE: Record<string, { label: string; color: string; bg: string }>
 };
 
 const DEPT_COLOR: Record<string, { color: string; bg: string; border: string }> = {
-  assembly:   { color: "var(--blue)",   bg: "var(--blue-bg)",   border: "rgba(96,165,250,0.2)" },
-  government: { color: "var(--purple)", bg: "var(--purple-bg)", border: "rgba(167,139,250,0.2)" },
-  security:   { color: "var(--red)",    bg: "var(--red-bg)",    border: "rgba(248,113,113,0.2)" },
-  archive:    { color: "var(--amber)",  bg: "var(--amber-bg)",  border: "rgba(251,191,36,0.2)" },
+  assembly:   { color: "var(--c-assembly)",   bg: "var(--blue-bg)",   border: "color-mix(in srgb, var(--c-assembly)   20%, transparent)" },
+  government: { color: "var(--c-government)", bg: "var(--purple-bg)", border: "color-mix(in srgb, var(--c-government) 20%, transparent)" },
+  security:   { color: "var(--c-security)",   bg: "var(--red-bg)",    border: "color-mix(in srgb, var(--c-security)   20%, transparent)" },
+  archive:    { color: "var(--c-archive)",    bg: "var(--amber-bg)",  border: "color-mix(in srgb, var(--c-archive)    20%, transparent)" },
 };
 
 function getDeptColors(slug: string) {
@@ -379,10 +379,10 @@ function DocList({
     secret:     { label: "Секретный",   color: "var(--red)",    bg: "var(--red-bg)"   },
   };
   const DEPT_COLOR: Record<string, { color: string; bg: string; border: string }> = {
-    assembly:   { color: "var(--blue)",   bg: "var(--blue-bg)",   border: "rgba(96,165,250,0.2)" },
-    government: { color: "var(--purple)", bg: "var(--purple-bg)", border: "rgba(167,139,250,0.2)" },
-    security:   { color: "var(--red)",    bg: "var(--red-bg)",    border: "rgba(248,113,113,0.2)" },
-    archive:    { color: "var(--amber)",  bg: "var(--amber-bg)",  border: "rgba(251,191,36,0.2)" },
+    assembly:   { color: "var(--c-assembly)",   bg: "var(--blue-bg)",   border: "color-mix(in srgb, var(--c-assembly)   20%, transparent)" },
+    government: { color: "var(--c-government)", bg: "var(--purple-bg)", border: "color-mix(in srgb, var(--c-government) 20%, transparent)" },
+    security:   { color: "var(--c-security)",   bg: "var(--red-bg)",    border: "color-mix(in srgb, var(--c-security)   20%, transparent)" },
+    archive:    { color: "var(--c-archive)",    bg: "var(--amber-bg)",  border: "color-mix(in srgb, var(--c-archive)    20%, transparent)" },
   };
   function getDeptColors(slug: string) {
     return DEPT_COLOR[slug] ?? { color: "var(--text-secondary)", bg: "var(--bg-elevated)", border: "var(--border-strong)" };

@@ -39,112 +39,91 @@ export default function AdminSidebar() {
     return pathname.startsWith(href);
   }
 
-  const linkStyle = (href: string): React.CSSProperties => ({
-    display: "block", padding: "7px 12px", borderRadius: "6px",
-    fontSize: "13px", fontWeight: active(href) ? 600 : 400,
-    color: active(href) ? "#e4e4e7" : "rgba(255,255,255,0.4)",
-    background: active(href) ? "rgba(255,255,255,0.07)" : "transparent",
-    textDecoration: "none",
-    borderLeft: active(href) ? "2px solid rgba(255,255,255,0.25)" : "2px solid transparent",
-    transition: "background 0.12s, color 0.12s",
-  });
+  const initials = user?.name?.slice(0, 2).toUpperCase() ?? "АД";
 
   return (
-    <aside style={{
-      position: "fixed", top: 0, left: 0,
-      width: "240px", height: "100vh",
-      background: "#0a0a0d",
-      borderRight: "1px solid rgba(255,255,255,0.07)",
-      display: "flex", flexDirection: "column",
-      zIndex: 50,
+    <aside className="sidebar" style={{
+      background: "linear-gradient(180deg, rgba(255,107,122,0.06) 0%, rgba(255,255,255,0.04) 40%)",
     }}>
 
-      {/* ── Logo ───────────────────────────── */}
-      <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <div style={{
-          fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
-          letterSpacing: "0.14em", color: "rgba(255,255,255,0.25)",
-          marginBottom: "10px",
-        }}>
+      {/* ── Logo ──────────────────────────── */}
+      <div className="sb-logo">
+        <div style={{ fontSize: "8.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: "var(--c-security)", marginBottom: "8px", opacity: 0.7 }}>
           Панель управления
         </div>
         <Link href="/admin" style={{ textDecoration: "none", display: "block" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "0", marginBottom: "3px" }}>
-            <span style={{ fontFamily: '"Courier New", monospace', fontWeight: 400, fontSize: "14px", color: "rgba(255,255,255,0.3)", letterSpacing: "-0.02em" }}>//</span>
-            <span style={{ fontFamily: '"Courier New", monospace', fontWeight: 700, fontSize: "14px", color: "rgba(255,255,255,0.45)" }}>:</span>
-            <span style={{ fontWeight: 800, fontSize: "15px", color: "#e4e4e7", letterSpacing: "-0.05em" }}>МОСТ</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "0" }}>
+            <span className="logo-slash">//</span>
+            <span className="logo-colon">:</span>
+            <span className="logo-most">МОСТ</span>
           </div>
-          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.06em" }}>Администрирование</div>
         </Link>
+        <div className="sb-sub">Администрирование · 2026</div>
       </div>
 
-      {/* ── Nav ────────────────────────────── */}
-      <nav style={{ flex: 1, padding: "14px 12px", display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
-        <Link href="/admin" style={linkStyle("/admin")}>Обзор</Link>
+      {/* ── Main nav ──────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto", position: "relative", zIndex: 1 }}>
+        <Link href="/admin" className={`sb-link${active("/admin") ? " active" : ""}`}>
+          Обзор
+        </Link>
 
-        <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "18px" }}>
-          {NAV_GROUPS.map(group => (
-            <div key={group.label}>
-              <div style={{
-                fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase",
-                letterSpacing: "0.12em", color: "rgba(255,255,255,0.22)",
-                padding: "0 0 7px 12px",
-              }}>
-                {group.label}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                {group.links.map(link => (
-                  <Link key={link.href} href={link.href} style={linkStyle(link.href)}>
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+        {NAV_GROUPS.map(group => (
+          <div key={group.label} style={{ marginTop: "6px" }}>
+            <div className="t-label" style={{ padding: "0 12px", marginBottom: "4px", opacity: 0.6 }}>
+              {group.label}
             </div>
-          ))}
-        </div>
-      </nav>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+              {group.links.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`sb-link${active(link.href) ? " active" : ""}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* ── Bottom ─────────────────────────── */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-        {/* User */}
+      {/* ── Footer ────────────────────────── */}
+      <div className="sb-foot">
         {user && (
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{
-                width: "30px", height: "30px", borderRadius: "50%", flexShrink: 0,
-                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "11px", fontWeight: 800, color: "#e4e4e7",
-              }}>
-                {user.name?.[0]?.toUpperCase() ?? "?"}
-              </div>
-              <div>
-                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#e4e4e7" }}>{user.name}</div>
-                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>Администратор</div>
-              </div>
+          <div className="sb-user">
+            <div className="sb-avatar" style={{ background: "linear-gradient(135deg, #ff6b7a 0%, #ff9a8b 100%)" }}>
+              {initials}
+            </div>
+            <div className="sb-user-txt">
+              <div className="sb-user-nm">{user.name}</div>
+              <div className="sb-user-nk">Администратор</div>
             </div>
           </div>
         )}
 
-        <div style={{ padding: "10px 12px", display: "flex", gap: "4px" }}>
+        <div style={{ display: "flex", gap: "4px" }}>
           <Link href="/portal" style={{
             flex: 1, display: "flex", alignItems: "center", gap: "6px",
-            padding: "8px 12px", borderRadius: "7px",
-            color: "rgba(255,255,255,0.35)", fontSize: "12.5px",
-            textDecoration: "none", transition: "background 0.12s, color 0.12s",
-          }}>
+            padding: "8px 12px", borderRadius: "10px",
+            color: "var(--fg-3)", fontSize: "12.5px",
+            textDecoration: "none", transition: "background 150ms, color 150ms",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--glass-2)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
             ← На портал
           </Link>
           <button onClick={() => signOut({ callbackUrl: "/login" })} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "8px 12px", borderRadius: "7px",
+            padding: "8px 12px", borderRadius: "10px",
             border: "none", background: "transparent",
-            color: "rgba(255,255,255,0.3)", fontSize: "12px",
-            cursor: "pointer", fontFamily: "inherit",
-            transition: "background 0.12s, color 0.12s",
+            color: "var(--fg-3)", fontSize: "12px",
+            cursor: "pointer", fontFamily: "var(--ff-body)",
+            transition: "background 150ms, color 150ms",
+            whiteSpace: "nowrap",
           }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--c-security) 10%, transparent)"; e.currentTarget.style.color = "var(--c-security)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
           >
             Выйти
           </button>

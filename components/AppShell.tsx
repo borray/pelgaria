@@ -67,10 +67,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-shell" style={{ position: "relative", zIndex: 3 }}>
         {isAdmin ? <AdminSidebar /> : <CivilianSidebar />}
         <main style={{
-          flex: 1,
           minHeight: "100vh",
           padding: "40px 48px 64px",
-          maxWidth: "calc(100vw - var(--sidebar-w))",
+          minWidth: 0,
+          overflow: "hidden",
         }}>
           {children}
         </main>
