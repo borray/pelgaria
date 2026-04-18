@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(cmd /c \"npm install better-sqlite3 next-auth@beta bcryptjs && npm install -D @types/better-sqlite3 @types/bcryptjs\")",
+      "Bash(node -e \"console.log\\(require\\(''crypto''\\).randomBytes\\(32\\).toString\\(''hex''\\)\\)\")",
+      "Bash(del \"C:\\\\Users\\\\turla\\\\Desktop\\\\pelgaria\\\\middleware.ts\")",
+      "Bash(npx next:*)",
+      "Bash(npm run:*)",
+      "Bash(deploy.bat)",
+      "Bash(cmd /c \"C:\\\\\\\\Users\\\\\\\\turla\\\\\\\\Desktop\\\\\\\\deploy.bat\")",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/components\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/lib\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/auth.ts\" \"C:/Users/turla/Desktop/pelgaria/proxy.ts\" \"C:/Users/turla/Desktop/pelgaria/next.config.ts\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(ssh root@194.67.119.74 \"cd /var/www/pelgaria/pelgaria && npm run build 2>&1 | tail -20 && pm2 restart most && echo DONE\")",
+      "Bash(ls /c/Users/turla/Desktop/pelgaria/*.ts)",
+      "Bash(ssh root@194.67.119.74 \"pm2 logs most --lines 30 --nostream\")",
+      "Bash(ssh root@194.67.119.74 \"cat /var/www/pelgaria/pelgaria/.env.local\")",
+      "Bash(ssh root@194.67.119.74 \"pm2 restart most --update-env && pm2 env 0 | grep AUTH\")",
+      "Bash(ssh root@194.67.119.74 \"grep -n 'trustHost' /var/www/pelgaria/pelgaria/auth.ts\")",
+      "Bash(ssh root@194.67.119.74:*)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app\" \"C:/Users/turla/Desktop/pelgaria/components\" \"C:/Users/turla/Desktop/pelgaria/lib\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/auth.ts\" \"C:/Users/turla/Desktop/pelgaria/proxy.ts\" root@194.67.119.74:/var/www/pelgaria/pelgaria/)",
+      "Bash(npx tsc:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\turla\\\\Desktop\\\\deploy.ps1\")",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/components/LoginForm.tsx\" \"C:/Users/turla/Desktop/pelgaria/components/NotificationForm.tsx\" \"C:/Users/turla/Desktop/pelgaria/components/PrintButton.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/components/)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/lib/db.ts\" root@194.67.119.74:/var/www/pelgaria/pelgaria/lib/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app/admin/appeals\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app/admin/notifications/[id]\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/notifications/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app/admin/passports/[id]/print\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/passports/[id]/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app/admin/system-notifications\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/)",
+      "Bash(scp -r \"C:/Users/turla/Desktop/pelgaria/app/api/notifications\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/api/)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/admin/notifications/page.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/notifications/)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/login/page.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/login/page.tsx)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/portal/page.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/portal/page.tsx)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/admin/passports/page.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/passports/page.tsx)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/admin/passports/new/page.tsx\" root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/passports/new/page.tsx)",
+      "Bash(scp \"C:/Users/turla/Desktop/pelgaria/app/admin/passports/[id]/edit/page.tsx\" \"root@194.67.119.74:/var/www/pelgaria/pelgaria/app/admin/passports/[id]/edit/page.tsx\")",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
