@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter } from "next/font/google";
+import { Manrope, Onest, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import AppShell from "@/components/AppShell";
 
-const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space", weight: ["500", "600", "700"] });
+const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
+const onest = Onest({ subsets: ["latin", "cyrillic"], variable: "--font-onest" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", weight: ["400", "500", "700"] });
 
 export const metadata: Metadata = {
   title: "//:МОСТ — Портал Пельгарии",
@@ -14,8 +15,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="ru" className={`${manrope.variable} ${onest.variable} ${jetbrains.variable}`}>
       <body>
+        <div className="bg-mesh" aria-hidden="true"><i /></div>
+        <div className="bg-grain" aria-hidden="true" />
         <SessionProvider>
           <AppShell>{children}</AppShell>
         </SessionProvider>
