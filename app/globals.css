@@ -11,32 +11,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Cipher background ticker ── */
+/* ── Cipher rows ── */
 .cipher-row {
   position: fixed;
   left: 0;
-  white-space: nowrap;
-  pointer-events: none;
-  overflow: hidden;
   width: 100%;
-  opacity: 0.07;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: auto;
+  opacity: 0.13;
+  letter-spacing: 0.13em;
   color: #fff;
   line-height: 1;
+  user-select: none;
 }
 
 .cipher-track {
   display: inline-block;
   animation: ticker linear infinite;
+  will-change: transform;
 }
 
 @keyframes ticker {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
-/* ── Main page ── */
+/* ── Main layout ── */
 .main {
   position: relative;
   z-index: 10;
@@ -49,17 +50,20 @@ body {
   text-align: center;
 }
 
-.org-name {
-  font-size: 11px;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 6px;
+/* ── Logo //:МОСТ ── */
+.logo {
+  font-size: 15px;
+  line-height: 1;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
 }
+.logo-sl { opacity: 0.3; font-weight: 400; }
+.logo-co { opacity: 1;   font-weight: 700; }
+.logo-nm { opacity: 1;   font-weight: 900; letter-spacing: -0.05em; }
 
 .org-title {
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  font-size: 10px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.25);
   margin-bottom: 48px;
@@ -67,55 +71,52 @@ body {
 
 .rule {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   height: 1px;
   background: rgba(255,255,255,0.15);
   margin: 0 auto 48px;
 }
 
-.stamp-wrap {
-  margin-bottom: 48px;
-}
+/* ── Stamp ── */
+.stamp-wrap { margin-bottom: 48px; }
 
 .stamp {
   display: inline-block;
-  border: 2px solid rgba(255,255,255,0.85);
-  padding: 12px 36px;
-  transform: rotate(-1.5deg);
-  letter-spacing: 0.28em;
-  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  border: 2px solid rgba(255,255,255,0.8);
+  padding: 12px 40px;
+  transform: rotate(-1.8deg);
+  letter-spacing: 0.3em;
+  font-size: clamp(1rem, 3vw, 1.45rem);
   font-weight: 700;
-  color: rgba(255,255,255,0.9);
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
   position: relative;
 }
-
 .stamp::before {
   content: "";
   position: absolute;
-  inset: 3px;
-  border: 1px solid rgba(255,255,255,0.2);
+  inset: 4px;
+  border: 1px solid rgba(255,255,255,0.18);
   pointer-events: none;
 }
 
+/* ── Status / teaser ── */
 .status-line {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.3);
-  margin-bottom: 48px;
+  margin-bottom: 14px;
 }
 
 .teaser {
-  font-size: clamp(0.65rem, 1.8vw, 0.8rem);
-  letter-spacing: 0.22em;
+  font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.45);
 }
 
-/* ── Responsive ── */
+/* ── Mobile ── */
 @media (max-width: 600px) {
-  .cipher-row { font-size: 9px; }
+  .cipher-row { font-size: 9px !important; }
   .stamp { padding: 10px 24px; }
 }
