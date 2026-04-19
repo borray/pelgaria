@@ -15,9 +15,17 @@ jobs:
           host: 194.67.119.74
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: AUTH_SECRET,ADMIN_PASSWORD,ADMIN_EMAIL
           script: |
             cd /var/www/pelgaria/pelgaria
             git pull origin main
+
+            # Записываем переменные окружения (только если ещё не заданы)
+            touch .env.local
+            grep -q AUTH_SECRET   .env.local || echo "AUTH_SECRET=$AUTH_SECRET"     >> .env.local
+            grep -q ADMIN_PASSWORD .env.local || echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env.local
+            grep -q ADMIN_EMAIL   .env.local || echo "ADMIN_EMAIL=$ADMIN_EMAIL"     >> .env.local
+
             NODE_OPTIONS="--max-old-space-size=1024" npm run build
             /usr/bin/pm2 restart most
             echo "Deployed successfully!"
