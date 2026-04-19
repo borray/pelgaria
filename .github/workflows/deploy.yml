@@ -24,12 +24,10 @@ jobs:
             cd /var/www/pelgaria/pelgaria
             git pull origin main
 
-            # Записываем переменные окружения (только если ещё не заданы)
-            touch .env.local
-            grep -q AUTH_SECRET   .env.local || echo "AUTH_SECRET=$AUTH_SECRET"     >> .env.local
-            grep -q ADMIN_PASSWORD .env.local || echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env.local
-            grep -q ADMIN_EMAIL   .env.local || echo "ADMIN_EMAIL=$ADMIN_EMAIL"     >> .env.local
+            # Всегда перезаписываем .env.local свежими значениями из секретов
+            printf "AUTH_SECRET=%s\nADMIN_PASSWORD=%s\nADMIN_EMAIL=%s\n" \
+              "$AUTH_SECRET" "$ADMIN_PASSWORD" "$ADMIN_EMAIL" > .env.local
 
             NODE_OPTIONS="--max-old-space-size=1024" npm run build
-            /usr/bin/pm2 restart most
+            /usr/bin/pm2 restart most --update-env
             echo "Deployed successfully!"
