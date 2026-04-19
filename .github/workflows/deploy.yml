@@ -24,10 +24,27 @@ jobs:
             cd /var/www/pelgaria/pelgaria
             git pull origin main
 
-            # Всегда перезаписываем .env.local свежими значениями из секретов
-            printf "AUTH_SECRET=%s\nADMIN_PASSWORD=%s\nADMIN_EMAIL=%s\n" \
-              "$AUTH_SECRET" "$ADMIN_PASSWORD" "$ADMIN_EMAIL" > .env.local
+            # Перезаписываем .env.local и экспортируем в текущую сессию
+            cat > .env.local << ENVEOF
+            AUTH_SECRET=$AUTH_SECRET
+            ADMIN_PASSWORD=$ADMIN_PASSWORD
+            ADMIN_EMAIL=$ADMIN_EMAIL
+            ENVEOF
+
+            export AUTH_SECRET="$AUTH_SECRET"
+            export ADMIN_PASSWORD="$ADMIN_PASSWORD"
+            export ADMIN_EMAIL="$ADMIN_EMAIL"
+
+            echo "=== .env.local contents ==="
+            cat .env.local
 
             NODE_OPTIONS="--max-old-space-size=1024" npm run build
+
             /usr/bin/pm2 restart most --update-env
-            echo "Deployed successfully!"
+            sleep 5
+
+            echo "=== PM2 status ==="
+            /usr/bin/pm2 status
+
+            echo "=== PM2 logs ==="
+            /usr/bin/pm2 logs most --lines 50 --nostream || true
