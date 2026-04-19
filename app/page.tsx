@@ -1,35 +1,49 @@
+import Link from "next/link";
 import CipherBg from "./CipherBg";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Page() {
   return (
     <>
       <CipherBg />
 
-      <main className="main">
-        <div className="center-card">
-          {/* Logo */}
-          <div className="logo" aria-label="МОСТ">
-            <span className="logo-sl">//</span>
-            <span className="logo-co">:</span>
-            <span className="logo-nm">МОСТ</span>
+      {/* Top bar */}
+      <div className="maint-topbar">
+        <Link href="/" className="maint-logo">
+          <span className="sl">//</span>
+          <span className="co">:</span>
+          <span className="nm">МОСТ</span>
+        </Link>
+        <div className="maint-topbar-right">
+          <ThemeToggle />
+          <Link href="/login" className="maint-operator-btn">Вход для операторов</Link>
+        </div>
+      </div>
+
+      {/* Main */}
+      <main className="maint-main">
+        <div className="maint-card">
+          <div className="maint-eyebrow">Федеральный реестр объектов</div>
+
+          <div className="maint-logo-wrap">
+            <span className="sl">//</span>
+            <span className="co">:</span>
+            <span className="nm">МОСТ</span>
           </div>
 
-          <div className="org-title">Федеральный реестр объектов</div>
+          <div className="maint-rule" />
 
-          <div className="rule" />
+          <div className="maint-stamp">Недоступно</div>
 
-          <div className="stamp-wrap">
-            <div className="stamp">Недоступно</div>
-          </div>
+          <div className="maint-rule" />
 
-          <div className="rule" />
-
-          <div className="status-line">Статус: техническое обслуживание</div>
-          <div className="teaser">Ведётся подготовка реестра фонда</div>
+          <div className="maint-status">Статус: техническое обслуживание</div>
+          <div className="maint-teaser">Ведётся подготовка реестра фонда</div>
         </div>
 
-        <div className="disclaimer">
-          Художественный вымысел. Все упомянутые объекты, организации и события носят вымышленный характер и не имеют отношения к реальным лицам или структурам.
+        <div className="maint-disclaimer">
+          Художественный вымысел. Все упомянутые объекты, организации и события
+          носят вымышленный характер и не имеют отношения к реальным лицам или структурам.
         </div>
       </main>
     </>
