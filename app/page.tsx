@@ -6,25 +6,31 @@ export default function Page() {
       <CipherBg />
 
       <main className="main">
-        {/* Logo */}
-        <div className="logo" aria-label="МОСТ">
-          <span className="logo-sl">//</span>
-          <span className="logo-co">:</span>
-          <span className="logo-nm">МОСТ</span>
+        <div className="center-card">
+          {/* Logo */}
+          <div className="logo" aria-label="МОСТ">
+            <span className="logo-sl">//</span>
+            <span className="logo-co">:</span>
+            <span className="logo-nm">МОСТ</span>
+          </div>
+
+          <div className="org-title">Федеральный реестр объектов</div>
+
+          <div className="rule" />
+
+          <div className="stamp-wrap">
+            <div className="stamp">Недоступно</div>
+          </div>
+
+          <div className="rule" />
+
+          <div className="status-line">Статус: техническое обслуживание</div>
+          <div className="teaser">Ведётся подготовка реестра фонда</div>
         </div>
 
-        <div className="org-title">Федеральный реестр объектов</div>
-
-        <div className="rule" />
-
-        <div className="stamp-wrap">
-          <div className="stamp">Недоступно</div>
+        <div className="disclaimer">
+          Художественный вымысел. Все упомянутые объекты, организации и события носят вымышленный характер и не имеют отношения к реальным лицам или структурам.
         </div>
-
-        <div className="rule" />
-
-        <div className="status-line">Статус: техническое обслуживание</div>
-        <div className="teaser">Ведётся подготовка реестра фонда</div>
       </main>
     </>
   );

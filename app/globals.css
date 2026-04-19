@@ -50,6 +50,21 @@ body {
   text-align: center;
 }
 
+/* ── Center card — isolates content from cipher bg ── */
+.center-card {
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 52px 64px;
+  max-width: 520px;
+  width: 100%;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+@media (max-width: 600px) {
+  .center-card { padding: 40px 28px; }
+}
+
 /* ── Logo //:МОСТ ── */
 .logo {
   font-size: 15px;
@@ -113,6 +128,18 @@ body {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.45);
+}
+
+/* ── Disclaimer ── */
+.disclaimer {
+  margin-top: 32px;
+  max-width: 420px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.2);
+  text-align: center;
+  text-transform: uppercase;
 }
 
 /* ── Mobile ── */
