@@ -20,6 +20,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="QuestPDF" Version="2024.3.4" />
+    <PackageReference Include="WpfMath" Version="2.1.0" />
   </ItemGroup>
 
 </Project>

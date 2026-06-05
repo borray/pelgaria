@@ -1,11 +1,65 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media.Imaging;
 using ExamApp.Models;
 
 namespace ExamApp.Converters
 {
+    /// <summary>byte[] (картинка из базы) → источник изображения для WPF.</summary>
+    public class BytesToImageConverter : IValueConverter
+    {
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is byte[] bytes && bytes.Length > 0)
+            {
+                try
+                {
+                    var img = new BitmapImage();
+                    using var ms = new MemoryStream(bytes);
+                    img.BeginInit();
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.StreamSource = ms;
+                    img.EndInit();
+                    img.Freeze();
+                    return img;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>Непустая/непустой коллекция/строка → Visible (иначе Collapsed). Параметр "Invert" инвертирует.</summary>
+    public class HasContentToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool has = value switch
+            {
+                null => false,
+                string s => !string.IsNullOrWhiteSpace(s),
+                byte[] b => b.Length > 0,
+                int i => i > 0,
+                System.Collections.ICollection c => c.Count > 0,
+                _ => true
+            };
+            bool invert = parameter is string p && p == "Invert";
+            if (invert) has = !has;
+            return has ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
     public class BoolToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

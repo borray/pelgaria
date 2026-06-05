@@ -13,12 +13,15 @@ namespace ExamApp.Models
     {
         public int Id { get; set; }
         public string Text { get; set; } = string.Empty;
+        /// <summary>Необязательная формула в нотации LaTeX (например, \frac{a}{b}).</summary>
+        public string? Formula { get; set; }
         public QuestionType Type { get; set; }
         public int MaxScore { get; set; } = 1;
         public int TopicId { get; set; }
 
         public Topic? Topic { get; set; }
         public ICollection<AnswerOption> AnswerOptions { get; set; } = new List<AnswerOption>();
+        public ICollection<QuestionImage> Images { get; set; } = new List<QuestionImage>();
         public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
     }
 }

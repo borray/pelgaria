@@ -10,6 +10,7 @@ namespace ExamApp.Data
         public DbSet<Topic> Topics { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<AnswerOption> AnswerOptions { get; set; }
+        public DbSet<QuestionImage> QuestionImages { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<ExamQuestion> ExamQuestions { get; set; }
         public DbSet<Participant> Participants { get; set; }
@@ -21,6 +22,55 @@ namespace ExamApp.Data
         {
             var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examapp.db");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
+        }
+
+        /// <summary>
+        /// Дополняет уже существующую базу новыми столбцами/таблицами.
+        /// EnsureCreated() создаёт схему только для НОВОЙ базы и не меняет старую,
+        /// поэтому новые поля (формулы, картинки) добавляем здесь вручную и идемпотентно.
+        /// </summary>
+        public void EnsureSchemaUpToDate()
+        {
+            AddColumnIfMissing("Questions", "Formula", "TEXT");
+            AddColumnIfMissing("AnswerOptions", "Formula", "TEXT");
+            AddColumnIfMissing("AnswerOptions", "ImageData", "BLOB");
+
+            Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS ""QuestionImages"" (
+                ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_QuestionImages"" PRIMARY KEY AUTOINCREMENT,
+                ""QuestionId"" INTEGER NOT NULL,
+                ""ImageData"" BLOB,
+                ""Caption"" TEXT NULL,
+                ""Order"" INTEGER NOT NULL,
+                CONSTRAINT ""FK_QuestionImages_Questions_QuestionId"" FOREIGN KEY (""QuestionId"")
+                    REFERENCES ""Questions"" (""Id"") ON DELETE CASCADE
+            )");
+        }
+
+        private void AddColumnIfMissing(string table, string column, string sqlType)
+        {
+            using var conn = Database.GetDbConnection();
+            conn.Open();
+            bool exists = false;
+            using (var check = conn.CreateCommand())
+            {
+                check.CommandText = $"PRAGMA table_info(\"{table}\")";
+                using var reader = check.ExecuteReader();
+                while (reader.Read())
+                {
+                    // column 1 of PRAGMA table_info is the column name
+                    if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+            }
+            if (!exists)
+            {
+                using var alter = conn.CreateCommand();
+                alter.CommandText = $"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" {sqlType}";
+                alter.ExecuteNonQuery();
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -52,6 +102,15 @@ namespace ExamApp.Data
                 entity.HasOne(a => a.Question)
                       .WithMany(q => q.AnswerOptions)
                       .HasForeignKey(a => a.QuestionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<QuestionImage>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.HasOne(i => i.Question)
+                      .WithMany(q => q.Images)
+                      .HasForeignKey(i => i.QuestionId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 

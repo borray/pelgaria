@@ -13,6 +13,8 @@
             <converters:PercentageConverter x:Key="PercentageConverter"/>
             <converters:CheckedStatusConverter x:Key="CheckedStatusConverter"/>
             <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
+            <converters:BytesToImageConverter x:Key="BytesToImageConverter"/>
+            <converters:HasContentToVisibilityConverter x:Key="HasContentToVisibilityConverter"/>
 
             <!-- Global Button style -->
             <Style TargetType="Button">

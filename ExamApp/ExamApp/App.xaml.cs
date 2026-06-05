@@ -9,9 +9,10 @@ namespace ExamApp
         {
             base.OnStartup(e);
 
-            // Ensure SQLite database is created
+            // Ensure SQLite database is created, then patch older databases with new columns
             using var ctx = new AppDbContext();
             ctx.Database.EnsureCreated();
+            ctx.EnsureSchemaUpToDate();
 
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         }

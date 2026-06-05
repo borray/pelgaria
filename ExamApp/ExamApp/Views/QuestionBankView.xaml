@@ -1,6 +1,7 @@
 <UserControl x:Class="ExamApp.Views.QuestionBankView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wm="clr-namespace:WpfMath.Controls;assembly=WpfMath"
              Loaded="UserControl_Loaded"
              Background="#F5F5F5">
     <Grid>
@@ -119,6 +120,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -127,6 +129,11 @@
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Text}"
                                                FontSize="13" TextWrapping="Wrap" Margin="0,0,16,4"/>
+
+                                    <!-- Formula preview (if any) -->
+                                    <wm:FormulaControl Grid.Row="1" Grid.Column="0" Formula="{Binding Formula}"
+                                                       Scale="13" HorizontalAlignment="Left" Margin="0,0,0,6"
+                                                       Visibility="{Binding Formula, Converter={StaticResource HasContentToVisibilityConverter}}"/>
 
                                     <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
                                         <Button Content="✎" Tag="{Binding}" Click="EditQuestion_Click"
@@ -139,7 +146,7 @@
                                                 Foreground="#C62828" ToolTip="Удалить"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                                                 Orientation="Horizontal">
                                         <Border Background="#E3F2FD" CornerRadius="10" Padding="8,3" Margin="0,0,6,0">
                                             <TextBlock Text="{Binding Type, Converter={StaticResource QuestionTypeToStringConverter}}"
@@ -148,11 +155,18 @@
                                         <Border Background="#FFF3E0" CornerRadius="10" Padding="8,3" Margin="0,0,6,0">
                                             <TextBlock Text="{Binding Topic.Name}" FontSize="11" Foreground="#E65100"/>
                                         </Border>
-                                        <Border Background="#F3E5F5" CornerRadius="10" Padding="8,3">
+                                        <Border Background="#F3E5F5" CornerRadius="10" Padding="8,3" Margin="0,0,6,0">
                                             <TextBlock FontSize="11" Foreground="#6A1B9A">
                                                 <Run Text="Макс: "/>
                                                 <Run Text="{Binding MaxScore}"/>
                                                 <Run Text=" б."/>
+                                            </TextBlock>
+                                        </Border>
+                                        <Border Background="#E8F5E9" CornerRadius="10" Padding="8,3"
+                                                Visibility="{Binding Images.Count, Converter={StaticResource HasContentToVisibilityConverter}}">
+                                            <TextBlock FontSize="11" Foreground="#2E7D32">
+                                                <Run Text="Картинок: "/>
+                                                <Run Text="{Binding Images.Count, Mode=OneWay}"/>
                                             </TextBlock>
                                         </Border>
                                     </StackPanel>

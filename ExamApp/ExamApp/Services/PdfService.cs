@@ -15,8 +15,13 @@ namespace ExamApp.Services
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
-        public string GenerateExamBlanks(Exam exam, List<Participant> participants, DateTime examDate)
+        public string GenerateExamBlanks(Exam exam, List<Participant> participants, DateTime examDate,
+            IReadOnlyDictionary<string, byte[]>? formulaImages = null)
         {
+            byte[]? Formula(string? latex)
+                => !string.IsNullOrWhiteSpace(latex) && formulaImages != null
+                   && formulaImages.TryGetValue(latex!, out var bytes) ? bytes : null;
+
             var outputPath = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 $"ExamBlanks_{exam.Title.Replace(" ", "_")}_{examDate:yyyyMMdd}.pdf");
@@ -131,6 +136,20 @@ namespace ExamApp.Services
                                             .FontSize(9).FontColor(Colors.Grey.Darken1);
                                     });
 
+                                    // Формула вопроса
+                                    var qFormula = Formula(question.Formula);
+                                    if (qFormula != null)
+                                        qCol.Item().PaddingLeft(30).PaddingTop(3).AlignLeft()
+                                            .MaxHeight(36).Image(qFormula).FitHeight();
+
+                                    // Картинки вопроса
+                                    foreach (var img in question.Images.OrderBy(i => i.Order))
+                                    {
+                                        if (img.ImageData.Length > 0)
+                                            qCol.Item().PaddingLeft(30).PaddingTop(5).AlignLeft()
+                                                .MaxWidth(260).Image(img.ImageData).FitWidth();
+                                    }
+
                                     if (question.Type == QuestionType.FreeForm)
                                     {
                                         qCol.Item().PaddingLeft(30).PaddingTop(5).Column(lineCol =>
@@ -150,14 +169,26 @@ namespace ExamApp.Services
                                         {
                                             for (int i = 0; i < options.Count; i++)
                                             {
-                                                optCol.Item().Row(optRow =>
+                                                var opt = options[i];
+                                                optCol.Item().PaddingTop(2).Row(optRow =>
                                                 {
                                                     optRow.ConstantItem(20)
                                                         .Text(i < letters.Length ? $"{letters[i]})" : $"{i + 1})")
                                                         .FontSize(10);
-                                                    optRow.RelativeItem()
-                                                        .Text(options[i].Text)
-                                                        .FontSize(10);
+                                                    optRow.RelativeItem().Column(oc =>
+                                                    {
+                                                        if (!string.IsNullOrWhiteSpace(opt.Text))
+                                                            oc.Item().Text(opt.Text).FontSize(10);
+
+                                                        var oFormula = Formula(opt.Formula);
+                                                        if (oFormula != null)
+                                                            oc.Item().PaddingTop(1).AlignLeft()
+                                                                .MaxHeight(26).Image(oFormula).FitHeight();
+
+                                                        if (opt.ImageData != null && opt.ImageData.Length > 0)
+                                                            oc.Item().PaddingTop(2).AlignLeft()
+                                                                .MaxWidth(180).Image(opt.ImageData).FitWidth();
+                                                    });
                                                 });
                                             }
                                         });

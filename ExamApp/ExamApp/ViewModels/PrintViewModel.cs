@@ -5,6 +5,7 @@ using ExamApp.Models;
 using ExamApp.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -94,8 +95,11 @@ namespace ExamApp.ViewModels
                 using var ctx = new AppDbContext();
                 var exam = await ctx.Exams
                     .Include(e => e.ExamQuestions)
-                    .ThenInclude(eq => eq.Question)
-                    .ThenInclude(q => q!.AnswerOptions)
+                        .ThenInclude(eq => eq.Question)
+                            .ThenInclude(q => q!.AnswerOptions)
+                    .Include(e => e.ExamQuestions)
+                        .ThenInclude(eq => eq.Question)
+                            .ThenInclude(q => q!.Images)
                     .FirstOrDefaultAsync(e => e.Id == SelectedExam.Id);
 
                 if (exam == null)
@@ -104,9 +108,13 @@ namespace ExamApp.ViewModels
                     return;
                 }
 
+                // Формулы рендерим заранее в UI-потоке (WpfMath требует UI-поток),
+                // PDF потом собираем в фоне из готовых картинок.
+                var formulaImages = PrerenderFormulas(exam);
+
                 var service = new PdfService();
                 var path = await Task.Run(() =>
-                    service.GenerateExamBlanks(exam, selected, ExamDate));
+                    service.GenerateExamBlanks(exam, selected, ExamDate, formulaImages));
 
                 LastGeneratedPath = path;
                 HasGenerated = true;
@@ -134,6 +142,27 @@ namespace ExamApp.ViewModels
             {
                 StatusMessage = $"Не удалось открыть файл: {ex.Message}";
             }
+        }
+
+        private static Dictionary<string, byte[]> PrerenderFormulas(Exam exam)
+        {
+            var images = new Dictionary<string, byte[]>();
+            void Add(string? latex)
+            {
+                if (string.IsNullOrWhiteSpace(latex) || images.ContainsKey(latex!)) return;
+                var png = FormulaRenderer.RenderToPng(latex);
+                if (png != null) images[latex!] = png;
+            }
+
+            foreach (var eq in exam.ExamQuestions)
+            {
+                var q = eq.Question;
+                if (q == null) continue;
+                Add(q.Formula);
+                foreach (var opt in q.AnswerOptions)
+                    Add(opt.Formula);
+            }
+            return images;
         }
 
         public async Task RefreshAsync()

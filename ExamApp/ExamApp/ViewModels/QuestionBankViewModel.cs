@@ -52,6 +52,7 @@ namespace ExamApp.ViewModels
             var query = ctx.Questions
                 .Include(q => q.Topic)
                 .Include(q => q.AnswerOptions)
+                .Include(q => q.Images)
                 .AsQueryable();
 
             if (SelectedTopic != null && SelectedTopic.Id != 0)
