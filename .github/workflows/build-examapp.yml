@@ -2,9 +2,6 @@ name: Build and Release ExamApp
 
 on:
   push:
-    branches:
-      - main
-      - claude/windows-exam-software-Z5zsK
     paths:
       - 'ExamApp/**'
 
@@ -60,14 +57,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.TAG }}
-          name: "ExamApp ${{ steps.meta.outputs.TAG }}"
+          name: "ЭкзаменПРО ${{ steps.meta.outputs.TAG }}"
           body: |
-            Автоматическая сборка
-            - Дата: ${{ steps.meta.outputs.BUILD_DATE }}
-            - Коммит: ${{ github.sha }}
-            - Ветка: ${{ github.ref_name }}
+            ### Что скачать
+            👉 Скачайте файл **`ExamApp.exe`** ниже и запустите его.
+            Установка не нужна. .NET не нужен.
 
-            **Установка:** скачайте `ExamApp.exe` и запустите. .NET не требуется.
+            ---
+            Дата сборки: ${{ steps.meta.outputs.BUILD_DATE }}
+            Коммит: ${{ github.sha }}
           files: publish/ExamApp.exe
           fail_on_unmatched_files: true
         env:
