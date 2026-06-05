@@ -1,0 +1,72 @@
+name: Build and Release ExamApp
+
+on:
+  push:
+    paths:
+      - 'ExamApp/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Generate build info
+        id: meta
+        shell: pwsh
+        run: |
+          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $tag  = "examapp-v" + (Get-Date).ToUniversalTime().ToString("yyyy.MM.dd") + ".${{ github.run_number }}"
+          "BUILD_DATE=$date" >> $env:GITHUB_OUTPUT
+          "TAG=$tag"         >> $env:GITHUB_OUTPUT
+
+      - name: Write BuildInfo.cs
+        shell: pwsh
+        run: |
+          $content = @"
+          namespace ExamApp;
+
+          public static class BuildInfo
+          {
+              public const string BuildDate = "${{ steps.meta.outputs.BUILD_DATE }}";
+              public const string Version   = "${{ steps.meta.outputs.TAG }}";
+          }
+          "@
+          Set-Content -Path "ExamApp/ExamApp/BuildInfo.cs" -Value $content -Encoding UTF8
+
+      - name: Publish self-contained exe
+        run: >
+          dotnet publish ExamApp/ExamApp/ExamApp.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.TAG }}
+          name: "ЭкзаменПРО ${{ steps.meta.outputs.TAG }}"
+          body: |
+            ### Что скачать
+            👉 Скачайте файл **`ExamApp.exe`** ниже и запустите его.
+            Установка не нужна. .NET не нужен.
+
+            ---
+            Дата сборки: ${{ steps.meta.outputs.BUILD_DATE }}
+            Коммит: ${{ github.sha }}
+          files: publish/ExamApp.exe
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

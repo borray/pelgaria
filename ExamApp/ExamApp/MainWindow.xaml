@@ -1,0 +1,129 @@
+<Window x:Class="ExamApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ExamApp.ViewModels"
+        xmlns:views="clr-namespace:ExamApp.Views"
+        Title="ЭкзаменПРО — Система контроля знаний"
+        Height="768" Width="1280"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar navigation -->
+        <Border Grid.Column="0" Background="#1E3A5F">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- App logo/title -->
+                <Border Grid.Row="0" Background="#152B48" Padding="16,20">
+                    <StackPanel>
+                        <TextBlock Text="ЭкзаменПРО" Foreground="White" FontSize="18"
+                                   FontWeight="Bold" TextAlignment="Center"/>
+                        <TextBlock Text="Система тестирования" Foreground="#7FA8CC"
+                                   FontSize="10" TextAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Navigation items -->
+                <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                    <Rectangle Fill="#0D2035" Height="1" Margin="16,0,16,12"/>
+
+                    <Button x:Name="NavQuestionBank" Click="NavButton_Click" Tag="QuestionBank"
+                            Background="Transparent" Margin="8,0,8,4" BorderThickness="0" Padding="0">
+                        <Border CornerRadius="8" Padding="12,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📚" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Банк вопросов" Foreground="White" FontSize="13"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <Button x:Name="NavExamFormation" Click="NavButton_Click" Tag="ExamFormation"
+                            Background="Transparent" Margin="8,0,8,4" BorderThickness="0" Padding="0">
+                        <Border CornerRadius="8" Padding="12,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Формирование КИМ" Foreground="White" FontSize="13"
+                                           VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <Button x:Name="NavParticipants" Click="NavButton_Click" Tag="Participants"
+                            Background="Transparent" Margin="8,0,8,4" BorderThickness="0" Padding="0">
+                        <Border CornerRadius="8" Padding="12,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👥" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Участники" Foreground="White" FontSize="13"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <Button x:Name="NavPrint" Click="NavButton_Click" Tag="Print"
+                            Background="Transparent" Margin="8,0,8,4" BorderThickness="0" Padding="0">
+                        <Border CornerRadius="8" Padding="12,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🖨️" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Печать бланков" Foreground="White" FontSize="13"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <Rectangle Fill="#0D2035" Height="1" Margin="16,8"/>
+
+                    <Button x:Name="NavResults" Click="NavButton_Click" Tag="Results"
+                            Background="Transparent" Margin="8,0,8,4" BorderThickness="0" Padding="0">
+                        <Border CornerRadius="8" Padding="12,10">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Служебный раздел" Foreground="White" FontSize="13"
+                                           VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+                </StackPanel>
+
+                <!-- Update section pinned to bottom -->
+                <Border Grid.Row="2" Background="#152B48" Padding="12,10">
+                    <StackPanel>
+                        <TextBlock x:Name="UpdateStatusText"
+                                   Text="Проверка обновлений..."
+                                   Foreground="#7FA8CC" FontSize="10"
+                                   TextWrapping="Wrap" TextAlignment="Center"
+                                   Margin="0,0,0,6"/>
+                        <Button x:Name="UpdateButton"
+                                Content="⬇ Установить обновление"
+                                Click="UpdateButton_Click"
+                                Visibility="Collapsed"
+                                Background="#FF8F00" Foreground="White"
+                                BorderThickness="0" Padding="8,5"
+                                FontSize="11" FontWeight="SemiBold"
+                                Cursor="Hand"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Content area (switched by code-behind) -->
+        <Grid Grid.Column="1">
+            <views:QuestionBankView x:Name="QuestionBankView"/>
+            <views:ExamFormationView x:Name="ExamFormationView" Visibility="Collapsed"/>
+            <views:ParticipantsView x:Name="ParticipantsView" Visibility="Collapsed"/>
+            <views:PrintView x:Name="PrintView" Visibility="Collapsed"/>
+            <views:ResultsView x:Name="ResultsView" Visibility="Collapsed"/>
+        </Grid>
+    </Grid>
+</Window>
