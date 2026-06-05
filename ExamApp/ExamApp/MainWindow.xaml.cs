@@ -38,32 +38,27 @@ namespace ExamApp
             {
                 if (_updateService.IsDevBuild)
                 {
-                    UpdateStatusText.Text = "Версия: dev";
-                    UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x7F, 0xA8, 0xCC));
+                    UpdateStatusText.Text = "Локальная сборка";
                     return;
                 }
-
-                UpdateStatusText.Text = "Проверка обновлений...";
-                UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x7F, 0xA8, 0xCC));
 
                 _pendingUpdate = await _updateService.CheckForUpdateAsync();
 
                 if (_pendingUpdate is not null)
                 {
-                    UpdateStatusText.Text = $"Доступно обновление!\n{_pendingUpdate.TagName}";
+                    UpdateStatusText.Text = $"Доступно обновление\n{_pendingUpdate.TagName}";
                     UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xA0, 0x00));
                     UpdateButton.Visibility = Visibility.Visible;
                 }
                 else
                 {
-                    UpdateStatusText.Text = $"Обновлений нет\n{BuildInfo.Version}";
-                    UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x7F, 0xA8, 0xCC));
+                    UpdateStatusText.Text = $"Версия {BuildInfo.Version}";
                 }
             }
             catch
             {
-                UpdateStatusText.Text = "Нет связи с сервером";
-                UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x7F, 0xA8, 0xCC));
+                // Нет интернета или приватный репозиторий — просто показываем версию.
+                UpdateStatusText.Text = $"Версия {BuildInfo.Version}";
             }
         }
 
@@ -78,7 +73,6 @@ namespace ExamApp
             if (confirm != MessageBoxResult.Yes) return;
 
             UpdateButton.IsEnabled = false;
-            UpdateStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x7F, 0xA8, 0xCC));
 
             try
             {
@@ -97,7 +91,7 @@ namespace ExamApp
             }
         }
 
-        private void NavButton_Click(object sender, RoutedEventArgs e)
+        private async void NavButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button btn) return;
 
@@ -109,6 +103,25 @@ namespace ExamApp
             ParticipantsView.Visibility = tag == "Participants" ? Visibility.Visible : Visibility.Collapsed;
             PrintView.Visibility = tag == "Print" ? Visibility.Visible : Visibility.Collapsed;
             ResultsView.Visibility = tag == "Results" ? Visibility.Visible : Visibility.Collapsed;
+
+            // Перезагружаем данные раздела, чтобы видеть всё, что создано в других разделах.
+            await RefreshSectionAsync(tag);
+        }
+
+        private async Task RefreshSectionAsync(string? tag)
+        {
+            try
+            {
+                switch (tag)
+                {
+                    case "QuestionBank": await _vm.QuestionBankVM.RefreshAsync(); break;
+                    case "ExamFormation": await _vm.ExamFormationVM.RefreshAsync(); break;
+                    case "Participants": await _vm.ParticipantsVM.RefreshAsync(); break;
+                    case "Print": await _vm.PrintVM.RefreshAsync(); break;
+                    case "Results": await _vm.ResultsVM.RefreshAsync(); break;
+                }
+            }
+            catch { /* обновление не критично для навигации */ }
         }
 
         private void SetActiveNav(Button button)
