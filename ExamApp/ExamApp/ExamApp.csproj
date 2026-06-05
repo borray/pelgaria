@@ -7,7 +7,6 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>ExamApp</AssemblyName>
     <RootNamespace>ExamApp</RootNamespace>
-    <ApplicationIcon>Assets\exam.ico</ApplicationIcon>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
