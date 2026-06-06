@@ -1,0 +1,114 @@
+name: Deploy SONAR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build server
+        working-directory: sonar/server
+        run: |
+          npm ci
+          npx prisma generate
+          npm run build
+
+      - name: Build client
+        working-directory: sonar/client
+        env:
+          VITE_API_URL: https://pg-bridge.ru
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Create app directories on server
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/sonar/app/dist /home/sonar/app/prisma /home/sonar/app/uploads /home/sonar/app/public"
+
+      - name: Write .env on server
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > /home/sonar/app/.env << 'ENVEOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_SECRET }}_refresh
+          CLIENT_URL=https://pg-bridge.ru
+          PORT=3001
+          DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_REDIRECT_URI=https://pg-bridge.ru/api/auth/discord/callback
+          ENVEOF"
+
+      - name: Upload server build
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
+            sonar/server/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/dist/
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            sonar/server/package.json \
+            sonar/server/package-lock.json \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            sonar/server/prisma/schema.prisma \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/prisma/
+
+      - name: Upload client build
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
+            sonar/client/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/public/
+
+      - name: Install deps, migrate, restart
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
+            set -e
+            cd /home/sonar/app
+
+            # Install all deps (including prisma CLI for migrations)
+            npm ci
+
+            # Generate Prisma client and run migrations
+            npx prisma generate
+            npx prisma migrate deploy
+
+            # Seed only on first deploy (if Treasury table is empty)
+            node -e "
+              const { PrismaClient } = require('@prisma/client');
+              const p = new PrismaClient();
+              p.treasury.count().then(n => {
+                if (n === 0) {
+                  console.log('Running seed...');
+                  require('child_process').execSync('node dist/prisma/seed.js', { stdio: 'inherit' });
+                }
+                p.\$disconnect();
+              }).catch(() => p.\$disconnect());
+            " || true
+
+            # Start or restart via PM2
+            if pm2 describe sonar > /dev/null 2>&1; then
+              pm2 restart sonar
+            else
+              pm2 start dist/index.js --name sonar --env production
+            fi
+
+            pm2 save
+          ENDSSH
