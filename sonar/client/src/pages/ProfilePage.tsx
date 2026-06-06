@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { IconBrandDiscord, IconUnlink, IconKey, IconUser } from '@tabler/icons-react'
 import { useAuthStore } from '../store/auth'
-import { api } from '../api/client'
+import api from '../api/client'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -87,7 +87,7 @@ export function ProfilePage() {
           <div>
             <div style={{ fontWeight: 600, fontSize: 16, color: '#0A1628' }}>{user.login}</div>
             <div style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>
-              <Badge color={user.role.color}>{user.role.name}</Badge>
+              <Badge status={user.role.name} label={user.role.name} color={user.role.color} />
             </div>
           </div>
         </div>
