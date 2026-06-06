@@ -138,7 +138,7 @@ router.post('/charges/auto', requireAuth, requirePermission('taxes.charge'), asy
 // POST /api/taxes/charges/:id/pay
 router.post('/charges/:id/pay', requireAuth, requirePermission('taxes.mark_paid'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.taxCharge.findUnique({
       where: { id },

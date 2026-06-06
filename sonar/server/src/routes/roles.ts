@@ -57,7 +57,7 @@ router.post('/', requireAuth, requirePermission('roles.manage'), async (req: Req
 // GET /api/roles/:id
 router.get('/:id', requireAuth, requirePermission('roles.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const role = await prisma.role.findUnique({
       where: { id },
@@ -81,7 +81,7 @@ router.get('/:id', requireAuth, requirePermission('roles.manage'), async (req: R
 // PUT /api/roles/:id
 router.put('/:id', requireAuth, requirePermission('roles.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { name, color, permissions } = req.body
 
     const existing = await prisma.role.findUnique({ where: { id } })
@@ -122,7 +122,7 @@ router.put('/:id', requireAuth, requirePermission('roles.manage'), async (req: R
 // DELETE /api/roles/:id
 router.delete('/:id', requireAuth, requirePermission('roles.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const role = await prisma.role.findUnique({
       where: { id },

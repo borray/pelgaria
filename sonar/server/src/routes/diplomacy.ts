@@ -153,7 +153,7 @@ router.post('/states', requireAuth, requirePermission('diplomacy.manage'), async
 // PUT /api/diplomacy/states/:id
 router.put('/states/:id', requireAuth, requirePermission('diplomacy.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { name, relation_status, description } = req.body
 
     const existing = await prisma.diplomaticState.findUnique({ where: { id } })
@@ -229,7 +229,7 @@ router.post('/treaties', requireAuth, requirePermission('diplomacy.manage'), asy
 // PUT /api/diplomacy/treaties/:id
 router.put('/treaties/:id', requireAuth, requirePermission('diplomacy.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { status, body } = req.body
 
     const existing = await prisma.diplomaticTreaty.findUnique({ where: { id } })
@@ -259,7 +259,7 @@ router.put('/treaties/:id', requireAuth, requirePermission('diplomacy.manage'), 
 // POST /api/diplomacy/treaties/:id/pdf
 router.post('/treaties/:id/pdf', requireAuth, requirePermission('diplomacy.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const treaty = await prisma.diplomaticTreaty.findUnique({
       where: { id },
       include: { state: { select: { id: true, name: true } } },

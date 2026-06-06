@@ -142,7 +142,7 @@ router.post('/conversations', requireAuth, requirePermission('chat.send'), async
 // GET /api/chat/conversations/:id/messages
 router.get('/conversations/:id/messages', requireAuth, requirePermission('chat.send'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const limit = parseInt((req.query.limit as string) || '50', 10)
     const before = req.query.before as string | undefined
 
@@ -178,7 +178,7 @@ router.get('/conversations/:id/messages', requireAuth, requirePermission('chat.s
 // POST /api/chat/conversations/:id/messages
 router.post('/conversations/:id/messages', requireAuth, requirePermission('chat.send'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { body } = req.body
     const userId = req.user!.id
 
@@ -223,7 +223,7 @@ router.post('/conversations/:id/messages', requireAuth, requirePermission('chat.
 // POST /api/chat/conversations/:id/attachments
 router.post('/conversations/:id/attachments', requireAuth, requirePermission('chat.send'), upload.array('files', 10), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const files = req.files as Express.Multer.File[]
 
     if (!files || files.length === 0) {
