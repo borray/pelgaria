@@ -1,0 +1,97 @@
+name: Deploy SONAR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            sonar/server/package-lock.json
+            sonar/client/package-lock.json
+
+      - name: Install and build server
+        working-directory: sonar/server
+        run: |
+          npm ci
+          npm run db:generate
+          npm run build
+
+      - name: Install and build client
+        working-directory: sonar/client
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync server files
+        run: |
+          rsync -avz --delete \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='uploads' \
+            sonar/server/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/dist/
+          rsync -avz \
+            sonar/server/package.json \
+            sonar/server/package-lock.json \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/
+          rsync -avz \
+            sonar/server/prisma/schema.prisma \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/prisma/
+
+      - name: Sync client build
+        run: |
+          rsync -avz --delete \
+            sonar/client/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/public/
+
+      - name: Deploy on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
+            set -e
+            export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}"
+
+            cd /home/sonar/app
+
+            # Install production dependencies
+            npm ci --omit=dev
+
+            # Run Prisma migrations
+            npx prisma generate
+            npm run db:migrate
+
+            # Restart or start PM2 process
+            if pm2 show sonar > /dev/null 2>&1; then
+              pm2 restart sonar
+            else
+              pm2 start dist/index.js --name sonar
+            fi
+
+            pm2 save
+          ENDSSH
