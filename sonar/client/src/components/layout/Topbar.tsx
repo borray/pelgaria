@@ -1,7 +1,7 @@
 import React from 'react'
 import { IconLogout } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 export function Topbar() {
   const { user, logout } = useAuthStore()
@@ -50,7 +50,7 @@ export function Topbar() {
 
       {user && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ textAlign: 'right' }}>
+          <Link to="/profile" style={{ textAlign: 'right', textDecoration: 'none' }}>
             <div
               style={{
                 fontFamily: 'Inter, sans-serif',
@@ -59,18 +59,21 @@ export function Topbar() {
                 color: '#FFFFFF',
               }}
             >
+              {user.discord_avatar
+                ? <img src={user.discord_avatar} style={{ width: 20, height: 20, borderRadius: '50%', marginRight: 6, verticalAlign: 'middle' }} alt="" />
+                : null}
               {user.login}
             </div>
             <div
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '11px',
-                color: user.role.color,
+                color: user.role.color || 'rgba(255,255,255,0.5)',
               }}
             >
               {user.role.name}
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             title="Выйти"

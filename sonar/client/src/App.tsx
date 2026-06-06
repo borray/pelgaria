@@ -21,6 +21,7 @@ import { DiplomacyPage } from './pages/DiplomacyPage'
 import { ChatPage } from './pages/ChatPage'
 import { AccountsPage } from './pages/AccountsPage'
 import { RolesPage } from './pages/RolesPage'
+import { ProfilePage } from './pages/ProfilePage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="roles/*" element={<RolesPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>
     </Routes>

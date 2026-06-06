@@ -20,6 +20,7 @@ import buildingsRouter from './routes/buildings'
 import territoriesRouter from './routes/territories'
 import diplomacyRouter from './routes/diplomacy'
 import chatRouter from './routes/chat'
+import discordRouter from './routes/discord'
 
 const app = express()
 const httpServer = createServer(app)
@@ -62,6 +63,7 @@ app.use('/api/buildings', buildingsRouter)
 app.use('/api/territories', territoriesRouter)
 app.use('/api/diplomacy', diplomacyRouter)
 app.use('/api/chat', chatRouter)
+app.use('/api/auth/discord', discordRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
