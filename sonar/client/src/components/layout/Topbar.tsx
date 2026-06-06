@@ -1,4 +1,3 @@
-import React from 'react'
 import { IconLogout } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 import { useNavigate, Link } from 'react-router-dom'
