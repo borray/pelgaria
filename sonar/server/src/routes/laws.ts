@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
-import puppeteer from 'puppeteer'
+import puppeteer from 'puppeteer-core'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 
@@ -95,7 +95,7 @@ async function renderLawPdf(law: {
 </body>
 </html>`
 
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
+  const browser = await puppeteer.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
   const page = await browser.newPage()
   await page.setContent(html, { waitUntil: 'networkidle0' })
   const pdfBuffer = await page.pdf({

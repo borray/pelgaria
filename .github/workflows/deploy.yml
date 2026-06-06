@@ -56,6 +56,7 @@ jobs:
           DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_REDIRECT_URI=https://pg-bridge.ru/api/auth/discord/callback
+          CHROMIUM_PATH=/usr/bin/chromium-browser
           ENVEOF"
 
       - name: Upload server build
@@ -82,6 +83,9 @@ jobs:
           ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
             set -e
             cd /home/sonar/app
+
+            # Install chromium for PDF generation if not present
+            which chromium-browser || which chromium || sudo apt-get install -y chromium-browser 2>/dev/null || true
 
             # Install all deps (including prisma CLI for migrations)
             npm ci
