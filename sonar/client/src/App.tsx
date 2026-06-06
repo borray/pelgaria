@@ -6,7 +6,21 @@ import { LoginPage } from './pages/LoginPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { CitizensPage } from './pages/CitizensPage'
 import { CitizenDetailPage } from './pages/CitizenDetailPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { PassportsPage } from './pages/PassportsPage'
+import { LawsPage } from './pages/LawsPage'
+import { LawDetailPage } from './pages/LawDetailPage'
+import { CasesPage } from './pages/CasesPage'
+import { CaseDetailPage } from './pages/CaseDetailPage'
+import { PunishmentsPage } from './pages/PunishmentsPage'
+import { TaxesPage } from './pages/TaxesPage'
+import { TreasuryPage } from './pages/TreasuryPage'
+import { BuildingsPage } from './pages/BuildingsPage'
+import { BuildingDetailPage } from './pages/BuildingDetailPage'
+import { TerritoriesPage } from './pages/TerritoriesPage'
+import { DiplomacyPage } from './pages/DiplomacyPage'
+import { ChatPage } from './pages/ChatPage'
+import { AccountsPage } from './pages/AccountsPage'
+import { RolesPage } from './pages/RolesPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -35,54 +49,21 @@ export default function App() {
         <Route index element={<Navigate to="/citizens" replace />} />
         <Route path="citizens" element={<CitizensPage />} />
         <Route path="citizens/:id" element={<CitizenDetailPage />} />
-        <Route
-          path="passports"
-          element={<PlaceholderPage title="Паспорта" description="Управление паспортами граждан." />}
-        />
-        <Route
-          path="laws"
-          element={<PlaceholderPage title="Законодательство" description="Реестр законов и указов государства." />}
-        />
-        <Route
-          path="cases"
-          element={<PlaceholderPage title="Судебные дела" description="Реестр судебных дел." />}
-        />
-        <Route
-          path="punishments"
-          element={<PlaceholderPage title="Наказания" description="Реестр наказаний." />}
-        />
-        <Route
-          path="taxes"
-          element={<PlaceholderPage title="Налоги" description="Налоговые начисления и периоды." />}
-        />
-        <Route
-          path="treasury"
-          element={<PlaceholderPage title="Казна" description="Государственная казна и транзакции." />}
-        />
-        <Route
-          path="buildings"
-          element={<PlaceholderPage title="РЕЛИКТ" description="Реестр строений и объектов." />}
-        />
-        <Route
-          path="territories"
-          element={<PlaceholderPage title="Территории" description="Управление территориями государства." />}
-        />
-        <Route
-          path="diplomacy"
-          element={<PlaceholderPage title="Дипломатия" description="Дипломатические отношения и договоры." />}
-        />
-        <Route
-          path="chat"
-          element={<PlaceholderPage title="Чат" description="Внутренняя система обмена сообщениями." />}
-        />
-        <Route
-          path="accounts"
-          element={<PlaceholderPage title="Аккаунты" description="Управление аккаунтами системы." />}
-        />
-        <Route
-          path="roles"
-          element={<PlaceholderPage title="Роли" description="Управление ролями и правами доступа." />}
-        />
+        <Route path="passports" element={<PassportsPage />} />
+        <Route path="laws" element={<LawsPage />} />
+        <Route path="laws/:id" element={<LawDetailPage />} />
+        <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:id" element={<CaseDetailPage />} />
+        <Route path="punishments" element={<PunishmentsPage />} />
+        <Route path="taxes" element={<TaxesPage />} />
+        <Route path="treasury" element={<TreasuryPage />} />
+        <Route path="buildings" element={<BuildingsPage />} />
+        <Route path="buildings/:id" element={<BuildingDetailPage />} />
+        <Route path="territories" element={<TerritoriesPage />} />
+        <Route path="diplomacy" element={<DiplomacyPage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="accounts" element={<AccountsPage />} />
+        <Route path="roles/*" element={<RolesPage />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>
     </Routes>

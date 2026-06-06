@@ -10,6 +10,16 @@ import authRouter from './routes/auth'
 import citizensRouter from './routes/citizens'
 import accountsRouter from './routes/accounts'
 import rolesRouter from './routes/roles'
+import passportsRouter from './routes/passports'
+import lawsRouter from './routes/laws'
+import casesRouter from './routes/cases'
+import punishmentsRouter from './routes/punishments'
+import taxesRouter from './routes/taxes'
+import treasuryRouter from './routes/treasury'
+import buildingsRouter from './routes/buildings'
+import territoriesRouter from './routes/territories'
+import diplomacyRouter from './routes/diplomacy'
+import chatRouter from './routes/chat'
 
 const app = express()
 const httpServer = createServer(app)
@@ -42,6 +52,16 @@ app.use('/api/auth', authRouter)
 app.use('/api/citizens', citizensRouter)
 app.use('/api/accounts', accountsRouter)
 app.use('/api/roles', rolesRouter)
+app.use('/api/passports', passportsRouter)
+app.use('/api/laws', lawsRouter)
+app.use('/api/cases', casesRouter)
+app.use('/api/punishments', punishmentsRouter)
+app.use('/api/taxes', taxesRouter)
+app.use('/api/treasury', treasuryRouter)
+app.use('/api/buildings', buildingsRouter)
+app.use('/api/territories', territoriesRouter)
+app.use('/api/diplomacy', diplomacyRouter)
+app.use('/api/chat', chatRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
@@ -73,6 +93,7 @@ io.on('connection', (socket) => {
       conversation_id: string
       body: string
       sender_id: string
+      attachment_ids?: string[]
     }) => {
       try {
         const message = await prisma.chatMessage.create({
@@ -99,6 +120,35 @@ io.on('connection', (socket) => {
       } catch (err) {
         console.error('Socket send_message error:', err)
         socket.emit('error', { message: 'Ошибка отправки сообщения' })
+      }
+    }
+  )
+
+  socket.on(
+    'message_read',
+    async (data: { conversation_id: string; message_id: string }) => {
+      try {
+        if (!userId) return
+        const msg = await prisma.chatMessage.findUnique({ where: { id: data.message_id } })
+        if (!msg) return
+        const readBy = (msg.read_by as string[]) || []
+        if (!readBy.includes(userId)) {
+          await prisma.chatMessage.update({
+            where: { id: data.message_id },
+            data: { read_by: [...readBy, userId] },
+          })
+        }
+        // notify the sender
+        const senderSocketId = userSocketMap.get(msg.sender_id)
+        if (senderSocketId) {
+          io.to(senderSocketId).emit('message_read', {
+            conversation_id: data.conversation_id,
+            message_id: data.message_id,
+            read_by_user_id: userId,
+          })
+        }
+      } catch (err) {
+        console.error('Socket message_read error:', err)
       }
     }
   )
