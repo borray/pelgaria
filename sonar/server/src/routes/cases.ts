@@ -80,7 +80,7 @@ router.post('/', requireAuth, requirePermission('cases.create'), async (req: Req
 // GET /api/cases/:id
 router.get('/:id', requireAuth, requirePermission('cases.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const caseRecord = await prisma.case.findFirst({
       where: { OR: [{ id }, { number: id }] },
       include: {
@@ -108,7 +108,7 @@ router.get('/:id', requireAuth, requirePermission('cases.view'), async (req: Req
 // PUT /api/cases/:id
 router.put('/:id', requireAuth, requirePermission('cases.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { judge_id, status, description } = req.body
 
     const existing = await prisma.case.findUnique({ where: { id } })
@@ -141,7 +141,7 @@ router.put('/:id', requireAuth, requirePermission('cases.manage'), async (req: R
 // POST /api/cases/:id/close
 router.post('/:id/close', requireAuth, requirePermission('cases.close'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { outcome, verdict_type, verdict_amount, verdict_note } = req.body
 
     if (!outcome) {

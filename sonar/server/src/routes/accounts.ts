@@ -114,7 +114,7 @@ router.post('/', requireAuth, requirePermission('accounts.manage'), async (req: 
 // PUT /api/accounts/:id
 router.put('/:id', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { role_id, citizen_id, is_active, discord_username, discord_id, discord_avatar } = req.body
 
     const existing = await prisma.user.findUnique({ where: { id } })
@@ -172,7 +172,7 @@ router.put('/:id', requireAuth, requirePermission('accounts.manage'), async (req
 // POST /api/accounts/:id/block
 router.post('/:id/block', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.user.findUnique({ where: { id } })
     if (!existing) {
@@ -205,7 +205,7 @@ router.post('/:id/block', requireAuth, requirePermission('accounts.manage'), asy
 // POST /api/accounts/:id/reset-password
 router.post('/:id/reset-password', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { newPassword } = req.body
 
     if (!newPassword || newPassword.length < 6) {
