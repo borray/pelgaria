@@ -1,0 +1,369 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  color       String   @default("#6B7280")
+  is_system   Boolean  @default(false)
+  permissions Json     @default("{}")
+  users       User[]
+  created_at  DateTime @default(now())
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  login                String    @unique
+  password_hash        String
+  role_id              String
+  role                 Role      @relation(fields: [role_id], references: [id])
+  citizen_id           String?   @unique
+  citizen              Citizen?  @relation(fields: [citizen_id], references: [id])
+  discord_id           String?
+  discord_username     String?
+  discord_avatar       String?
+  is_active            Boolean   @default(true)
+  must_change_password Boolean   @default(true)
+  created_at           DateTime  @default(now())
+  last_login_at        DateTime?
+  refresh_tokens       RefreshToken[]
+  issued_passports     Passport[]    @relation("IssuedBy")
+  judged_cases         Case[]        @relation("Judge")
+  issued_punishments   Punishment[]  @relation("IssuedBy")
+  revoked_punishments  Punishment[]  @relation("RevokedBy")
+  tax_markings         TaxCharge[]   @relation("MarkedBy")
+  treasury_transactions TreasuryTransaction[]
+  managed_territories  Territory[]
+  sent_messages        ChatMessage[]
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  created_at DateTime @default(now())
+}
+
+model Citizen {
+  id               String        @id @default(cuid())
+  reg_number       String        @unique
+  nickname         String
+  discord_username String?
+  role_title       String        @default("Гражданин")
+  status           CitizenStatus @default(ACTIVE)
+  joined_at        DateTime      @default(now())
+  note             String?
+  user             User?
+  passports        Passport[]
+  cases            Case[]        @relation("Accused")
+  punishments      Punishment[]
+  tax_charges      TaxCharge[]
+  buildings        Building[]
+  created_at       DateTime      @default(now())
+}
+
+enum CitizenStatus {
+  ACTIVE
+  INACTIVE
+  UNDER_INVESTIGATION
+  EXILED
+  BANNED
+}
+
+model Passport {
+  id               String         @id @default(cuid())
+  number           String         @unique
+  citizen_id       String
+  citizen          Citizen        @relation(fields: [citizen_id], references: [id])
+  issued_at        DateTime       @default(now())
+  expires_at       DateTime?
+  status           PassportStatus @default(VALID)
+  previous_numbers Json           @default("[]")
+  issued_by_id     String
+  issued_by        User           @relation("IssuedBy", fields: [issued_by_id], references: [id])
+}
+
+enum PassportStatus {
+  VALID
+  REVOKED
+  EXPIRED
+}
+
+model Law {
+  id          String    @id @default(cuid())
+  number      String    @unique
+  type        LawType
+  title       String
+  body        String
+  status      LawStatus @default(ACTIVE)
+  adopted_at  DateTime  @default(now())
+  repealed_at DateTime?
+  cases       Case[]
+}
+
+enum LawType {
+  LAW
+  DECREE
+}
+
+enum LawStatus {
+  ACTIVE
+  REPEALED
+  SUSPENDED
+}
+
+model Case {
+  id             String       @id @default(cuid())
+  number         String       @unique
+  accused_id     String
+  accused        Citizen      @relation("Accused", fields: [accused_id], references: [id])
+  law_id         String?
+  law            Law?         @relation(fields: [law_id], references: [id])
+  description    String
+  judge_id       String?
+  judge          User?        @relation("Judge", fields: [judge_id], references: [id])
+  status         CaseStatus   @default(OPENED)
+  outcome        CaseOutcome?
+  verdict_type   VerdictType?
+  verdict_amount Float?
+  verdict_note   String?
+  opened_at      DateTime     @default(now())
+  closed_at      DateTime?
+  punishments    Punishment[]
+}
+
+enum CaseStatus {
+  OPENED
+  IN_PROGRESS
+  CLOSED
+}
+
+enum CaseOutcome {
+  ACQUITTED
+  CONVICTED
+}
+
+enum VerdictType {
+  FINE
+  WARNING
+  EXILE
+  OTHER
+}
+
+model Punishment {
+  id             String           @id @default(cuid())
+  citizen_id     String
+  citizen        Citizen          @relation(fields: [citizen_id], references: [id])
+  type           PunishmentType
+  reason         String
+  case_id        String?
+  case           Case?            @relation(fields: [case_id], references: [id])
+  issued_by_id   String
+  issued_by      User             @relation("IssuedBy", fields: [issued_by_id], references: [id])
+  issued_at      DateTime         @default(now())
+  expires_at     DateTime?
+  revoked_by_id  String?
+  revoked_by     User?            @relation("RevokedBy", fields: [revoked_by_id], references: [id])
+  revoked_at     DateTime?
+  status         PunishmentStatus @default(ACTIVE)
+}
+
+enum PunishmentType {
+  BAN
+  WARNING
+  FINE
+  EXILE
+}
+
+enum PunishmentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model TaxPeriod {
+  id         String      @id @default(cuid())
+  name       String
+  starts_at  DateTime
+  ends_at    DateTime
+  charges    TaxCharge[]
+  created_at DateTime    @default(now())
+}
+
+model TaxCharge {
+  id           String          @id @default(cuid())
+  citizen_id   String
+  citizen      Citizen         @relation(fields: [citizen_id], references: [id])
+  period_id    String
+  period       TaxPeriod       @relation(fields: [period_id], references: [id])
+  amount       Float
+  status       TaxChargeStatus @default(UNPAID)
+  paid_at      DateTime?
+  marked_by_id String?
+  marked_by    User?           @relation("MarkedBy", fields: [marked_by_id], references: [id])
+  building_id  String?
+  building     Building?       @relation(fields: [building_id], references: [id])
+}
+
+enum TaxChargeStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+model Treasury {
+  id      String @id @default(cuid())
+  balance Float  @default(0)
+}
+
+model TreasuryTransaction {
+  id              String   @id @default(cuid())
+  amount          Float
+  description     String
+  performed_by_id String
+  performed_by    User     @relation(fields: [performed_by_id], references: [id])
+  created_at      DateTime @default(now())
+}
+
+model Building {
+  id             String         @id @default(cuid())
+  reg_number     String         @unique
+  name           String
+  type           BuildingType
+  coord_x        Int
+  coord_y        Int
+  coord_z        Int
+  owner_id       String
+  owner          Citizen        @relation(fields: [owner_id], references: [id])
+  status         BuildingStatus @default(ACTIVE)
+  description    String?
+  area           Int?
+  dimensions     String?
+  materials      String?
+  screenshot_url String?
+  tax_rate       Float          @default(0)
+  created_at     DateTime       @default(now())
+  tax_charges    TaxCharge[]
+}
+
+enum BuildingType {
+  RESIDENTIAL
+  GOVERNMENT
+  COMMERCIAL
+  MILITARY
+}
+
+enum BuildingStatus {
+  ACTIVE
+  UNDER_CONSTRUCTION
+  ABANDONED
+  DEMOLISHED
+}
+
+model Territory {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  minister_id String?
+  minister    User?           @relation(fields: [minister_id], references: [id])
+  coordinates String?
+  status      TerritoryStatus @default(DEVELOPED)
+  created_at  DateTime        @default(now())
+}
+
+enum TerritoryStatus {
+  DEVELOPED
+  UNDER_CONSTRUCTION
+  DISPUTED
+  NEUTRAL
+}
+
+model DiplomaticState {
+  id              String             @id @default(cuid())
+  name            String
+  relation_status RelationStatus
+  description     String?
+  treaties        DiplomaticTreaty[]
+  created_at      DateTime           @default(now())
+}
+
+enum RelationStatus {
+  ALLIANCE
+  NEUTRAL
+  TENSION
+  WAR
+}
+
+model DiplomaticTreaty {
+  id        String          @id @default(cuid())
+  number    String          @unique
+  state_id  String
+  state     DiplomaticState @relation(fields: [state_id], references: [id])
+  type      TreatyType
+  body      String
+  signed_at DateTime        @default(now())
+  status    TreatyStatus    @default(ACTIVE)
+}
+
+enum TreatyType {
+  NON_AGGRESSION
+  ALLIANCE
+  TRADE
+  OTHER
+}
+
+enum TreatyStatus {
+  ACTIVE
+  TERMINATED
+}
+
+model ChatConversation {
+  id           String           @id @default(cuid())
+  type         ConversationType
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+  created_at   DateTime         @default(now())
+}
+
+enum ConversationType {
+  DIRECT
+  GENERAL
+}
+
+model ChatParticipant {
+  id              String           @id @default(cuid())
+  conversation_id String
+  conversation    ChatConversation @relation(fields: [conversation_id], references: [id])
+  user_id         String
+}
+
+model ChatMessage {
+  id              String           @id @default(cuid())
+  conversation_id String
+  conversation    ChatConversation @relation(fields: [conversation_id], references: [id])
+  sender_id       String
+  sender          User             @relation(fields: [sender_id], references: [id])
+  body            String?
+  created_at      DateTime         @default(now())
+  read_by         Json             @default("[]")
+  attachments     ChatAttachment[]
+}
+
+model ChatAttachment {
+  id            String      @id @default(cuid())
+  message_id    String
+  message       ChatMessage @relation(fields: [message_id], references: [id])
+  filename      String
+  original_name String
+  mime_type     String
+  size          Int
+  url           String
+}
