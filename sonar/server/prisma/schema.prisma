@@ -41,6 +41,7 @@ model User {
   treasury_transactions TreasuryTransaction[]
   managed_territories  Territory[]
   sent_messages        ChatMessage[]
+  chat_participants    ChatParticipant[]
 }
 
 model RefreshToken {
@@ -343,6 +344,7 @@ model ChatParticipant {
   conversation_id String
   conversation    ChatConversation @relation(fields: [conversation_id], references: [id])
   user_id         String
+  user            User             @relation(fields: [user_id], references: [id])
 }
 
 model ChatMessage {

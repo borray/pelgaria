@@ -164,7 +164,7 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
 // GET /api/laws/:id
 router.get('/:id', requireAuth, requirePermission('laws.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const law = await prisma.law.findFirst({
       where: { OR: [{ id }, { number: id }] },
     })
@@ -182,7 +182,7 @@ router.get('/:id', requireAuth, requirePermission('laws.view'), async (req: Requ
 // PUT /api/laws/:id
 router.put('/:id', requireAuth, requirePermission('laws.edit'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { title, body, status } = req.body
 
     const existing = await prisma.law.findUnique({ where: { id } })
@@ -210,7 +210,7 @@ router.put('/:id', requireAuth, requirePermission('laws.edit'), async (req: Requ
 // POST /api/laws/:id/repeal
 router.post('/:id/repeal', requireAuth, requirePermission('laws.repeal'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.law.findUnique({ where: { id } })
     if (!existing) {
@@ -236,7 +236,7 @@ router.post('/:id/repeal', requireAuth, requirePermission('laws.repeal'), async 
 // POST /api/laws/:id/pdf
 router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const law = await prisma.law.findUnique({ where: { id } })
     if (!law) {
       res.status(404).json({ error: 'Закон не найден' })

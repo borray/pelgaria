@@ -81,7 +81,7 @@ router.post('/', requireAuth, requirePermission('punishments.issue'), async (req
 // POST /api/punishments/:id/revoke
 router.post('/:id/revoke', requireAuth, requirePermission('punishments.revoke'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.punishment.findUnique({ where: { id } })
     if (!existing) {

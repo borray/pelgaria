@@ -54,7 +54,7 @@ router.post('/', requireAuth, requirePermission('territories.manage'), async (re
 // PUT /api/territories/:id
 router.put('/:id', requireAuth, requirePermission('territories.manage'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { name, description, minister_id, coordinates, status } = req.body
 
     const existing = await prisma.territory.findUnique({ where: { id } })

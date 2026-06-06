@@ -89,7 +89,7 @@ router.post('/', requireAuth, requirePermission('citizens.create'), async (req: 
 // GET /api/citizens/:id
 router.get('/:id', requireAuth, requirePermission('citizens.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const citizen = await prisma.citizen.findFirst({
       where: {
@@ -155,7 +155,7 @@ router.get('/:id', requireAuth, requirePermission('citizens.view'), async (req: 
 // PUT /api/citizens/:id
 router.put('/:id', requireAuth, requirePermission('citizens.edit'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { nickname, discord_username, role_title, status, note, joined_at } = req.body
 
     const existing = await prisma.citizen.findUnique({ where: { id } })
@@ -186,7 +186,7 @@ router.put('/:id', requireAuth, requirePermission('citizens.edit'), async (req: 
 // DELETE /api/citizens/:id
 router.delete('/:id', requireAuth, requirePermission('citizens.delete'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.citizen.findUnique({
       where: { id },

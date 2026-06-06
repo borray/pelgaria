@@ -331,7 +331,7 @@ router.post('/', requireAuth, requirePermission('passports.issue'), async (req: 
 // POST /api/passports/:id/reissue
 router.post('/:id/reissue', requireAuth, requirePermission('passports.reissue'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const old = await prisma.passport.findUnique({ where: { id } })
     if (!old) {
@@ -376,7 +376,7 @@ router.post('/:id/reissue', requireAuth, requirePermission('passports.reissue'),
 // POST /api/passports/:id/revoke
 router.post('/:id/revoke', requireAuth, requirePermission('passports.issue'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { reason } = req.body
 
     const existing = await prisma.passport.findUnique({ where: { id } })
@@ -401,7 +401,7 @@ router.post('/:id/revoke', requireAuth, requirePermission('passports.issue'), as
 // GET /api/passports/:id/pdf
 router.get('/:id/pdf', requireAuth, requirePermission('passports.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const passport = await prisma.passport.findUnique({
       where: { id },
@@ -416,7 +416,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('passports.view'), async (
       return
     }
 
-    const pdfBuffer = await renderPassportPdf(passport as Parameters<typeof renderPassportPdf>[0])
+    const pdfBuffer = await renderPassportPdf(passport as unknown as Parameters<typeof renderPassportPdf>[0])
 
     res.set({
       'Content-Type': 'application/pdf',

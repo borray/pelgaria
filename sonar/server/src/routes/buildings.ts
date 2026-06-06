@@ -101,7 +101,7 @@ router.post('/', requireAuth, requirePermission('relict.create'), async (req: Re
 // GET /api/buildings/:id
 router.get('/:id', requireAuth, requirePermission('relict.view'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const building = await prisma.building.findFirst({
       where: { OR: [{ id }, { reg_number: id }] },
       include: {
@@ -126,7 +126,7 @@ router.get('/:id', requireAuth, requirePermission('relict.view'), async (req: Re
 // PUT /api/buildings/:id
 router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
     const { name, type, coord_x, coord_y, coord_z, owner_id, status, description, area, dimensions, materials, tax_rate } = req.body
 
     const existing = await prisma.building.findUnique({ where: { id } })
@@ -166,7 +166,7 @@ router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Re
 // DELETE /api/buildings/:id
 router.delete('/:id', requireAuth, requirePermission('relict.delete'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.building.findUnique({ where: { id } })
     if (!existing) {
@@ -192,7 +192,7 @@ router.delete('/:id', requireAuth, requirePermission('relict.delete'), async (re
 // POST /api/buildings/:id/screenshot
 router.post('/:id/screenshot', requireAuth, requirePermission('relict.edit'), upload.single('screenshot'), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = req.params.id as string
 
     const existing = await prisma.building.findUnique({ where: { id } })
     if (!existing) {
