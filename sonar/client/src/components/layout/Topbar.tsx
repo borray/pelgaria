@@ -1,18 +1,7 @@
-import { IconLogout, IconMenu2 } from '@tabler/icons-react'
+import { IconLogout, IconMenu2, IconUserCircle } from '@tabler/icons-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
-import { useNavigate, Link } from 'react-router-dom'
-
-function RadarIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="#3B82F6" strokeWidth="1.5"/>
-      <circle cx="12" cy="12" r="6" stroke="#3B82F6" strokeWidth="1" opacity="0.6"/>
-      <circle cx="12" cy="12" r="2" fill="#3B82F6"/>
-      <line x1="12" y1="12" x2="20" y2="5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="19" cy="6" r="1.5" fill="#3B82F6" opacity="0.8"/>
-    </svg>
-  )
-}
+import { SonarBrand } from '../brand/SonarBrand'
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuthStore()
@@ -24,129 +13,34 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   }
 
   return (
-    <header
-      className="app-topbar"
-      style={{
-        height: '56px',
-        background: '#0A1628',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button
-          className="mobile-menu-button"
-          onClick={onMenuClick}
-          aria-label="Открыть меню"
-          style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: '#FFFFFF',
-            borderRadius: 8,
-            width: 36,
-            height: 36,
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-        >
+    <header className="app-topbar">
+      <div className="topbar-leading">
+        <button className="mobile-menu-button" onClick={onMenuClick} aria-label="Открыть меню">
           <IconMenu2 size={20} />
         </button>
-        <Link
-          to="/"
-          aria-label="Главная СОНАР"
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}
-        >
-          <RadarIcon />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-          <span
-            className="app-subtitle"
-            style={{
-              fontFamily: "'Unbounded', sans-serif",
-              fontWeight: 800,
-              fontSize: '19px',
-              letterSpacing: '0.14em',
-              lineHeight: 1,
-              textTransform: 'uppercase',
-              background: 'linear-gradient(95deg, #60A5FA 0%, #3B82F6 55%, #2563EB 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            СОНАР
-          </span>
-          <span
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '13px',
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: '0.02em',
-            }}
-          >
-            Государство Пельагрия
-          </span>
-          </div>
+        <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
+          <SonarBrand light size="sm" />
         </Link>
+        <div className="topbar-context">
+          <span>Государство Пельагрия</span>
+          <strong>Единый цифровой контур</strong>
+        </div>
       </div>
 
       {user && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link to="/profile" style={{ textAlign: 'right', textDecoration: 'none' }}>
-            <div
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: '#FFFFFF',
-              }}
-            >
+        <div className="topbar-user-area">
+          <Link to="/profile" className="topbar-profile">
+            <div className="topbar-avatar">
               {user.discord_avatar
-                ? <img src={user.discord_avatar} style={{ width: 20, height: 20, borderRadius: '50%', marginRight: 6, verticalAlign: 'middle' }} alt="" />
-                : null}
-              {user.login}
+                ? <img src={user.discord_avatar} alt="" />
+                : <IconUserCircle size={23} />}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
-              <span
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '11px',
-                  color: '#FFFFFF',
-                  background: 'rgba(255,255,255,0.15)',
-                  borderRadius: '4px',
-                  padding: '1px 6px',
-                  display: 'inline-block',
-                }}
-              >
-                {user.role.name}
-              </span>
+            <div className="topbar-profile-copy">
+              <strong>{user.login}</strong>
+              <span>{user.role.name}</span>
             </div>
           </Link>
-          <button
-            onClick={handleLogout}
-            title="Выйти"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'rgba(255,255,255,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px',
-              borderRadius: '4px',
-              transition: 'opacity 0.15s ease, color 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              ;(e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF'
-              ;(e.currentTarget as HTMLButtonElement).style.opacity = '1'
-            }}
-            onMouseLeave={(e) => {
-              ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'
-              ;(e.currentTarget as HTMLButtonElement).style.opacity = '0.8'
-            }}
-          >
+          <button className="topbar-icon-button" onClick={handleLogout} title="Выйти">
             <IconLogout size={18} />
           </button>
         </div>

@@ -40,6 +40,7 @@ export function Breadcrumbs() {
 
   return (
     <nav
+      className="app-breadcrumbs"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -51,6 +52,7 @@ export function Breadcrumbs() {
     >
       <Link
         to="/"
+        className="breadcrumb-home"
         style={{
           color: '#6B7280',
           textDecoration: 'none',

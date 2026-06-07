@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { TaxPeriod, TaxCharge, Citizen } from '../types'
@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDate, formatAmount } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 const CHARGE_STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -58,7 +58,7 @@ export function TaxesPage() {
   const handleDownloadPeriodPdf = async (period: TaxPeriod) => {
     setPdfLoadingId(period.id)
     try {
-      await downloadPdf(`/api/taxes/periods/${period.id}/pdf`, `taxes-${period.name.replace(/\s+/g, '-')}.pdf`)
+      await printPdf(`/api/taxes/periods/${period.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -217,9 +217,9 @@ export function TaxesPage() {
           size="sm"
           loading={pdfLoadingId === row.id}
           onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}
-          title="Скачать ведомость PDF"
+          title="Печать ведомости"
         >
-          <IconFileTypePdf size={14} />
+          <IconPrinter size={14} />
         </Button>
       ),
     },

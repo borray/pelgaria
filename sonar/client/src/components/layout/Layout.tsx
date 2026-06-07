@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Topbar } from './Topbar'
 import { Sidebar } from './Sidebar'
 import { Breadcrumbs } from './Breadcrumbs'
+import { CommandPalette } from './CommandPalette'
 
 export function Layout() {
   const location = useLocation()
@@ -13,19 +14,13 @@ export function Layout() {
   }, [location.pathname])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="app-shell">
       <Topbar onMenuClick={() => setSidebarOpen((open) => !open)} />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <CommandPalette />
+      <div className="app-workspace">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main
           className="app-main"
-          style={{
-            flex: 1,
-            overflow: 'auto',
-            overflowX: 'hidden',
-            background: '#F1F5F9',
-            minWidth: 0,
-          }}
         >
           <Breadcrumbs />
           <div key={location.pathname} className="page-enter">

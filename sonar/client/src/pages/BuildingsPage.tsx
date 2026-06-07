@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IconPlus, IconSearch, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconSearch, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Building, Citizen } from '../types'
@@ -11,7 +11,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -72,8 +72,7 @@ export function BuildingsPage() {
   const handleDownloadRegistryPdf = async () => {
     setPdfLoading(true)
     try {
-      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
-      await downloadPdf('/api/buildings/registry/pdf', `buildings-registry-${today}.pdf`)
+      await printPdf('/api/buildings/registry/pdf')
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -206,8 +205,8 @@ export function BuildingsPage() {
         </h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" loading={pdfLoading} onClick={handleDownloadRegistryPdf}>
-            <IconFileTypePdf size={16} />
-            Реестр (PDF)
+            <IconPrinter size={16} />
+            Печать реестра
           </Button>
           {canCreate && (
             <Button variant="primary" onClick={openCreateModal}>

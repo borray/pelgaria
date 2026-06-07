@@ -174,15 +174,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       />
       <nav
         className={`app-sidebar${open ? ' is-open' : ''}`}
-        style={{
-          width: '240px',
-          background: '#0D1E35',
-          flexShrink: 0,
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '8px 0',
-        }}
       >
       {sections.map((section) => {
         const visibleItems = section.items.filter(
@@ -191,18 +182,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         if (visibleItems.length === 0) return null
 
         return (
-          <div key={section.title} style={{ marginBottom: '4px' }}>
-            <div
-              style={{
-                padding: '8px 16px 4px',
-                fontSize: '10px',
-                fontWeight: 600,
-                color: 'rgba(255,255,255,0.3)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                fontFamily: 'Inter, sans-serif',
-              }}
-            >
+          <div key={section.title} className="sidebar-section">
+            <div className="sidebar-section-title">
               {section.title}
             </div>
             {visibleItems.map((item) => (
@@ -211,57 +192,24 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 to={item.to}
                 end={item.to === '/'}
                 onClick={onClose}
-                style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '8px 12px 8px 13px',
-                  textDecoration: 'none',
-                  fontSize: '13px',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: isActive ? 500 : 400,
-                  color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
-                  background: isActive ? 'rgba(59,130,246,0.18)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #3B82F6' : '3px solid transparent',
-                  margin: '0 8px 0 0',
-                  borderRadius: '0 4px 4px 0',
-                  transition: 'background 0.15s ease, color 0.15s ease',
-                })}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  if (!el.getAttribute('aria-current')) {
-                    el.style.background = 'rgba(255,255,255,0.07)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLAnchorElement
-                  if (!el.getAttribute('aria-current')) {
-                    el.style.background = 'transparent'
-                  }
-                }}
+                className={({ isActive }) => `sidebar-link${isActive ? ' is-active' : ''}`}
               >
-                {({ isActive }) => (
-                  <>
-                    <span style={{ color: isActive ? '#3B82F6' : 'rgba(255,255,255,0.5)' }}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                    {item.badge !== undefined && item.badge > 0 && (
-                      <span
-                        style={{
-                          marginLeft: 'auto',
-                          background: '#DC2626',
-                          color: '#FFFFFF',
-                          borderRadius: '10px',
-                          padding: '1px 6px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
+                <span className="sidebar-link-icon">{item.icon}</span>
+                <span>{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      background: '#DC2626',
+                      color: '#FFFFFF',
+                      borderRadius: '10px',
+                      padding: '1px 6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.badge}
+                  </span>
                 )}
               </NavLink>
             ))}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { IconEdit, IconTrash, IconArrowLeft, IconFileTypePdf } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconArrowLeft, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Citizen } from '../types'
@@ -14,7 +14,7 @@ import { Select } from '../components/ui/Select'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate, formatDateTime, formatAmount } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'Активен' },
@@ -99,7 +99,7 @@ export function CitizenDetailPage() {
     if (!citizen) return
     setPdfLoading(true)
     try {
-      await downloadPdf(`/api/citizens/${citizen.id}/pdf`, `citizen-${citizen.reg_number}.pdf`)
+      await printPdf(`/api/citizens/${citizen.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -161,8 +161,8 @@ export function CitizenDetailPage() {
           </Button>
         )}
         <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
-          <IconFileTypePdf size={14} />
-          Досье (PDF)
+          <IconPrinter size={14} />
+          Печать досье
         </Button>
         {canDelete && (
           <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>

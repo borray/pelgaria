@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconDownload } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { DiplomaticState, DiplomaticTreaty } from '../types'
@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { printPdfPost } from '../utils/pdf'
 
 const RELATION_OPTIONS = [
   { value: 'ALLIANCE', label: 'Союз' },
@@ -121,13 +122,7 @@ export function DiplomacyPage() {
   const handleDownloadPdf = async (treaty: DiplomaticTreaty) => {
     setPdfLoadingId(treaty.id)
     try {
-      const res = await apiClient.post(`/diplomacy/treaties/${treaty.id}/pdf`, {}, { responseType: 'blob' })
-      const url = URL.createObjectURL(res.data as Blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `treaty-${treaty.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      await printPdfPost(`/api/diplomacy/treaties/${treaty.id}/pdf`)
     } catch { alert('Ошибка генерации PDF') }
     finally { setPdfLoadingId(null) }
   }
@@ -157,8 +152,8 @@ export function DiplomacyPage() {
       header: '',
       width: '60px',
       render: (row) => (
-        <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="PDF">
-          <IconDownload size={14} />
+        <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="Печать договора">
+          <IconPrinter size={14} />
         </Button>
       ),
     },
