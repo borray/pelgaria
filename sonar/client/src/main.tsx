@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import './styles/animations.css'
 
 const globalStyle = document.createElement('style')
 globalStyle.textContent = `
@@ -12,7 +13,7 @@ globalStyle.textContent = `
     margin: 0;
     padding: 0;
     font-family: Inter, sans-serif;
-    background: #F2F4F7;
+    background: #F1F5F9;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

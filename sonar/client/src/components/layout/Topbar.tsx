@@ -2,6 +2,18 @@ import { IconLogout } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 import { useNavigate, Link } from 'react-router-dom'
 
+function RadarIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="#3B82F6" strokeWidth="1.5"/>
+      <circle cx="12" cy="12" r="6" stroke="#3B82F6" strokeWidth="1" opacity="0.6"/>
+      <circle cx="12" cy="12" r="2" fill="#3B82F6"/>
+      <line x1="12" y1="12" x2="20" y2="5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="19" cy="6" r="1.5" fill="#3B82F6" opacity="0.8"/>
+    </svg>
+  )
+}
+
 export function Topbar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -23,28 +35,33 @@ export function Topbar() {
         flexShrink: 0,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-        <span
-          style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontWeight: 700,
-            fontSize: '18px',
-            color: '#FFFFFF',
-            letterSpacing: '0.05em',
-          }}
-        >
-          СОНАР
-        </span>
-        <span
-          style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '13px',
-            color: 'rgba(255,255,255,0.5)',
-            letterSpacing: '0.02em',
-          }}
-        >
-          Государство Пельагрия
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <RadarIcon />
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontWeight: 700,
+              fontSize: '18px',
+              letterSpacing: '0.05em',
+              background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            СОНАР
+          </span>
+          <span
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.5)',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Государство Пельагрия
+          </span>
+        </div>
       </div>
 
       {user && (
@@ -63,14 +80,20 @@ export function Topbar() {
                 : null}
               {user.login}
             </div>
-            <div
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '11px',
-                color: user.role.color || 'rgba(255,255,255,0.5)',
-              }}
-            >
-              {user.role.name}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
+              <span
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '11px',
+                  color: '#FFFFFF',
+                  background: 'rgba(255,255,255,0.15)',
+                  borderRadius: '4px',
+                  padding: '1px 6px',
+                  display: 'inline-block',
+                }}
+              >
+                {user.role.name}
+              </span>
             </div>
           </Link>
           <button
@@ -85,13 +108,15 @@ export function Topbar() {
               alignItems: 'center',
               padding: '4px',
               borderRadius: '4px',
-              transition: 'color 0.15s',
+              transition: 'opacity 0.15s ease, color 0.15s ease',
             }}
             onMouseEnter={(e) => {
               ;(e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF'
+              ;(e.currentTarget as HTMLButtonElement).style.opacity = '1'
             }}
             onMouseLeave={(e) => {
               ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'
+              ;(e.currentTarget as HTMLButtonElement).style.opacity = '0.8'
             }}
           >
             <IconLogout size={18} />

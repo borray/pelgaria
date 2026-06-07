@@ -4,16 +4,41 @@ interface CardProps {
   children: React.ReactNode
   style?: React.CSSProperties
   title?: string
+  onClick?: () => void
 }
 
-export function Card({ children, style, title }: CardProps) {
+export function Card({ children, style, title, onClick }: CardProps) {
+  const isClickable = !!onClick
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isClickable) {
+      const el = e.currentTarget
+      el.style.boxShadow = '0 4px 12px rgba(15,23,42,0.1)'
+      el.style.transform = 'translateY(-1px)'
+    }
+  }
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isClickable) {
+      const el = e.currentTarget
+      el.style.boxShadow = '0 1px 4px rgba(15,23,42,0.06)'
+      el.style.transform = 'translateY(0)'
+    }
+  }
+
   return (
     <div
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         background: '#FFFFFF',
-        border: '0.5px solid #D0D7E3',
-        borderRadius: '4px',
+        border: '0.5px solid #E2E8F0',
+        borderRadius: '10px',
         fontFamily: 'Inter, sans-serif',
+        boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
+        transition: 'all 0.2s ease',
+        cursor: isClickable ? 'pointer' : undefined,
         ...style,
       }}
     >
@@ -21,16 +46,16 @@ export function Card({ children, style, title }: CardProps) {
         <div
           style={{
             padding: '12px 16px',
-            borderBottom: '0.5px solid #D0D7E3',
+            borderBottom: '0.5px solid #E2E8F0',
             fontSize: '14px',
             fontWeight: 600,
-            color: '#0A1628',
+            color: '#0F172A',
           }}
         >
           {title}
         </div>
       )}
-      <div style={{ padding: title ? '16px' : '16px' }}>{children}</div>
+      <div style={{ padding: '16px' }}>{children}</div>
     </div>
   )
 }
