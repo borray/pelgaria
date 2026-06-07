@@ -25,13 +25,27 @@ export function EmptyState({
         gap: '12px',
       }}
     >
-      <IconInbox size={40} stroke={1.5} color="#D0D7E3" />
       <div
         style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: '#374151',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background: 'linear-gradient(180deg, #F1F5F9 0%, #E8EFF8 100%)',
+          border: '1px solid #E2E8F0',
+        }}
+      >
+        <IconInbox size={30} stroke={1.5} color="#94A3B8" />
+      </div>
+      <div
+        style={{
+          fontSize: '15px',
+          fontWeight: 600,
+          color: '#0F172A',
           textAlign: 'center',
+          letterSpacing: '-0.01em',
         }}
       >
         {title}

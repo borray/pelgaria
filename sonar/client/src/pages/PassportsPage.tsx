@@ -4,6 +4,7 @@ import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Passport, Citizen } from '../types'
 import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
@@ -27,6 +28,8 @@ export function PassportsPage() {
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [citizens, setCitizens] = useState<Citizen[]>([])
   const [selectedCitizenId, setSelectedCitizenId] = useState('')
+  const [issuedAt, setIssuedAt] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
   const [issueLoading, setIssueLoading] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
@@ -61,6 +64,8 @@ export function PassportsPage() {
   const openIssueModal = () => {
     setShowIssueModal(true)
     setSelectedCitizenId('')
+    setIssuedAt('')
+    setExpiresAt('')
     setIssueError(null)
     fetchCitizens()
   }
@@ -74,7 +79,11 @@ export function PassportsPage() {
     setIssueLoading(true)
     setIssueError(null)
     try {
-      await apiClient.post('/passports', { citizen_id: selectedCitizenId })
+      await apiClient.post('/passports', {
+        citizen_id: selectedCitizenId,
+        ...(issuedAt ? { issued_at: issuedAt } : {}),
+        ...(expiresAt ? { expires_at: expiresAt } : {}),
+      })
       setShowIssueModal(false)
       fetchPassports()
     } catch (err: unknown) {
@@ -167,7 +176,7 @@ export function PassportsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Паспорта
         </h1>
         {canIssue && (
@@ -188,7 +197,7 @@ export function PassportsPage() {
       </div>
 
       {!loading && passports.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState
             title="Паспорта не найдены"
             description={statusFilter ? 'Попробуйте изменить фильтр' : 'Выдайте первый паспорт'}
@@ -254,6 +263,18 @@ export function PassportsPage() {
               ))}
             </select>
           </div>
+          <Input
+            label="Дата выдачи"
+            type="date"
+            value={issuedAt}
+            onChange={(e) => setIssuedAt(e.target.value)}
+          />
+          <Input
+            label="Действителен до"
+            type="date"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+          />
           {issueError && (
             <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>
               {issueError}

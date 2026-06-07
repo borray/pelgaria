@@ -39,6 +39,7 @@ interface CreateBuildingForm {
   status: string
   description: string
   tax_rate: string
+  built_at: string
 }
 
 export function BuildingsPage() {
@@ -62,6 +63,7 @@ export function BuildingsPage() {
     status: 'ACTIVE',
     description: '',
     tax_rate: '0',
+    built_at: '',
   })
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -103,7 +105,7 @@ export function BuildingsPage() {
   const openCreateModal = async () => {
     setShowCreateModal(true)
     setCreateError(null)
-    setForm({ name: '', type: 'RESIDENTIAL', coord_x: '0', coord_y: '0', coord_z: '0', owner_id: '', status: 'ACTIVE', description: '', tax_rate: '0' })
+    setForm({ name: '', type: 'RESIDENTIAL', coord_x: '0', coord_y: '0', coord_z: '0', owner_id: '', status: 'ACTIVE', description: '', tax_rate: '0', built_at: '' })
     try {
       const res = await apiClient.get<Citizen[]>('/citizens')
       setCitizens(res.data)
@@ -129,6 +131,7 @@ export function BuildingsPage() {
         status: form.status,
         description: form.description || null,
         tax_rate: Number(form.tax_rate),
+        ...(form.built_at ? { built_at: form.built_at } : {}),
       })
       setShowCreateModal(false)
       navigate(`/buildings/${res.data.id}`)
@@ -198,7 +201,7 @@ export function BuildingsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           РЕЛИКТ — Реестр объектов
         </h1>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -230,7 +233,7 @@ export function BuildingsPage() {
       </div>
 
       {!loading && buildings.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState title="Объекты не найдены" description={search || typeFilter || statusFilter ? 'Измените параметры' : 'Добавьте первый объект'} action={canCreate ? <Button variant="primary" size="sm" onClick={openCreateModal}><IconPlus size={14} />Добавить</Button> : undefined} />
         </div>
       ) : (
@@ -276,6 +279,7 @@ export function BuildingsPage() {
           </div>
           <Select label="Статус" options={STATUS_OPTIONS.slice(1)} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} />
           <Input label="Налог (у.е.)" type="number" min="0" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: e.target.value })} />
+          <Input label="Дата постройки" type="date" value={form.built_at} onChange={(e) => setForm({ ...form, built_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
             <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />

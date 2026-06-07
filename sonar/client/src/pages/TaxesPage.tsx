@@ -308,7 +308,7 @@ export function TaxesPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Налоги</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Налоги</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           {tab === 'periods' && canCharge && (
             <Button variant="primary" size="sm" onClick={() => { setShowCreatePeriodModal(true); setPeriodError(null) }}>

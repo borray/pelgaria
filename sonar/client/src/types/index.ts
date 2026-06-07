@@ -179,6 +179,7 @@ export interface Building {
   materials?: string | null
   screenshot_url?: string | null
   tax_rate: number
+  built_at?: string | null
   created_at: string
 }
 

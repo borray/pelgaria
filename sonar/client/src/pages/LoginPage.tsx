@@ -157,13 +157,16 @@ export function LoginPage() {
             <RadarIcon size={32} />
             <span
               style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontWeight: 700,
-                fontSize: '32px',
-                letterSpacing: '0.05em',
-                background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+                fontFamily: "'Unbounded', sans-serif",
+                fontWeight: 800,
+                fontSize: '34px',
+                letterSpacing: '0.12em',
+                lineHeight: 1,
+                textTransform: 'uppercase',
+                background: 'linear-gradient(95deg, #93C5FD 0%, #60A5FA 50%, #3B82F6 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
               }}
             >
               СОНАР

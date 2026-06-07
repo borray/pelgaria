@@ -31,6 +31,7 @@ interface IssuePunishmentForm {
   citizen_id: string
   type: string
   reason: string
+  issued_at: string
   expires_at: string
 }
 
@@ -44,7 +45,7 @@ export function PunishmentsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [citizens, setCitizens] = useState<Citizen[]>([])
   const [showIssueModal, setShowIssueModal] = useState(false)
-  const [form, setForm] = useState<IssuePunishmentForm>({ citizen_id: '', type: 'WARNING', reason: '', expires_at: '' })
+  const [form, setForm] = useState<IssuePunishmentForm>({ citizen_id: '', type: 'WARNING', reason: '', issued_at: '', expires_at: '' })
   const [issueLoading, setIssueLoading] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   const [revokeLoadingId, setRevokeLoadingId] = useState<string | null>(null)
@@ -82,7 +83,7 @@ export function PunishmentsPage() {
 
   const openIssueModal = async () => {
     setShowIssueModal(true)
-    setForm({ citizen_id: '', type: 'WARNING', reason: '', expires_at: '' })
+    setForm({ citizen_id: '', type: 'WARNING', reason: '', issued_at: '', expires_at: '' })
     setIssueError(null)
     try {
       const res = await apiClient.get<Citizen[]>('/citizens')
@@ -106,6 +107,7 @@ export function PunishmentsPage() {
         type: form.type,
         reason: form.reason.trim(),
         expires_at: form.expires_at || null,
+        ...(form.issued_at ? { issued_at: form.issued_at } : {}),
       })
       setShowIssueModal(false)
       fetchPunishments()
@@ -197,7 +199,7 @@ export function PunishmentsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Наказания
         </h1>
         {canIssue && (
@@ -214,7 +216,7 @@ export function PunishmentsPage() {
       </div>
 
       {!loading && punishments.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState title="Наказания не найдены" description={typeFilter || statusFilter ? 'Измените фильтры' : 'Нет наказаний'} action={canIssue ? <Button variant="primary" size="sm" onClick={openIssueModal}><IconPlus size={14} />Выдать</Button> : undefined} />
         </div>
       ) : (
@@ -274,6 +276,15 @@ export function PunishmentsPage() {
               onChange={(e) => setForm({ ...form, reason: e.target.value })}
               rows={3}
               style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Дата вынесения</label>
+            <input
+              type="date"
+              value={form.issued_at}
+              onChange={(e) => setForm({ ...form, issued_at: e.target.value })}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

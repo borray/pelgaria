@@ -3,7 +3,16 @@ import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
-import { guillochePattern } from '../services/templates'
+import {
+  guillocheRosette,
+  guillocheField,
+  sealBlock,
+  pageShell,
+  parseOptionalDate,
+  A4_W,
+  ACCENT,
+  INK,
+} from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -26,9 +35,8 @@ async function renderLawPdf(law: {
   repealed_at: Date | null
 }): Promise<Buffer> {
   const typeLabel = law.type === 'LAW' ? 'ЗАКОН' : 'УКАЗ'
-  const docNumber = `${typeLabel} №${law.number}`
+  const seed = law.number
   const adoptedDate = law.adopted_at.toLocaleDateString('ru-RU')
-  const guilloche = guillochePattern(law.number, 794, 50)
 
   const statusLabel = law.status === 'ACTIVE' ? 'ДЕЙСТВУЕТ' : law.status === 'REPEALED' ? 'ОТМЕНЁН' : 'ПРИОСТАНОВЛЕН'
   const statusColor = law.status === 'ACTIVE' ? '#16A34A' : law.status === 'REPEALED' ? '#DC2626' : '#D97706'
@@ -38,148 +46,72 @@ async function renderLawPdf(law: {
     .map((line) => `<p>${line || '&nbsp;'}</p>`)
     .join('')
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+  const seal = sealBlock({ number: law.number, signer: 'Глава государства', role: 'Глава государства', date: adoptedDate, size: 138 })
+  const rosette = guillocheRosette(seed, 120)
+  const fieldFill = guillocheField(seed + ':fill', A4_W - 130, 70, 0.12)
 
-  .header {
-    background: #0A1628;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    padding: 0 40px;
-  }
-  .header-left {
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    width: 180px;
-    flex-shrink: 0;
-    line-height: 1.6;
-  }
-  .header-center { flex: 1; text-align: center; }
-  .header-doctype {
-    color: #FFFFFF;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .header-sub {
-    color: rgba(255,255,255,0.5);
-    font-size: 11px;
-    margin-top: 4px;
-    letter-spacing: 0.04em;
-  }
-  .header-right {
-    width: 180px;
-    text-align: right;
-    font-size: 12px;
-    color: rgba(255,255,255,0.5);
-  }
+  const header = `<div class="law-header">
+    <div class="law-emblem">${rosette}</div>
+    <div class="law-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+    <div class="law-acttype">${typeLabel}</div>
+    <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${law.number}</div>
+    <div class="law-rule"></div>
+  </div>`
 
-  .guilloche-bar { overflow: hidden; height: 50px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
-
-  .content { padding: 36px 40px 28px; }
-  .doc-number {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: #4A90D9;
-    letter-spacing: 0.06em;
-    margin-bottom: 10px;
-  }
-  .doc-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #0A1628;
-    margin-bottom: 8px;
-    line-height: 1.4;
-  }
-  .doc-status {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: ${statusColor};
-    background: ${statusColor}18;
-    border: 1px solid ${statusColor}44;
-    border-radius: 3px;
-    padding: 2px 8px;
-    margin-bottom: 24px;
-  }
-  .doc-body p {
-    font-size: 14px;
-    color: #374151;
-    line-height: 1.8;
-    margin-bottom: 8px;
-  }
-
-  .footer {
-    border-top: 1px solid #E5E7EB;
-    background: #F8F9FB;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-  .date-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-  .date-value { font-size: 14px; color: #374151; font-weight: 500; }
-  .signature-block { text-align: right; }
-  .signature-line { width: 160px; border-bottom: 1px solid #6B7280; height: 22px; margin-left: auto; }
-  .signature-label { font-size: 11px; color: #6B7280; font-style: italic; margin-top: 4px; }
-  .doc-footer-strip {
-    padding: 10px 40px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: #C4C9D4;
-    border-top: 1px solid #F0F2F5;
-  }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
-    <div class="header-center">
-      <div class="header-doctype">${typeLabel}</div>
-      <div class="header-sub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ</div>
+  const body = `
+    <div class="law-titleblock">
+      <div class="law-doc-number">${typeLabel} №${law.number}</div>
+      <div class="law-title">${law.title}</div>
+      <div class="law-status">${statusLabel}</div>
     </div>
-    <div class="header-right">${adoptedDate}</div>
-  </div>
-  <div class="guilloche-bar">${guilloche}</div>
+    <div class="law-body">${bodyHtml}</div>
+    <div class="law-fill">${fieldFill}</div>
+  `
 
-  <div class="content">
-    <div class="doc-number">${docNumber}</div>
-    <div class="doc-title">${law.title}</div>
-    <div class="doc-status">${statusLabel}</div>
-    <div class="doc-body">${bodyHtml}</div>
-  </div>
-
-  <div class="footer">
-    <div>
-      <div class="date-label">Дата принятия</div>
-      <div class="date-value">${adoptedDate}</div>
-      ${law.repealed_at ? `<div class="date-label" style="margin-top:8px;">Дата отмены</div><div class="date-value">${law.repealed_at.toLocaleDateString('ru-RU')}</div>` : ''}
+  const footer = `
+    <div class="law-footer">
+      <div class="law-dates">
+        <div class="law-date-label">Дата принятия</div>
+        <div class="law-date-value">${adoptedDate}</div>
+        ${law.repealed_at ? `<div class="law-date-label" style="margin-top:10px;">Дата отмены</div><div class="law-date-value">${law.repealed_at.toLocaleDateString('ru-RU')}</div>` : ''}
+      </div>
+      <div class="law-sign">
+        ${seal}
+        <div class="law-sign-line"></div>
+        <div class="law-sign-label">Глава государства</div>
+      </div>
     </div>
-    <div class="signature-block">
-      <div class="signature-line"></div>
-      <div class="signature-label">Глава государства</div>
-    </div>
-  </div>
-  <div class="doc-footer-strip">
-    <span>Государственная информационная система СОНАР</span>
-    <span>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</span>
-  </div>
-</body>
-</html>`
+    <div class="law-foot-strip">Государственная информационная система СОНАР · Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
+  `
 
+  const styles = `
+    .law-header { text-align:center; padding:10px 0 18px; }
+    .law-emblem { width:84px; height:84px; margin:0 auto 10px; }
+    .law-emblem svg { width:84px; height:84px; }
+    .law-state { font-size:12px; letter-spacing:5px; color:${ACCENT}; font-weight:600; }
+    .law-acttype { font-family:'PT Serif',serif; font-size:46px; font-weight:700; color:${INK}; letter-spacing:0.18em; margin-top:8px; }
+    .law-actsub { font-size:11px; color:#6B7280; letter-spacing:0.18em; margin-top:6px; text-transform:uppercase; }
+    .law-rule { height:3px; background:${INK}; margin:16px auto 0; width:60%; }
+    .law-titleblock { text-align:center; margin:6px 0 26px; }
+    .law-doc-number { font-family:'JetBrains Mono',monospace; font-size:12px; color:${ACCENT}; letter-spacing:0.1em; }
+    .law-title { font-family:'PT Serif',serif; font-size:22px; font-weight:700; color:${INK}; margin-top:10px; line-height:1.4; }
+    .law-status { display:inline-block; margin-top:12px; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${statusColor}; border:1px solid ${statusColor}55; border-radius:3px; padding:3px 12px; }
+    .law-body { font-family:'PT Serif',serif; }
+    .law-body p { font-size:14px; color:#1F2937; line-height:1.95; margin-bottom:6px; text-align:justify; }
+    .law-body p:first-letter { }
+    .law-fill { margin-top:18px; opacity:0.9; }
+    .law-footer { display:flex; justify-content:space-between; align-items:flex-end; border-top:2px solid ${INK}; padding-top:18px; }
+    .law-date-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.1em; }
+    .law-date-value { font-size:14px; color:#374151; font-weight:500; margin-top:3px; }
+    .law-sign { text-align:center; }
+    .law-sign-line { width:200px; border-bottom:1px solid #6B7280; height:10px; margin:6px auto 0; }
+    .law-sign-label { font-size:11px; color:#6B7280; font-style:italic; margin-top:5px; }
+    .law-foot-strip { text-align:center; font-size:9px; color:#9CA3AF; margin-top:12px; }
+  `
+
+  const watermark = `<div style="width:540px;height:540px;">${guillocheRosette(seed + ':wm', 540)}</div>`
+
+  const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'law' })
   return htmlToPdf(html)
 }
 
@@ -217,6 +149,14 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
       return
     }
 
+    let adopted_at: Date
+    try {
+      adopted_at = parseOptionalDate(req.body.adopted_at) ?? new Date()
+    } catch {
+      res.status(400).json({ error: 'Некорректная дата' })
+      return
+    }
+
     const number = await generateLawNumber(type as LawType)
 
     const law = await prisma.law.create({
@@ -226,7 +166,7 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
         title,
         body,
         status: 'ACTIVE',
-        adopted_at: new Date(),
+        adopted_at,
       },
     })
 

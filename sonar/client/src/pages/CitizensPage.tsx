@@ -225,7 +225,7 @@ export function CitizensPage() {
       </div>
 
       {!loading && citizens.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState
             title="Граждане не найдены"
             description={

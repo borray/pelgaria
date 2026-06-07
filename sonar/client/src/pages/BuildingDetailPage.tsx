@@ -41,7 +41,7 @@ export function BuildingDetailPage() {
   const [citizens, setCitizens] = useState<Citizen[]>([])
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', type: '', status: '', coord_x: '0', coord_y: '0', coord_z: '0', description: '', tax_rate: '0', owner_id: '' })
+  const [editForm, setEditForm] = useState({ name: '', type: '', status: '', coord_x: '0', coord_y: '0', coord_z: '0', description: '', tax_rate: '0', owner_id: '', built_at: '' })
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -69,6 +69,7 @@ export function BuildingDetailPage() {
           description: r.data.description ?? '',
           tax_rate: String(r.data.tax_rate),
           owner_id: r.data.owner_id,
+          built_at: r.data.built_at ? r.data.built_at.slice(0, 10) : '',
         })
       })
       .catch(() => setBuilding(null))
@@ -92,6 +93,7 @@ export function BuildingDetailPage() {
         description: editForm.description || null,
         tax_rate: Number(editForm.tax_rate),
         owner_id: editForm.owner_id,
+        ...(editForm.built_at ? { built_at: editForm.built_at } : {}),
       })
       setBuilding(res.data)
       setShowEditModal(false)
@@ -290,6 +292,7 @@ export function BuildingDetailPage() {
           </div>
           <Select label="Статус" options={STATUS_OPTIONS} value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} />
           <Input label="Налог (у.е.)" type="number" min="0" value={editForm.tax_rate} onChange={(e) => setEditForm({ ...editForm, tax_rate: e.target.value })} />
+          <Input label="Дата постройки" type="date" value={editForm.built_at} onChange={(e) => setEditForm({ ...editForm, built_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
             <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />

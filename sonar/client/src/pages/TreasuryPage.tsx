@@ -158,7 +158,7 @@ export function TreasuryPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
             <IconFileTypePdf size={16} />

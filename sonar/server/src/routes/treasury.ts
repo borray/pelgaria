@@ -3,7 +3,13 @@ import { PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
-import { guillochePattern } from '../services/templates'
+import {
+  guillocheRosette,
+  sealBlock,
+  pageShell,
+  ACCENT,
+  INK,
+} from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -115,8 +121,8 @@ router.get('/report/pdf', requireAuth, requirePermission('treasury.view'), async
       }),
     ])
 
-    const guilloche = guillochePattern('treasury-report', 794, 40)
     const printDate = new Date().toLocaleDateString('ru-RU')
+    const seed = 'КАЗНА-' + (from ?? '') + (to ?? '') + printDate
     const balance = treasury?.balance ?? 0
 
     const totalIn = transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
@@ -138,106 +144,92 @@ router.get('/report/pdf', requireAuth, requirePermission('treasury.view'), async
         <td style="padding:7px 10px;font-size:12px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${t.performed_by?.login ?? '—'}</td>
       </tr>`).join('')
 
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
-  .header { background: #0A1628; height: 80px; display: flex; align-items: center; padding: 0 40px; }
-  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
-  .header-center { flex: 1; text-align: center; }
-  .header-doctype { color: #FFFFFF; font-size: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 3px; }
-  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
-  .guilloche-bar { overflow: hidden; height: 40px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
-  .balance-banner { padding: 20px 40px; background: #0A1628; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4A90D9; }
-  .balance-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-  .balance-value { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; color: #FFFFFF; }
-  .balance-unit { font-size: 14px; color: rgba(255,255,255,0.5); margin-left: 8px; }
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid #E5E7EB; }
-  .stat-cell { padding: 16px 40px; border-right: 1px solid #E5E7EB; }
-  .stat-cell:last-child { border-right: none; }
-  .stat-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; }
-  .content { padding: 24px 40px; }
-  .period-label { font-size: 12px; color: #6B7280; margin-bottom: 16px; }
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 10px; text-align: left; border-bottom: 2px solid #E5E7EB; background: #F8F9FB; }
-  .footer { border-top: 1px solid #E5E7EB; background: #F8F9FB; padding: 14px 40px; display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; }
-  .doc-footer-strip { padding: 10px 40px; display: flex; justify-content: space-between; font-size: 10px; color: #C4C9D4; border-top: 1px solid #F0F2F5; }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
-    <div class="header-center">
-      <div class="header-doctype">Финансовый отчёт государственной казны</div>
-      <div class="header-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
-    </div>
-    <div class="header-right">${printDate}</div>
-  </div>
-  <div class="guilloche-bar">${guilloche}</div>
+    const seal = sealBlock({ number: 'КАЗНА', signer: 'Казначей', role: 'Казначей', date: printDate, size: 118 })
 
-  <div class="balance-banner">
-    <div>
-      <div class="balance-label">Текущий баланс казны</div>
-      <div>
-        <span class="balance-value">${balance}</span>
-        <span class="balance-unit">у.е.</span>
+    const header = `<div class="ts-header">
+      <div class="ts-emblem">${guillocheRosette(seed, 64)}</div>
+      <div class="ts-head-text">
+        <div class="ts-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="ts-title">ФИНАНСОВЫЙ ОТЧЁТ КАЗНЫ</div>
+        <div class="ts-sub">Государственная информационная система СОНАР · ${printDate}</div>
       </div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Период отчёта</div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.7);">${periodLabel}</div>
-    </div>
-  </div>
+    </div>`
 
-  <div class="stats-row">
-    <div class="stat-cell">
-      <div class="stat-label">Транзакций</div>
-      <div class="stat-value" style="color:#0A1628;">${transactions.length}</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-label">Поступило</div>
-      <div class="stat-value" style="color:#16A34A;">+${totalIn}</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-label">Списано</div>
-      <div class="stat-value" style="color:#DC2626;">${totalOut}</div>
-    </div>
-  </div>
+    const body = `
+      <div class="ts-balance">
+        <div>
+          <div class="ts-bal-label">Текущий баланс казны</div>
+          <div><span class="ts-bal-value">${balance}</span><span class="ts-bal-unit">у.е.</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="ts-bal-label">Период отчёта</div>
+          <div class="ts-bal-period">${periodLabel}</div>
+        </div>
+      </div>
+      <div class="ts-stats">
+        <div class="ts-stat"><div class="ts-stat-label">Транзакций</div><div class="ts-stat-value" style="color:${INK};">${transactions.length}</div></div>
+        <div class="ts-stat"><div class="ts-stat-label">Поступило</div><div class="ts-stat-value" style="color:#16A34A;">+${totalIn}</div></div>
+        <div class="ts-stat"><div class="ts-stat-label">Списано</div><div class="ts-stat-value" style="color:#DC2626;">${totalOut}</div></div>
+      </div>
+      <table class="ts-table">
+        <thead>
+          <tr>
+            <th style="width:100px;">Дата</th>
+            <th>Описание</th>
+            <th style="width:100px;text-align:right;">Сумма</th>
+            <th style="width:120px;">Кто провёл</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || `<tr><td colspan="4" style="padding:16px 10px;text-align:center;font-size:13px;color:#9CA3AF;">Нет транзакций за выбранный период</td></tr>`}
+        </tbody>
+      </table>
+    `
 
-  <div class="content">
-    <div class="period-label">Транзакции за период: ${periodLabel}</div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:100px;">Дата</th>
-          <th>Описание</th>
-          <th style="width:100px;">Сумма</th>
-          <th style="width:120px;">Кто провёл</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml || `<tr><td colspan="4" style="padding:16px 10px;text-align:center;font-size:13px;color:#9CA3AF;">Нет транзакций за выбранный период</td></tr>`}
-      </tbody>
-    </table>
-  </div>
+    const footer = `
+      <div class="ts-footer">
+        <div>
+          <div class="ts-stat-label">Дата составления</div>
+          <div class="ts-foot-date">${printDate}</div>
+        </div>
+        <div class="ts-sign">
+          ${seal}
+          <div class="ts-sign-line"></div>
+          <div class="ts-sign-label">Казначей государства</div>
+        </div>
+      </div>
+      <div class="ts-foot-strip">Финансовый документ — только для уполномоченных лиц · Дата печати: ${printDate}</div>
+    `
 
-  <div class="footer">
-    <span>Дата составления: ${printDate}</span>
-    <span>Государственная информационная система СОНАР</span>
-  </div>
-  <div class="doc-footer-strip">
-    <span>Финансовый документ — только для уполномоченных лиц</span>
-    <span>Дата печати: ${printDate}</span>
-  </div>
-</body>
-</html>`
+    const styles = `
+      .ts-header { display:flex; align-items:center; gap:16px; border-bottom:3px solid ${INK}; padding-bottom:14px; }
+      .ts-emblem { width:54px; height:54px; flex-shrink:0; }
+      .ts-emblem svg { width:54px; height:54px; }
+      .ts-head-text { flex:1; text-align:center; }
+      .ts-state { font-size:11px; letter-spacing:4px; color:${ACCENT}; font-weight:600; }
+      .ts-title { font-size:22px; font-weight:700; letter-spacing:0.08em; color:${INK}; margin-top:4px; }
+      .ts-sub { font-size:10px; color:#9CA3AF; margin-top:5px; }
+      .ts-balance { display:flex; justify-content:space-between; align-items:center; border:2px solid ${INK}; border-left:6px solid ${ACCENT}; border-radius:4px; padding:18px 22px; margin:20px 0 16px; }
+      .ts-bal-label { font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+      .ts-bal-value { font-family:'JetBrains Mono',monospace; font-size:38px; font-weight:700; color:${INK}; }
+      .ts-bal-unit { font-size:14px; color:#9CA3AF; margin-left:8px; }
+      .ts-bal-period { font-size:14px; color:#374151; }
+      .ts-stats { display:grid; grid-template-columns:1fr 1fr 1fr; border:1px solid #E5E7EB; border-radius:4px; margin-bottom:20px; }
+      .ts-stat { padding:14px 18px; border-right:1px solid #E5E7EB; }
+      .ts-stat:last-child { border-right:none; }
+      .ts-stat-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+      .ts-stat-value { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; }
+      .ts-table { width:100%; border-collapse:collapse; }
+      .ts-table th { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.06em; padding:8px 10px; text-align:left; border-bottom:2px solid ${INK}; }
+      .ts-footer { display:flex; justify-content:space-between; align-items:flex-end; border-top:2px solid ${INK}; padding-top:18px; margin-top:20px; }
+      .ts-foot-date { font-size:14px; color:#374151; font-weight:500; }
+      .ts-sign { text-align:center; }
+      .ts-sign-line { width:200px; border-bottom:1px solid #6B7280; height:8px; margin:6px auto 0; }
+      .ts-sign-label { font-size:11px; color:#6B7280; font-style:italic; margin-top:5px; }
+      .ts-foot-strip { text-align:center; font-size:9px; color:#9CA3AF; margin-top:12px; }
+    `
 
+    const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'treasury' })
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',

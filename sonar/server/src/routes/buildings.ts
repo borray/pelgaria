@@ -6,7 +6,16 @@ import fs from 'fs'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
-import { guillochePattern } from '../services/templates'
+import {
+  guillocheRosette,
+  guillocheField,
+  barcodeStripes,
+  pageShell,
+  parseOptionalDate,
+  A4_W,
+  ACCENT,
+  INK,
+} from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -70,6 +79,14 @@ router.post('/', requireAuth, requirePermission('relict.create'), async (req: Re
       return
     }
 
+    let built_at: Date | null
+    try {
+      built_at = parseOptionalDate(req.body.built_at)
+    } catch {
+      res.status(400).json({ error: 'Некорректная дата постройки' })
+      return
+    }
+
     const reg_number = await generateBuildingNumber()
 
     const building = await prisma.building.create({
@@ -87,6 +104,7 @@ router.post('/', requireAuth, requirePermission('relict.create'), async (req: Re
         dimensions: dimensions || null,
         materials: materials || null,
         tax_rate: Number(tax_rate) || 0,
+        built_at,
       },
       include: {
         owner: { select: { id: true, reg_number: true, nickname: true } },
@@ -110,7 +128,7 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
       },
     })
 
-    const guilloche = guillochePattern('buildings-registry', 794, 40)
+    const seed = 'РЛК-РЕЕСТР'
     const printDate = new Date().toLocaleDateString('ru-RU')
 
     const totalTax = buildings.reduce((s, b) => s + b.tax_rate, 0)
@@ -145,101 +163,204 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
         <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#374151;text-align:right;border-bottom:1px solid #F3F4F6;">${b.tax_rate}</td>
       </tr>`).join('')
 
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
-  .header { background: #0A1628; height: 80px; display: flex; align-items: center; padding: 0 40px; }
-  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
-  .header-center { flex: 1; text-align: center; }
-  .header-doctype { color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 3px; }
-  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
-  .guilloche-bar { overflow: hidden; height: 40px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
-  .summary-bar { padding: 14px 40px; background: #F0F4FA; border-bottom: 1px solid #D0D7E3; display: flex; gap: 40px; }
-  .sum-item .sum-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-  .sum-item .sum-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #0A1628; }
-  .content { padding: 24px 40px; }
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; padding: 7px 8px; text-align: left; border-bottom: 2px solid #E5E7EB; background: #F8F9FB; }
-  .totals-row td { padding: 9px 8px; font-size: 12px; font-weight: 700; color: #0A1628; border-top: 2px solid #0A1628; background: #F0F4FA; }
-  .footer { border-top: 1px solid #E5E7EB; background: #F8F9FB; padding: 14px 40px; display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; }
-  .doc-footer-strip { padding: 10px 40px; display: flex; justify-content: space-between; font-size: 10px; color: #C4C9D4; border-top: 1px solid #F0F2F5; }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
-    <div class="header-center">
-      <div class="header-doctype">Реестр построек — Реликт</div>
-      <div class="header-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
-    </div>
-    <div class="header-right">${printDate}</div>
-  </div>
-  <div class="guilloche-bar">${guilloche}</div>
+    const header = `<div class="rg-header">
+      <div class="rg-emblem">${guillocheRosette(seed, 70)}</div>
+      <div class="rg-head-text">
+        <div class="rg-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="rg-title">РЕЕСТР ПОСТРОЕК · РЕЛИКТ</div>
+        <div class="rg-sub">Государственная информационная система СОНАР · ${printDate}</div>
+      </div>
+    </div>`
 
-  <div class="summary-bar">
-    <div class="sum-item">
-      <div class="sum-label">Объектов всего</div>
-      <div class="sum-value">${buildings.length}</div>
-    </div>
-    <div class="sum-item">
-      <div class="sum-label">Активных</div>
-      <div class="sum-value">${buildings.filter((b) => b.status === 'ACTIVE').length}</div>
-    </div>
-    <div class="sum-item">
-      <div class="sum-label">Суммарный налог</div>
-      <div class="sum-value">${totalTax} у.е.</div>
-    </div>
-  </div>
+    const body = `
+      <div class="rg-summary">
+        <div class="rg-sum"><div class="rg-sum-label">Объектов всего</div><div class="rg-sum-value">${buildings.length}</div></div>
+        <div class="rg-sum"><div class="rg-sum-label">Активных</div><div class="rg-sum-value">${buildings.filter((b) => b.status === 'ACTIVE').length}</div></div>
+        <div class="rg-sum"><div class="rg-sum-label">Суммарный налог</div><div class="rg-sum-value">${totalTax} у.е.</div></div>
+      </div>
+      <table class="rg-table">
+        <thead>
+          <tr>
+            <th style="width:84px;">Номер</th>
+            <th>Название</th>
+            <th style="width:88px;">Тип</th>
+            <th style="width:104px;">Координаты</th>
+            <th style="width:104px;">Владелец</th>
+            <th style="width:88px;">Статус</th>
+            <th style="width:56px;text-align:right;">Налог</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          <tr class="rg-totals">
+            <td></td><td>ИТОГО</td><td></td><td></td><td></td>
+            <td>${buildings.filter((b) => b.status === 'ACTIVE').length} активных</td>
+            <td style="font-family:'JetBrains Mono',monospace;text-align:right;">${totalTax}</td>
+          </tr>
+        </tbody>
+      </table>
+    `
 
-  <div class="content">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:90px;">Номер</th>
-          <th>Название</th>
-          <th style="width:90px;">Тип</th>
-          <th style="width:110px;">Координаты</th>
-          <th style="width:110px;">Владелец</th>
-          <th style="width:90px;">Статус</th>
-          <th style="width:60px;text-align:right;">Налог</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}
-        <tr class="totals-row">
-          <td></td>
-          <td>ИТОГО</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td>${buildings.filter((b) => b.status === 'ACTIVE').length} активных</td>
-          <td style="font-family:'JetBrains Mono',monospace;text-align:right;">${totalTax}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    const footer = `
+      <div class="rg-footer">
+        <span>Дата составления: ${printDate}</span>
+        <span>Реестр объектов государства Пельагрия</span>
+      </div>
+    `
 
-  <div class="footer">
-    <span>Дата составления: ${printDate}</span>
-    <span>Государственная информационная система СОНАР</span>
-  </div>
-  <div class="doc-footer-strip">
-    <span>Реестр объектов государства Пельагрия</span>
-    <span>Дата печати: ${printDate}</span>
-  </div>
-</body>
-</html>`
+    const styles = `
+      .rg-header { display:flex; align-items:center; gap:16px; background:${INK}; color:#fff; padding:14px 20px; border-radius:3px; }
+      .rg-emblem { width:56px; height:56px; flex-shrink:0; filter:invert(1) opacity(0.85); }
+      .rg-emblem svg { width:56px; height:56px; }
+      .rg-head-text { flex:1; text-align:center; }
+      .rg-state { font-size:11px; letter-spacing:4px; color:rgba(255,255,255,0.65); }
+      .rg-title { font-size:21px; font-weight:700; letter-spacing:0.1em; margin-top:4px; }
+      .rg-sub { font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px; }
+      .rg-summary { display:flex; gap:40px; padding:18px 4px; border-bottom:2px solid ${ACCENT}33; margin-bottom:18px; }
+      .rg-sum-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:3px; }
+      .rg-sum-value { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:${INK}; }
+      .rg-table { width:100%; border-collapse:collapse; }
+      .rg-table th { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.06em; padding:7px 8px; text-align:left; border-bottom:2px solid ${INK}; }
+      .rg-totals td { padding:9px 8px; font-size:12px; font-weight:700; color:${INK}; border-top:2px solid ${INK}; background:#F0F4FA; }
+      .rg-footer { display:flex; justify-content:space-between; border-top:2px solid ${INK}; padding-top:14px; font-size:11px; color:#6B7280; }
+    `
 
+    const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'registry' })
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="buildings-registry-${printDate.replace(/\./g, '-')}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    })
+    res.send(pdfBuffer)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Ошибка генерации PDF' })
+  }
+})
+
+// GET /api/buildings/:id/pdf — technical passport (РЕЛИКТ) for a single object
+router.get('/:id/pdf', requireAuth, requirePermission('relict.view'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const building = await prisma.building.findFirst({
+      where: { OR: [{ id }, { reg_number: id }] },
+      include: {
+        owner: { select: { id: true, reg_number: true, nickname: true } },
+      },
+    })
+    if (!building) {
+      res.status(404).json({ error: 'Объект не найден' })
+      return
+    }
+
+    const seed = building.reg_number
+    const printDate = new Date().toLocaleDateString('ru-RU')
+    const builtDate = (building.built_at ?? building.created_at)
+      ? new Date(building.built_at ?? building.created_at).toLocaleDateString('ru-RU')
+      : '—'
+
+    const typeLabels: Record<BuildingType, string> = {
+      RESIDENTIAL: 'Жилое',
+      GOVERNMENT: 'Государственное',
+      COMMERCIAL: 'Коммерческое',
+      MILITARY: 'Военное',
+    }
+    const statusLabels: Record<BuildingStatus, string> = {
+      ACTIVE: 'Активен',
+      UNDER_CONSTRUCTION: 'В строительстве',
+      ABANDONED: 'Заброшен',
+      DEMOLISHED: 'Снесён',
+    }
+    const statusColors: Record<BuildingStatus, string> = {
+      ACTIVE: '#16A34A',
+      UNDER_CONSTRUCTION: '#D97706',
+      ABANDONED: '#6B7280',
+      DEMOLISHED: '#DC2626',
+    }
+
+    const barcode = barcodeStripes(building.reg_number, 240, 36)
+
+    const spec = (label: string, value: string, mono = false) =>
+      `<tr><td class="rk-spec-label">${label}</td><td class="rk-spec-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${value}</td></tr>`
+
+    const header = `<div class="rk-header">
+      <div class="rk-emblem">${guillocheRosette(seed, 84)}</div>
+      <div class="rk-head-text">
+        <div class="rk-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · РЕЛИКТ</div>
+        <div class="rk-title">ТЕХНИЧЕСКИЙ ПАСПОРТ ОБЪЕКТА</div>
+        <div class="rk-num">${building.reg_number}</div>
+      </div>
+    </div>`
+
+    const body = `
+      <div class="rk-namebar">
+        <div>
+          <div class="rk-label">Наименование объекта</div>
+          <div class="rk-name">${building.name}</div>
+        </div>
+        <div class="rk-status" style="color:${statusColors[building.status]};border-color:${statusColors[building.status]}66;background:${statusColors[building.status]}0D;">${statusLabels[building.status] ?? building.status}</div>
+      </div>
+      <div class="rk-section-label">Спецификация</div>
+      <table class="rk-specs">
+        ${spec('Регистрационный номер', building.reg_number, true)}
+        ${spec('Тип объекта', typeLabels[building.type] ?? building.type)}
+        ${spec('Координаты (X / Y / Z)', `${building.coord_x} / ${building.coord_y} / ${building.coord_z}`, true)}
+        ${spec('Площадь', building.area != null ? `${building.area} м²` : '—')}
+        ${spec('Габариты', building.dimensions ?? '—')}
+        ${spec('Материалы', building.materials ?? '—')}
+        ${spec('Владелец', building.owner ? `${building.owner.nickname} (${building.owner.reg_number})` : '—')}
+        ${spec('Дата постройки', builtDate)}
+        ${spec('Налоговая ставка', `${building.tax_rate} у.е.`, true)}
+      </table>
+      ${building.description ? `<div class="rk-section-label" style="margin-top:20px;">Описание</div><div class="rk-desc">${building.description}</div>` : ''}
+      <div class="rk-fill">${guillocheField(seed + ':fill', A4_W - 130, 80, 0.1)}</div>
+    `
+
+    const footer = `
+      <div class="rk-footer">
+        <div class="rk-barcode">${barcode}<div class="rk-barcode-text">${building.reg_number}</div></div>
+        <div class="rk-sign">
+          <div class="rk-sign-line"></div>
+          <div class="rk-sign-label">Уполномоченный по реестру РЕЛИКТ</div>
+        </div>
+      </div>
+      <div class="rk-foot-strip">Реестр объектов государства Пельагрия · Дата печати: ${printDate}</div>
+    `
+
+    const styles = `
+      .rk-header { display:flex; align-items:center; gap:18px; border-bottom:3px solid ${INK}; padding-bottom:16px; }
+      .rk-emblem { width:74px; height:74px; flex-shrink:0; }
+      .rk-emblem svg { width:74px; height:74px; }
+      .rk-head-text { flex:1; }
+      .rk-state { font-size:11px; letter-spacing:3px; color:${ACCENT}; font-weight:600; }
+      .rk-title { font-size:24px; font-weight:700; letter-spacing:0.06em; color:${INK}; margin-top:6px; }
+      .rk-num { font-family:'JetBrains Mono',monospace; font-size:15px; color:${ACCENT}; margin-top:6px; }
+      .rk-namebar { display:flex; align-items:flex-start; justify-content:space-between; margin:22px 0 24px; }
+      .rk-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+      .rk-name { font-size:22px; font-weight:700; color:${INK}; }
+      .rk-status { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; border:1px solid; border-radius:3px; padding:4px 12px; }
+      .rk-section-label { font-size:11px; font-weight:700; color:${INK}; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px; }
+      .rk-specs { width:100%; border-collapse:collapse; }
+      .rk-spec-label { width:230px; font-size:11px; color:#6B7280; text-transform:uppercase; letter-spacing:0.04em; padding:9px 8px; border-bottom:1px solid #EDF0F4; vertical-align:top; }
+      .rk-spec-value { font-size:14px; color:#1F2937; font-weight:500; padding:9px 8px; border-bottom:1px solid #EDF0F4; }
+      .rk-desc { font-size:14px; color:#374151; line-height:1.7; white-space:pre-wrap; background:#F8F9FB; border-left:3px solid ${ACCENT}; padding:16px 20px; border-radius:0 4px 4px 0; }
+      .rk-fill { margin-top:18px; }
+      .rk-footer { display:flex; justify-content:space-between; align-items:flex-end; border-top:2px solid ${INK}; padding-top:18px; }
+      .rk-barcode { display:flex; flex-direction:column; gap:4px; }
+      .rk-barcode-text { font-family:'JetBrains Mono',monospace; font-size:9px; color:#9CA3AF; }
+      .rk-sign { text-align:right; }
+      .rk-sign-line { width:200px; border-bottom:1px solid #6B7280; height:8px; margin-left:auto; }
+      .rk-sign-label { font-size:11px; color:#6B7280; font-style:italic; margin-top:5px; }
+      .rk-foot-strip { text-align:center; font-size:9px; color:#9CA3AF; margin-top:12px; }
+    `
+
+    const watermark = `<div style="width:520px;height:520px;">${guillocheRosette(seed + ':wm', 520)}</div>`
+    const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'building' })
+    const pdfBuffer = await htmlToPdf(html)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="building-${building.reg_number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)
@@ -274,8 +395,10 @@ router.get('/:id', requireAuth, requirePermission('relict.view'), async (req: Re
   }
 })
 
-// PUT /api/buildings/:id
-router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Request, res: Response) => {
+// PUT / PATCH /api/buildings/:id — PATCH supports editing built_at (and other fields)
+router.put('/:id', requireAuth, requirePermission('relict.edit'), updateBuilding)
+router.patch('/:id', requireAuth, requirePermission('relict.edit'), updateBuilding)
+async function updateBuilding(req: Request, res: Response) {
   try {
     const id = req.params.id as string
     const { name, type, coord_x, coord_y, coord_z, owner_id, status, description, area, dimensions, materials, tax_rate } = req.body
@@ -284,6 +407,16 @@ router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Re
     if (!existing) {
       res.status(404).json({ error: 'Объект не найден' })
       return
+    }
+
+    let built_at: Date | null | undefined = undefined
+    if (req.body.built_at !== undefined) {
+      try {
+        built_at = parseOptionalDate(req.body.built_at)
+      } catch {
+        res.status(400).json({ error: 'Некорректная дата постройки' })
+        return
+      }
     }
 
     const building = await prisma.building.update({
@@ -301,6 +434,7 @@ router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Re
         dimensions: dimensions !== undefined ? dimensions : existing.dimensions,
         materials: materials !== undefined ? materials : existing.materials,
         tax_rate: tax_rate !== undefined ? Number(tax_rate) : existing.tax_rate,
+        ...(built_at !== undefined && { built_at }),
       },
       include: {
         owner: { select: { id: true, reg_number: true, nickname: true } },
@@ -312,7 +446,7 @@ router.put('/:id', requireAuth, requirePermission('relict.edit'), async (req: Re
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
   }
-})
+}
 
 // DELETE /api/buildings/:id
 router.delete('/:id', requireAuth, requirePermission('relict.delete'), async (req: Request, res: Response) => {

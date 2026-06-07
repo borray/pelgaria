@@ -145,7 +145,7 @@ export function CasesPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Судебные дела
         </h1>
         {canCreate && (
@@ -161,7 +161,7 @@ export function CasesPage() {
       </div>
 
       {!loading && cases.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState
             title="Дела не найдены"
             description={statusFilter ? 'Измените фильтр' : 'Возбудите первое дело'}

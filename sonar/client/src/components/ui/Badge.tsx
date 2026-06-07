@@ -14,12 +14,13 @@ export function Badge({ status, label, color }: BadgeProps) {
     <span
       style={{
         display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: '3px',
+        padding: '3px 10px',
+        borderRadius: '999px',
         fontSize: '12px',
-        fontWeight: 500,
+        fontWeight: 600,
+        letterSpacing: '0.01em',
         fontFamily: 'Inter, sans-serif',
-        background: bg + '1A',
+        background: bg + '14',
         color: bg,
         border: `1px solid ${bg}33`,
         whiteSpace: 'nowrap',

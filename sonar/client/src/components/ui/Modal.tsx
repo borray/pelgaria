@@ -33,57 +33,86 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(10,22,40,0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
         padding: '16px',
+        animation: 'backdropIn 0.2s ease',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#FFFFFF',
-          border: '0.5px solid #D0D7E3',
-          borderRadius: '4px',
+          border: '1px solid rgba(226,232,240,0.9)',
+          borderRadius: '16px',
           width: '100%',
           maxWidth: width,
           maxHeight: 'calc(100vh - 64px)',
           display: 'flex',
           flexDirection: 'column',
+          overflow: 'hidden',
           fontFamily: 'Inter, sans-serif',
+          boxShadow:
+            '0 24px 64px -12px rgba(10,22,40,0.45), 0 8px 24px -8px rgba(10,22,40,0.25)',
+          animation: 'modalIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
+        {/* Accent top strip */}
+        <div
+          style={{
+            height: '3px',
+            background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+            flexShrink: 0,
+          }}
+        />
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px',
-            borderBottom: '0.5px solid #D0D7E3',
+            padding: '18px 22px',
+            borderBottom: '1px solid #EEF2F7',
+            background: 'linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%)',
+            flexShrink: 0,
           }}
         >
           <h2
             style={{
               margin: 0,
-              fontSize: '16px',
-              fontWeight: 600,
+              fontSize: '17px',
+              fontWeight: 700,
               color: '#0A1628',
+              letterSpacing: '-0.01em',
             }}
           >
             {title}
           </h2>
           <button
             onClick={onClose}
+            aria-label="Закрыть"
             style={{
-              background: 'none',
+              background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: '#6B7280',
-              padding: '2px',
+              color: '#94A3B8',
+              padding: '6px',
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#F1F5F9'
+              e.currentTarget.style.color = '#0A1628'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = '#94A3B8'
             }}
           >
             <IconX size={18} />
@@ -92,7 +121,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
 
         <div
           style={{
-            padding: '20px',
+            padding: '22px',
             overflowY: 'auto',
             flex: 1,
           }}
@@ -103,11 +132,13 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
         {footer && (
           <div
             style={{
-              padding: '12px 20px',
-              borderTop: '0.5px solid #D0D7E3',
+              padding: '14px 22px',
+              borderTop: '1px solid #EEF2F7',
+              background: '#FBFCFE',
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: '8px',
+              gap: '10px',
+              flexShrink: 0,
             }}
           >
             {footer}

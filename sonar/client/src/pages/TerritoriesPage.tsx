@@ -183,7 +183,7 @@ export function TerritoriesPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Территории</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Территории</h1>
         {canManage && (
           <Button variant="primary" onClick={openCreateModal}>
             <IconPlus size={16} />Добавить территорию
@@ -192,7 +192,7 @@ export function TerritoriesPage() {
       </div>
 
       {!loading && territories.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState title="Территории не найдены" description="Добавьте первую территорию" action={canManage ? <Button variant="primary" size="sm" onClick={openCreateModal}><IconPlus size={14} />Добавить</Button> : undefined} />
         </div>
       ) : (

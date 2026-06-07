@@ -143,7 +143,7 @@ function RolesList() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Роли</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Роли</h1>
         {canManage && (
           <Button variant="primary" onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateForm({ name: '', color: '#6B7280' }) }}>
             <IconPlus size={16} />Создать роль
@@ -152,7 +152,7 @@ function RolesList() {
       </div>
 
       {roles.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState title="Роли не найдены" description="Создайте первую роль" action={canManage ? <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}><IconPlus size={14} />Создать</Button> : undefined} />
         </div>
       ) : (
@@ -161,7 +161,7 @@ function RolesList() {
             <div
               key={role.id}
               onClick={() => navigate(`/roles/${role.id}`)}
-              style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px', padding: '16px 20px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.1s', borderLeft: `4px solid ${role.color}` }}
+              style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 20px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.1s', borderLeft: `4px solid ${role.color}` }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = role.color }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#D0D7E3'; (e.currentTarget as HTMLDivElement).style.borderLeftColor = role.color }}
             >
@@ -296,7 +296,7 @@ function RoleDetail() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {ALL_PERMISSIONS.map((group) => (
-          <div key={group.group} style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px', overflow: 'hidden' }}>
+          <div key={group.group} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '10px 16px', background: '#F8F9FB', borderBottom: '1px solid #D0D7E3', fontSize: '13px', fontWeight: 600, color: '#374151', fontFamily: 'Inter, sans-serif' }}>
               {group.group}
             </div>

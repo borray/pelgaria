@@ -40,13 +40,16 @@ export function Topbar() {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
           <span
             style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontWeight: 700,
-              fontSize: '18px',
-              letterSpacing: '0.05em',
-              background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+              fontFamily: "'Unbounded', sans-serif",
+              fontWeight: 800,
+              fontSize: '19px',
+              letterSpacing: '0.14em',
+              lineHeight: 1,
+              textTransform: 'uppercase',
+              background: 'linear-gradient(95deg, #60A5FA 0%, #3B82F6 55%, #2563EB 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}
           >
             СОНАР
