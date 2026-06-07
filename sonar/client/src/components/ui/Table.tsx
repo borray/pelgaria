@@ -23,6 +23,7 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
 
   return (
     <div
+      className="ui-table-shell"
       style={{
         overflowX: 'auto',
         border: '1px solid #E2E8F0',
@@ -32,6 +33,7 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
       }}
     >
       <table
+        className="ui-table"
         style={{
           width: '100%',
           borderCollapse: 'collapse',

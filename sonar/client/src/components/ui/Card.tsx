@@ -28,15 +28,16 @@ export function Card({ children, style, title, onClick }: CardProps) {
 
   return (
     <div
+      className="ui-card"
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
         background: '#FFFFFF',
-        border: '0.5px solid #E2E8F0',
-        borderRadius: '10px',
+        border: '1px solid #E2E8F0',
+        borderRadius: '16px',
         fontFamily: 'Inter, sans-serif',
-        boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
+        boxShadow: '0 8px 30px rgba(15,23,42,0.055)',
         transition: 'all 0.2s ease',
         cursor: isClickable ? 'pointer' : undefined,
         ...style,

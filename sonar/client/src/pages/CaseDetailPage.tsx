@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconFileTypePdf } from '@tabler/icons-react'
+import { IconArrowLeft, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Case, User } from '../types'
@@ -10,7 +10,7 @@ import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
 import { formatDate } from '../utils/formatters'
-import { downloadPdfPost } from '../utils/pdf'
+import { printPdfPost } from '../utils/pdf'
 
 const VERDICT_TYPE_OPTIONS = [
   { value: 'WARNING', label: 'Предупреждение' },
@@ -35,7 +35,7 @@ export function CaseDetailPage() {
     if (!id) return
     setPdfLoading(true)
     try {
-      await downloadPdfPost(`/api/cases/${id}/pdf`, `verdict-${caseData?.number ?? id}.pdf`)
+      await printPdfPost(`/api/cases/${id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -165,8 +165,8 @@ export function CaseDetailPage() {
           )}
           {caseData.status === 'CLOSED' && (
             <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
-              <IconFileTypePdf size={16} />
-              Приговор (PDF)
+              <IconPrinter size={16} />
+              Печать приговора
             </Button>
           )}
           {canClose && caseData.status !== 'CLOSED' && (

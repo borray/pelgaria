@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './styles/animations.css'
+import './styles/design-system.css'
 import { ToastProvider } from './components/ui/Toast'
 
 const globalStyle = document.createElement('style')

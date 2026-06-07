@@ -99,7 +99,7 @@ export function Select({
   const shadow = (focused || open) && !error ? '0 0 0 3px rgba(59,130,246,0.15)' : undefined
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative', ...style }}>
+    <div className="ui-field ui-select" style={{ display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative', ...style }}>
       {label && (
         <label
           htmlFor={inputId}
@@ -111,6 +111,7 @@ export function Select({
 
       <div ref={containerRef} style={{ position: 'relative' }}>
         <button
+          className="ui-select-trigger"
           id={inputId}
           type="button"
           disabled={disabled}

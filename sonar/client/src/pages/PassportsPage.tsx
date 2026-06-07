@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconDownload } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Passport, Citizen } from '../types'
@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { printPdf } from '../utils/pdf'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -97,13 +98,7 @@ export function PassportsPage() {
   const handleDownloadPdf = async (passport: Passport) => {
     setPdfLoadingId(passport.id)
     try {
-      const res = await apiClient.get(`/passports/${passport.id}/pdf`, { responseType: 'blob' })
-      const url = URL.createObjectURL(res.data as Blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `passport-${passport.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      await printPdf(`/api/passports/${passport.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -165,9 +160,9 @@ export function PassportsPage() {
           size="sm"
           onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
           loading={pdfLoadingId === row.id}
-          title="Скачать PDF"
+          title="Печать паспорта"
         >
-          <IconDownload size={14} />
+          <IconPrinter size={14} />
         </Button>
       ),
     },

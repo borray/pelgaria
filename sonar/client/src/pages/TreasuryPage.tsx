@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconMinus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconMinus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Treasury, TreasuryTransaction } from '../types'
@@ -8,7 +8,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDateTime } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 export function TreasuryPage() {
   const canEdit = usePermission('treasury.edit')
@@ -39,8 +39,7 @@ export function TreasuryPage() {
       if (pdfFrom) params.set('from', pdfFrom)
       if (pdfTo) params.set('to', pdfTo)
       const query = params.toString()
-      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
-      await downloadPdf(`/api/treasury/report/pdf${query ? `?${query}` : ''}`, `treasury-report-${today}.pdf`)
+      await printPdf(`/api/treasury/report/pdf${query ? `?${query}` : ''}`)
       setShowPdfModal(false)
     } catch {
       alert('Ошибка генерации PDF')
@@ -161,8 +160,8 @@ export function TreasuryPage() {
         <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
-            <IconFileTypePdf size={16} />
-            Отчёт (PDF)
+            <IconPrinter size={16} />
+            Печать отчёта
           </Button>
           {canEdit && (
             <>
@@ -258,12 +257,12 @@ export function TreasuryPage() {
       <Modal
         open={showPdfModal}
         onClose={() => setShowPdfModal(false)}
-        title="Финансовый отчёт (PDF)"
+        title="Печать финансового отчёта"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowPdfModal(false)}>Отмена</Button>
             <Button variant="primary" loading={pdfLoading} onClick={handleDownloadReportPdf}>
-              Скачать PDF
+              Открыть печать
             </Button>
           </>
         }

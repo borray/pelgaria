@@ -21,7 +21,7 @@ export function Input({ label, error, style, id, onFocus, onBlur, ...props }: In
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div className="ui-field" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {label && (
         <label
           htmlFor={inputId}
@@ -36,6 +36,7 @@ export function Input({ label, error, style, id, onFocus, onBlur, ...props }: In
         </label>
       )}
       <input
+        className="ui-input"
         id={inputId}
         onFocus={handleFocus}
         onBlur={handleBlur}

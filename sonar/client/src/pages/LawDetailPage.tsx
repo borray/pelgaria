@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconEdit, IconTrash, IconDownload } from '@tabler/icons-react'
+import { IconArrowLeft, IconEdit, IconTrash, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Law, Case } from '../types'
@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { formatDate } from '../utils/formatters'
+import { printPdfPost } from '../utils/pdf'
 
 export function LawDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -82,13 +83,7 @@ export function LawDetailPage() {
   const handleDownloadPdf = async () => {
     setPdfLoading(true)
     try {
-      const res = await apiClient.post(`/laws/${id}/pdf`, {}, { responseType: 'blob' })
-      const url = URL.createObjectURL(res.data as Blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `law-${law?.number ?? id}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      await printPdfPost(`/api/laws/${id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -149,8 +144,8 @@ export function LawDetailPage() {
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={handleDownloadPdf} loading={pdfLoading}>
-            <IconDownload size={14} />
-            PDF
+            <IconPrinter size={14} />
+            Печать
           </Button>
         </div>
       </div>

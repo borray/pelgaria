@@ -100,13 +100,14 @@ export function Button({
   return (
     <button
       disabled={disabled || loading}
+      className={`ui-button ui-button-${variant} ui-button-${size}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: '6px',
         fontFamily: 'Inter, sans-serif',
         fontWeight: 500,
-        borderRadius: '8px',
+        borderRadius: '10px',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.6 : 1,
         transition: 'all 0.15s ease',

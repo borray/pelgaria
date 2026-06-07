@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Punishment, Citizen } from '../types'
@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
-import { downloadPdfPost } from '../utils/pdf'
+import { printPdfPost } from '../utils/pdf'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -54,7 +54,7 @@ export function PunishmentsPage() {
   const handleDownloadPdf = async (p: Punishment) => {
     setPdfLoadingId(p.id)
     try {
-      await downloadPdfPost(`/api/punishments/${p.id}/pdf`, `punishment-${p.id.slice(0, 8)}.pdf`)
+      await printPdfPost(`/api/punishments/${p.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -177,9 +177,9 @@ export function PunishmentsPage() {
             size="sm"
             loading={pdfLoadingId === row.id}
             onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
-            title="Скачать постановление PDF"
+            title="Печать постановления"
           >
-            <IconFileTypePdf size={14} />
+            <IconPrinter size={14} />
           </Button>
           {row.status === 'ACTIVE' && canRevoke && (
             <Button
