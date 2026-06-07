@@ -11,6 +11,7 @@ export function Layout() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar />
         <main
+          className="page-enter"
           style={{
             flex: 1,
             overflow: 'auto',
