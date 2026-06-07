@@ -1,4 +1,5 @@
 import React from 'react'
+import { TableSkeleton } from './Skeleton'
 
 export interface TableColumn<T> {
   key: string
@@ -17,11 +18,7 @@ interface TableProps<T> {
 
 export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: TableProps<T>) {
   if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontSize: '14px' }}>
-        Загрузка...
-      </div>
-    )
+    return <TableSkeleton rows={5} cols={columns.length} />
   }
 
   return (
