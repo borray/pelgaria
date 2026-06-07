@@ -438,6 +438,9 @@ export function pageShell(opts: PageShellOptions): string {
   const border = guillocheBorder(opts.seed)
   const micro = microtextLine('ПЕЛЬАГРИЯ • СОНАР', A4_W - 96)
   const watermark = opts.watermark ?? ''
+  const controlCode = `СОНАР-${verificationHash(opts.seed, opts.kind ?? 'DOC', 'PRINT')}`
+  const controlBarcode = barcodeStripes(controlCode, 250, 34)
+  const securityRosette = guillocheRosette(`${opts.seed}:security`, 96)
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -475,6 +478,30 @@ export function pageShell(opts: PageShellOptions): string {
   }
   .doc-body { position: relative; z-index: 1; flex: 1; }
   .doc-microstrip { height: 10px; overflow: hidden; opacity: 0.8; margin: 6px 0; }
+  .document-security {
+    display: grid;
+    grid-template-columns: 86px 1fr 250px;
+    align-items: center;
+    gap: 14px;
+    border-top: 2px solid #111;
+    border-bottom: 1px solid #777;
+    margin-top: 14px;
+    padding: 8px 0;
+    color: #111;
+  }
+  .document-security-rosette { width: 62px; height: 62px; filter: grayscale(1) contrast(1.5); }
+  .document-security-rosette svg { width: 62px; height: 62px; }
+  .document-security-title { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .document-security-copy { font-size: 8px; line-height: 1.45; color: #444; margin-top: 4px; }
+  .document-security-code { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .04em; margin-top: 2px; }
+  .document-security-barcode { text-align: right; }
+  .document-security-barcode svg { filter: grayscale(1) contrast(2); }
+  @media print {
+    * { color: #000 !important; border-color: #222 !important; text-shadow: none !important; box-shadow: none !important; }
+    .sheet { filter: grayscale(1) contrast(1.08); }
+    .doc-watermark { opacity: .045; }
+    svg { shape-rendering: crispEdges; }
+  }
   ${opts.accent ? `.accent { color: ${accent}; }` : ''}
   ${opts.styles ?? ''}
 </style>
@@ -491,6 +518,15 @@ export function pageShell(opts: PageShellOptions): string {
       </div>
       <div class="doc-microstrip">${micro}</div>
       ${opts.footer}
+      <div class="document-security">
+        <div class="document-security-rosette">${securityRosette}</div>
+        <div>
+          <div class="document-security-title">Контроль печатного документа СОНАР</div>
+          <div class="document-security-copy">Подлинность проверяется по ШК и контрольному рисунку. Копия сохраняет юридическую силу только при совпадении реквизитов реестра.</div>
+          <div class="document-security-code">${controlCode}</div>
+        </div>
+        <div class="document-security-barcode">${controlBarcode}</div>
+      </div>
     </div>
   </div>
 </body>

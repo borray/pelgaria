@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -137,7 +138,7 @@ export function PunishmentsPage() {
     {
       key: 'number',
       header: 'Номер',
-      width: '150px',
+      width: '210px',
       render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 600 }}>{row.number ?? 'Формируется'}</span>,
     },
     {
@@ -160,7 +161,7 @@ export function PunishmentsPage() {
       key: 'registry_code',
       header: 'ШК',
       width: '150px',
-      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'issued_by',

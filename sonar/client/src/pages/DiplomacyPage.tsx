@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const RELATION_OPTIONS = [
   { value: 'ALLIANCE', label: 'Союз' },
@@ -179,7 +180,7 @@ export function DiplomacyPage() {
 
   const treatyColumns: TableColumn<DiplomaticTreaty>[] = [
     { key: 'number', header: 'Номер', width: '110px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>{row.number}</span> },
-    { key: 'registry_code', header: 'ШК', width: '150px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#64748B' }}>{row.registry_code ?? 'Формируется'}</span> },
+    { key: 'registry_code', header: 'ШК', width: '210px', render: (row) => <RegistryMark code={row.registry_code} compact /> },
     { key: 'state', header: 'Государство', render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.state?.name ?? '—'}</span> },
     { key: 'type', header: 'Тип', width: '180px', render: (row) => <Badge status={row.type} /> },
     { key: 'signed_at', header: 'Подписан', width: '120px', render: (row) => <span style={{ fontSize: '13px', color: '#6B7280' }}>{formatDate(row.signed_at)}</span> },

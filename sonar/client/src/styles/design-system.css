@@ -515,10 +515,106 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .registry-search:focus { border-color: #6ea5ef; box-shadow: 0 0 0 4px rgba(47,125,244,.1); }
 .registry-code { display: inline-flex; align-items: center; min-height: 25px; padding: 0 8px; border: 1px solid #cfe0f4; border-radius: 7px; color: #1769e0; background: #f1f7ff; font: 10px "JetBrains Mono", monospace; }
 
+.registry-mark {
+  width: 210px;
+  display: inline-grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border: 1px solid #d5dee9;
+  border-radius: 8px;
+  color: #1e3048;
+  background: linear-gradient(180deg,#fff,#f7f9fc);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+}
+.registry-mark svg { width: 84px; height: 22px; fill: #111827; }
+.registry-mark > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 8px "JetBrains Mono",monospace; letter-spacing: .02em; }
+.registry-mark.is-compact { width: 196px; grid-template-columns: 76px minmax(0,1fr); padding: 4px 6px; }
+.registry-mark.is-compact svg { width: 76px; height: 18px; }
+
+.modal-dialog { border-radius: 18px !important; }
+.modal-dialog.is-destructive .modal-accent { background: linear-gradient(90deg,#991b1b,#ef4444) !important; }
+.modal-dialog.is-destructive .modal-heading > span { color:#b91c1c; }
+.modal-dialog.is-destructive .modal-header { background:linear-gradient(180deg,#fff7f7,#fff) !important; }
+.modal-header { min-height: 76px; }
+.modal-content form:not(.form-section-stack) {
+  padding: 17px;
+  border: 1px solid #e0e7ef;
+  border-radius: 13px;
+  background: white;
+}
+.modal-content form:not(.form-section-stack) > div + div { margin-top: 2px; }
+.modal-content textarea:not(.document-textarea),
+.modal-content input[type="text"],
+.modal-content input[type="number"],
+.modal-content input[type="date"],
+.modal-content input[type="password"] {
+  border-radius: 10px !important;
+  border-color: #d5dfeb !important;
+  background: #fff !important;
+}
+.modal-content textarea:not(.document-textarea):focus,
+.modal-content input:focus {
+  border-color: #6ea5ef !important;
+  box-shadow: 0 0 0 4px rgba(47,125,244,.1) !important;
+}
+.form-section-stack { display: flex; flex-direction: column; gap: 14px; }
+.form-section + .form-section { margin-top: 0; }
+.form-section-heading { justify-content: flex-start; }
+.form-section-heading > span {
+  min-width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border: 1px solid #cfe0f4;
+  border-radius: 9px;
+  color: #1769e0;
+  background: #f1f7ff;
+  font: 700 10px "JetBrains Mono",monospace;
+}
+.form-section-heading > div { min-width: 0; }
+.form-section-heading small { display: block; margin-top: 3px; color: #8493a6; font-size: 10px; line-height: 1.45; }
+.passport-validity { grid-template-columns: repeat(3,1fr); }
+.passport-confirm { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; overflow: hidden; border: 1px solid #dce5ef; border-radius: 12px; background: #dce5ef; }
+.passport-confirm > div { padding: 13px; background: #f8fafc; }
+.passport-confirm span,.passport-confirm strong { display: block; }
+.passport-confirm span { color: #8291a4; font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+.passport-confirm strong { margin-top: 5px; color: #263951; font-size: 11px; }
+
+.page-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:22px; }
+.page-heading h1 { margin:5px 0 5px;font-size:27px;letter-spacing:-.04em;color:#142238; }
+.page-heading p { margin:0;color:#718197;font-size:12px; }
+.page-kicker { color:#1769e0;font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase; }
+.portal-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px; }
+.portal-stats > div { display:flex;align-items:center;gap:13px;padding:15px 17px;border:1px solid #e0e7ef;border-radius:13px;color:#1769e0;background:white;box-shadow:0 8px 24px rgba(16,27,45,.04); }
+.portal-stats span,.portal-stats strong { display:block; }.portal-stats span{color:#77879b;font-size:10px}.portal-stats strong{margin-top:2px;color:#1d3048;font-size:20px}
+.service-catalog,.print-archive { margin-bottom:22px;padding:18px;border:1px solid #e0e7ef;border-radius:15px;background:#fff;box-shadow:0 8px 30px rgba(16,27,45,.035); }
+.section-heading { display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:15px; }
+.section-heading span { color:#1769e0;font-size:8px;font-weight:800;letter-spacing:.14em;text-transform:uppercase; }
+.section-heading h2 { margin:4px 0 0;color:#21344d;font-size:17px; }
+.service-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px; }
+.service-card { min-height:150px;display:flex;flex-direction:column;align-items:flex-start;padding:16px;border:1px solid #dfe7f0;border-radius:13px;text-align:left;color:#263951;background:linear-gradient(145deg,#fff,#f8fafc);cursor:pointer;transition:.16s ease; }
+.service-card:hover { transform:translateY(-2px);border-color:#a9c9f4;box-shadow:0 12px 24px rgba(23,105,224,.09); }
+.service-card .service-icon { width:39px;height:39px;display:grid;place-items:center;margin-bottom:13px;border-radius:11px;color:#1769e0;background:#edf5ff; }
+.service-card strong { font-size:12px;line-height:1.35; }.service-card > span:not(.service-icon){margin-top:7px;color:#75869a;font-size:10px;line-height:1.5}.service-card small{margin-top:auto;padding-top:11px;color:#1769e0;font-size:9px;font-weight:700}
+.archive-search { width:min(360px,100%);height:38px;display:flex;align-items:center;gap:8px;padding:0 11px;border:1px solid #d5dfeb;border-radius:10px;color:#91a0b2;background:#fff; }
+.archive-search input { min-width:0;flex:1;border:0;outline:0;background:transparent;font-size:11px; }
+.table-secondary { max-width:220px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8493a6;font-size:9px;font-weight:400; }
+.link-status { display:inline-flex;align-items:center;gap:5px;color:#8594a6;font-size:9px;text-transform:uppercase; }.link-status.is-linked{color:#14705a}
+
+@media (max-width: 900px) {
+  .service-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
 @media (max-width: 560px) {
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .span-2 { grid-column: auto; }
   .modal-header,.modal-content,.modal-footer { padding-left: 17px !important; padding-right: 17px !important; }
+  .portal-stats,.passport-confirm { grid-template-columns:1fr; }
+  .service-grid { grid-template-columns:1fr; }
+  .page-heading,.section-heading { align-items:flex-start;flex-direction:column; }
 }
 
 .login-screen {

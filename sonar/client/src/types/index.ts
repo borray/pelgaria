@@ -264,6 +264,22 @@ export interface ChatAttachment {
   url: string
 }
 
+export interface GeneratedDocument {
+  id: string
+  number: string
+  registry_code: string
+  template_type: string
+  title: string
+  payload: Record<string, unknown>
+  citizen_id?: string | null
+  citizen?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'> | null
+  linked_entity_type?: string | null
+  linked_entity_id?: string | null
+  status: string
+  created_by?: Pick<User, 'id' | 'login'>
+  created_at: string
+}
+
 export type Permission =
   | 'citizens.view'
   | 'citizens.create'

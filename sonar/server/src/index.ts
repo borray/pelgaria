@@ -24,6 +24,7 @@ import diplomacyRouter from './routes/diplomacy'
 import chatRouter from './routes/chat'
 import discordRouter from './routes/discord'
 import dashboardRouter from './routes/dashboard'
+import printCenterRouter from './routes/printCenter'
 
 const app = express()
 const httpServer = createServer(app)
@@ -77,6 +78,7 @@ app.use('/api/diplomacy', diplomacyRouter)
 app.use('/api/chat', chatRouter)
 app.use('/api/auth/discord', discordRouter)
 app.use('/api/dashboard', dashboardRouter)
+app.use('/api/print-center', printCenterRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

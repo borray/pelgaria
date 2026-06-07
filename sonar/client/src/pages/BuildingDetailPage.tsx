@@ -267,7 +267,7 @@ export function BuildingDetailPage() {
         </div>
       )}
 
-      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать объект" width={560}
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать объект" description="Изменение технических и регистрационных сведений РЕЛИКТ." width={680}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button>
@@ -302,7 +302,7 @@ export function BuildingDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Удалить объект"
+      <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Удалить объект" description="Проверьте номер и наименование объекта перед необратимым удалением."
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отмена</Button>

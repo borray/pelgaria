@@ -15,6 +15,7 @@ import {
   IconUserCog,
   IconShield,
   IconLayoutDashboard,
+  IconPrinter,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 
@@ -35,6 +36,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   const { hasPermission } = useAuthStore()
 
   const sections: NavSection[] = [
+    {
+      title: 'Документы',
+      items: [
+        {
+          to: '/print-center',
+          label: 'Центр печати',
+          icon: <IconPrinter size={16} />,
+        },
+      ],
+    },
     {
       title: 'Сводка',
       items: [

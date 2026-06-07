@@ -11,6 +11,7 @@ import {
   IconScale,
   IconSearch,
   IconUsers,
+  IconPrinter,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
@@ -26,6 +27,7 @@ const destinations = [
   { label: 'Территории', hint: 'Управление землями', path: '/territories', icon: IconMap, permission: 'territories.view' },
   { label: 'Дипломатия', hint: 'Государства и договоры', path: '/diplomacy', icon: IconGlobe, permission: 'diplomacy.view' },
   { label: 'Чат', hint: 'Защищённая связь', path: '/chat', icon: IconMessageCircle, permission: 'chat.send' },
+  { label: 'Центр печати', hint: 'Справки, заявления и выписки', path: '/print-center', icon: IconPrinter },
 ]
 
 export function CommandPalette() {
