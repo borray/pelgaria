@@ -31,7 +31,19 @@ interface CreateLawForm {
   title: string
   body: string
   adopted_at: string
+  auto_number: boolean
+  number: string
 }
+
+const today = () => new Date().toISOString().slice(0, 10)
+const emptyForm = (): CreateLawForm => ({
+  type: 'LAW',
+  title: '',
+  body: '',
+  adopted_at: today(),
+  auto_number: true,
+  number: '',
+})
 
 export function LawsPage() {
   const navigate = useNavigate()
@@ -45,7 +57,7 @@ export function LawsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [form, setForm] = useState<CreateLawForm>({ type: 'LAW', title: '', body: '', adopted_at: '' })
+  const [form, setForm] = useState<CreateLawForm>(emptyForm())
 
   const fetchLaws = useCallback(async () => {
     setLoading(true)
@@ -81,10 +93,12 @@ export function LawsPage() {
         type: form.type,
         title: form.title.trim(),
         body: form.body.trim(),
-        ...(form.adopted_at ? { adopted_at: form.adopted_at } : {}),
+        adopted_at: form.adopted_at,
+        auto_number: form.auto_number,
+        ...(!form.auto_number ? { number: form.number } : {}),
       })
       setShowCreateModal(false)
-      setForm({ type: 'LAW', title: '', body: '', adopted_at: '' })
+      setForm(emptyForm())
       fetchLaws()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка создания'
@@ -102,6 +116,16 @@ export function LawsPage() {
       render: (row) => (
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
           {row.number}
+        </span>
+      ),
+    },
+    {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '150px',
+      render: (row) => (
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#64748B' }}>
+          {row.registry_code ?? 'Формируется'}
         </span>
       ),
     },
@@ -148,7 +172,7 @@ export function LawsPage() {
         <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '320px' }}>
           <IconSearch size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
           <input
-            placeholder="Поиск по названию, номеру..."
+            placeholder="Название, номер или ШК..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
@@ -178,9 +202,10 @@ export function LawsPage() {
 
       <Modal
         open={showCreateModal}
-        onClose={() => { setShowCreateModal(false); setCreateError(null); setForm({ type: 'LAW', title: '', body: '', adopted_at: '' }) }}
+        onClose={() => { setShowCreateModal(false); setCreateError(null); setForm(emptyForm()) }}
         title="Создать закон / указ"
-        width={600}
+        description="Регистрация нормативного документа в едином реестре СОНАР"
+        width={680}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>
@@ -188,38 +213,45 @@ export function LawsPage() {
           </>
         }
       >
-        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Select
-            label="Тип документа"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            options={[{ value: 'LAW', label: 'Закон (ЗАК)' }, { value: 'DECREE', label: 'Указ (УКЗ)' }]}
-          />
-          <Input
-            label="Название *"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            autoFocus
-          />
-          <Input
-            label="Дата принятия"
-            type="date"
-            value={form.adopted_at}
-            onChange={(e) => setForm({ ...form, adopted_at: e.target.value })}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-              Текст документа *
-            </label>
-            <textarea
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
-              rows={10}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
-            />
-          </div>
+        <form onSubmit={handleCreate}>
+          <section className="form-section">
+            <div className="form-section-heading">
+              <div><strong>Регистрация документа</strong><span>Система присвоит номер и уникальный ШК</span></div>
+            </div>
+            <div className="number-mode">
+              <button type="button" className={form.auto_number ? 'is-active' : ''} onClick={() => setForm({ ...form, auto_number: true, number: '' })}>Автоматический номер</button>
+              <button type="button" className={!form.auto_number ? 'is-active' : ''} onClick={() => setForm({ ...form, auto_number: false })}>Указать вручную</button>
+            </div>
+            {form.auto_number ? (
+              <div className="document-preview">
+                Формат номера:
+                <strong>{form.type === 'LAW' ? 'ЗАК' : 'УКЗ'}-{new Date(form.adopted_at || Date.now()).getFullYear()}-0001</strong>
+                · ШК будет создан автоматически
+              </div>
+            ) : (
+              <div style={{ marginTop: 12 }}>
+                <Input label="Регистрационный номер *" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="Например: ЗАК-2026-0042" />
+              </div>
+            )}
+          </section>
+
+          <section className="form-section">
+            <div className="form-section-heading"><div><strong>Реквизиты</strong><span>Основные сведения нормативного акта</span></div></div>
+            <div className="form-grid">
+              <Select label="Тип документа" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} options={[{ value: 'LAW', label: 'Закон' }, { value: 'DECREE', label: 'Указ' }]} />
+              <Input label="Дата принятия *" type="date" value={form.adopted_at} onChange={(e) => setForm({ ...form, adopted_at: e.target.value })} />
+              <div className="span-2">
+                <Input label="Название документа *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} autoFocus placeholder="Краткое официальное наименование" />
+              </div>
+            </div>
+          </section>
+
+          <section className="form-section">
+            <div className="form-section-heading"><div><strong>Содержание</strong><span>Полный текст в редакции на дату принятия</span></div></div>
+            <textarea className="document-textarea" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={11} placeholder="Введите текст документа..." />
+          </section>
           {createError && (
-            <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>
+            <div className="form-error">
               {createError}
             </div>
           )}

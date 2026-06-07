@@ -25,6 +25,7 @@ export function PassportsPage() {
 
   const [passports, setPassports] = useState<Passport[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -40,6 +41,7 @@ export function PassportsPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
       const res = await apiClient.get<Passport[]>(`/passports?${params.toString()}`)
       setPassports(res.data)
     } catch {
@@ -47,7 +49,7 @@ export function PassportsPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, search])
 
   useEffect(() => {
     fetchPassports()
@@ -137,6 +139,12 @@ export function PassportsPage() {
       render: (row) => <span style={{ color: '#6B7280', fontSize: '13px' }}>{formatDate(row.issued_at)}</span>,
     },
     {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '150px',
+      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
+    },
+    {
       key: 'expires_at',
       header: 'Действителен до',
       render: (row) => (
@@ -183,6 +191,7 @@ export function PassportsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер или ШК..." />
         <Select
           options={STATUS_OPTIONS}
           value={statusFilter}
@@ -222,6 +231,8 @@ export function PassportsPage() {
       <Modal
         open={showIssueModal}
         onClose={() => setShowIssueModal(false)}
+        description="Номер паспорта и ШК будут присвоены автоматически реестром СОНАР."
+        width={620}
         title="Выдать паспорт"
         footer={
           <>

@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express'
-import { PrismaClient, PassportStatus } from '@prisma/client'
+import { PrismaClient, PassportStatus, Prisma } from '@prisma/client'
 import crypto from 'crypto'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
 import { htmlToPdf } from '../services/pdf'
 import {
   barcodeStripes,
@@ -30,6 +31,7 @@ async function generatePassportNumber(): Promise<string> {
 
 async function renderPassportPdf(passport: {
   number: string
+  registry_code?: string | null
   issued_at: Date
   expires_at: Date | null
   citizen: {
@@ -145,9 +147,18 @@ async function renderPassportPdf(passport: {
 // GET /api/passports
 router.get('/', requireAuth, requirePermission('passports.view'), async (req: Request, res: Response) => {
   try {
-    const { citizen_id } = req.query as Record<string, string>
-    const where: { citizen_id?: string } = {}
+    const { citizen_id, status, search } = req.query as Record<string, string>
+    const where: Prisma.PassportWhereInput = {}
     if (citizen_id) where.citizen_id = citizen_id
+    if (status) where.status = status as PassportStatus
+    if (search) {
+      where.OR = [
+        { number: { contains: search, mode: 'insensitive' } },
+        { registry_code: { contains: search, mode: 'insensitive' } },
+        { citizen: { nickname: { contains: search, mode: 'insensitive' } } },
+        { citizen: { reg_number: { contains: search, mode: 'insensitive' } } },
+      ]
+    }
 
     const passports = await prisma.passport.findMany({
       where,
@@ -157,7 +168,18 @@ router.get('/', requireAuth, requirePermission('passports.view'), async (req: Re
         issued_by: { select: { id: true, login: true } },
       },
     })
-    res.json(passports)
+    const hydrated = await Promise.all(passports.map(async (passport) => {
+      if (passport.registry_code) return passport
+      return prisma.passport.update({
+        where: { id: passport.id },
+        data: { registry_code: registryCode('ПСП', passport.number) },
+        include: {
+          citizen: { select: { id: true, reg_number: true, nickname: true } },
+          issued_by: { select: { id: true, login: true } },
+        },
+      })
+    }))
+    res.json(hydrated)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
@@ -195,22 +217,24 @@ router.post('/', requireAuth, requirePermission('passports.issue'), async (req: 
       return
     }
 
-    const number = await generatePassportNumber()
-
-    const passport = await prisma.passport.create({
-      data: {
-        number,
-        citizen_id,
-        issued_at,
-        expires_at,
-        status: 'VALID',
-        previous_numbers: [],
-        issued_by_id: req.user!.id,
-      },
-      include: {
-        citizen: { select: { id: true, reg_number: true, nickname: true } },
-        issued_by: { select: { id: true, login: true } },
-      },
+    const passport = await prisma.$transaction(async (tx) => {
+      const number = await nextDocumentNumber(tx, 'passport', 'ПСП', issued_at)
+      return tx.passport.create({
+        data: {
+          number,
+          registry_code: registryCode('ПСП', number),
+          citizen_id,
+          issued_at,
+          expires_at,
+          status: 'VALID',
+          previous_numbers: [],
+          issued_by_id: req.user!.id,
+        },
+        include: {
+          citizen: { select: { id: true, reg_number: true, nickname: true } },
+          issued_by: { select: { id: true, login: true } },
+        },
+      })
     })
 
     res.status(201).json(passport)
@@ -237,25 +261,28 @@ router.post('/:id/reissue', requireAuth, requirePermission('passports.reissue'),
     })
 
     const prevNumbers = [...(old.previous_numbers as string[]), old.number]
-    const newNumber = await generatePassportNumber()
     const issued_at = new Date()
     const expires_at = new Date(issued_at)
     expires_at.setFullYear(expires_at.getFullYear() + 2)
 
-    const passport = await prisma.passport.create({
-      data: {
-        number: newNumber,
-        citizen_id: old.citizen_id,
-        issued_at,
-        expires_at,
-        status: 'VALID',
-        previous_numbers: prevNumbers,
-        issued_by_id: req.user!.id,
-      },
-      include: {
-        citizen: { select: { id: true, reg_number: true, nickname: true } },
-        issued_by: { select: { id: true, login: true } },
-      },
+    const passport = await prisma.$transaction(async (tx) => {
+      const newNumber = await nextDocumentNumber(tx, 'passport', 'ПСП', issued_at)
+      return tx.passport.create({
+        data: {
+          number: newNumber,
+          registry_code: registryCode('ПСП', newNumber),
+          citizen_id: old.citizen_id,
+          issued_at,
+          expires_at,
+          status: 'VALID',
+          previous_numbers: prevNumbers,
+          issued_by_id: req.user!.id,
+        },
+        include: {
+          citizen: { select: { id: true, reg_number: true, nickname: true } },
+          issued_by: { select: { id: true, login: true } },
+        },
+      })
     })
 
     res.status(201).json(passport)

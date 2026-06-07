@@ -51,6 +51,7 @@ export type PassportStatus = 'VALID' | 'REVOKED' | 'EXPIRED'
 export interface Passport {
   id: string
   number: string
+  registry_code?: string | null
   citizen_id: string
   citizen?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'>
   issued_at: string
@@ -67,6 +68,7 @@ export type LawStatus = 'ACTIVE' | 'REPEALED' | 'SUSPENDED'
 export interface Law {
   id: string
   number: string
+  registry_code?: string | null
   type: LawType
   title: string
   body: string
@@ -82,6 +84,7 @@ export type VerdictType = 'FINE' | 'WARNING' | 'EXILE' | 'OTHER'
 export interface Case {
   id: string
   number: string
+  registry_code?: string | null
   accused_id: string
   accused?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'>
   law_id?: string | null
@@ -104,6 +107,8 @@ export type PunishmentStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED'
 
 export interface Punishment {
   id: string
+  number?: string | null
+  registry_code?: string | null
   citizen_id: string
   citizen?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'>
   type: PunishmentType
@@ -213,6 +218,7 @@ export type TreatyStatus = 'ACTIVE' | 'TERMINATED'
 export interface DiplomaticTreaty {
   id: string
   number: string
+  registry_code?: string | null
   state_id: string
   state?: Pick<DiplomaticState, 'id' | 'name'>
   type: TreatyType

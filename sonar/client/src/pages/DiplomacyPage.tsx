@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconPrinter } from '@tabler/icons-react'
+import { IconPlus, IconPrinter, IconSearch, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { DiplomaticState, DiplomaticTreaty } from '../types'
@@ -28,10 +28,17 @@ const TREATY_TYPE_OPTIONS = [
 ]
 
 interface StateForm { name: string; relation_status: string; description: string }
-interface TreatyForm { state_id: string; type: string; body: string; signed_at: string }
+interface TreatyForm { state_id: string; type: string; body: string; signed_at: string; auto_number: boolean; number: string }
 
 const emptyStateForm = (): StateForm => ({ name: '', relation_status: 'NEUTRAL', description: '' })
-const emptyTreatyForm = (states: DiplomaticState[]): TreatyForm => ({ state_id: states[0]?.id ?? '', type: 'NON_AGGRESSION', body: '', signed_at: '' })
+const emptyTreatyForm = (states: DiplomaticState[]): TreatyForm => ({
+  state_id: states[0]?.id ?? '',
+  type: 'NON_AGGRESSION',
+  body: '',
+  signed_at: new Date().toISOString().slice(0, 10),
+  auto_number: true,
+  number: '',
+})
 
 export function DiplomacyPage() {
   const canManage = usePermission('diplomacy.manage')
@@ -49,18 +56,22 @@ export function DiplomacyPage() {
   const [stateError, setStateError] = useState<string | null>(null)
 
   const [showTreatyModal, setShowTreatyModal] = useState(false)
-  const [treatyForm, setTreatyForm] = useState<TreatyForm>({ state_id: '', type: 'NON_AGGRESSION', body: '', signed_at: '' })
+  const [treatyForm, setTreatyForm] = useState<TreatyForm>(emptyTreatyForm([]))
   const [treatyLoading, setTreatyLoading] = useState(false)
   const [treatyError, setTreatyError] = useState<string | null>(null)
 
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: 'state' | 'treaty'; id: string; label: string } | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const [sRes, tRes] = await Promise.all([
         apiClient.get<DiplomaticState[]>('/diplomacy/states'),
-        apiClient.get<DiplomaticTreaty[]>('/diplomacy/treaties'),
+        apiClient.get<DiplomaticTreaty[]>(`/diplomacy/treaties${search ? `?search=${encodeURIComponent(search)}` : ''}`),
       ])
       setStates(sRes.data)
       setTreaties(tRes.data)
@@ -70,7 +81,7 @@ export function DiplomacyPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [search])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -109,7 +120,14 @@ export function DiplomacyPage() {
     if (!treatyForm.state_id || !treatyForm.body.trim()) { setTreatyError('Государство и текст обязательны'); return }
     setTreatyLoading(true); setTreatyError(null)
     try {
-      await apiClient.post('/diplomacy/treaties', { state_id: treatyForm.state_id, type: treatyForm.type, body: treatyForm.body.trim(), ...(treatyForm.signed_at ? { signed_at: treatyForm.signed_at } : {}) })
+      await apiClient.post('/diplomacy/treaties', {
+        state_id: treatyForm.state_id,
+        type: treatyForm.type,
+        body: treatyForm.body.trim(),
+        signed_at: treatyForm.signed_at,
+        auto_number: treatyForm.auto_number,
+        ...(!treatyForm.auto_number ? { number: treatyForm.number } : {}),
+      })
       setShowTreatyModal(false)
       fetchData()
     } catch (err: unknown) {
@@ -141,8 +159,27 @@ export function DiplomacyPage() {
     WAR: 'Война',
   }
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      const url = deleteTarget.kind === 'state'
+        ? `/diplomacy/states/${deleteTarget.id}`
+        : `/diplomacy/treaties/${deleteTarget.id}`
+      await apiClient.delete(url)
+      setDeleteTarget(null)
+      fetchData()
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   const treatyColumns: TableColumn<DiplomaticTreaty>[] = [
     { key: 'number', header: 'Номер', width: '110px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>{row.number}</span> },
+    { key: 'registry_code', header: 'ШК', width: '150px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#64748B' }}>{row.registry_code ?? 'Формируется'}</span> },
     { key: 'state', header: 'Государство', render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.state?.name ?? '—'}</span> },
     { key: 'type', header: 'Тип', width: '180px', render: (row) => <Badge status={row.type} /> },
     { key: 'signed_at', header: 'Подписан', width: '120px', render: (row) => <span style={{ fontSize: '13px', color: '#6B7280' }}>{formatDate(row.signed_at)}</span> },
@@ -150,11 +187,18 @@ export function DiplomacyPage() {
     {
       key: 'actions',
       header: '',
-      width: '60px',
+      width: '105px',
       render: (row) => (
-        <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="Печать договора">
-          <IconPrinter size={14} />
-        </Button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="Печать договора">
+            <IconPrinter size={14} />
+          </Button>
+          {canManage && (
+            <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget({ kind: 'treaty', id: row.id, label: row.number }) }} title="Удалить договор">
+              <IconTrash size={14} />
+            </Button>
+          )}
+        </div>
       ),
     },
   ]
@@ -199,6 +243,13 @@ export function DiplomacyPage() {
         ))}
       </div>
 
+      {tab === 'treaties' && (
+        <div style={{ position: 'relative', width: 'min(380px, 100%)', marginBottom: 16 }}>
+          <IconSearch size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+          <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Государство, номер, ШК или текст..." />
+        </div>
+      )}
+
       {tab === 'states' && (
         loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
@@ -221,6 +272,11 @@ export function DiplomacyPage() {
                   {canManage && (
                     <Button variant="secondary" size="sm" onClick={() => { setSelectedState(s); setStateForm({ name: s.name, relation_status: s.relation_status, description: s.description ?? '' }); setStateError(null); setShowEditStateModal(true) }}>
                       Изменить
+                    </Button>
+                  )}
+                  {canManage && (
+                    <Button variant="danger" size="sm" onClick={() => { setDeleteError(null); setDeleteTarget({ kind: 'state', id: s.id, label: s.name }) }}>
+                      <IconTrash size={14} />Удалить
                     </Button>
                   )}
                   <span style={{ fontSize: '12px', color: '#9CA3AF', alignSelf: 'center' }}>
@@ -251,25 +307,43 @@ export function DiplomacyPage() {
         footer={<><Button variant="secondary" onClick={() => setShowEditStateModal(false)}>Отмена</Button><Button variant="primary" loading={stateLoading} onClick={handleEditState}>Сохранить</Button></>}
       >{StateFormContent(true)}</Modal>
 
-      <Modal open={showTreatyModal} onClose={() => setShowTreatyModal(false)} title="Создать договор" width={540}
+      <Modal open={showTreatyModal} onClose={() => setShowTreatyModal(false)} title="Создать международный договор" description="Документ будет зарегистрирован в едином реестре СОНАР" width={680}
         footer={<><Button variant="secondary" onClick={() => setShowTreatyModal(false)}>Отмена</Button><Button variant="primary" loading={treatyLoading} onClick={handleCreateTreaty}>Создать</Button></>}
       >
-        <form onSubmit={handleCreateTreaty} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Select
-            label="Государство *"
-            options={states.map((s) => ({ value: s.id, label: s.name }))}
-            placeholder="— Выберите —"
-            value={treatyForm.state_id}
-            onChange={(e) => setTreatyForm({ ...treatyForm, state_id: e.target.value })}
-          />
-          <Select label="Тип *" options={TREATY_TYPE_OPTIONS} value={treatyForm.type} onChange={(e) => setTreatyForm({ ...treatyForm, type: e.target.value })} />
-          <Input label="Дата подписания" type="date" value={treatyForm.signed_at} onChange={(e) => setTreatyForm({ ...treatyForm, signed_at: e.target.value })} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Текст договора *</label>
-            <textarea value={treatyForm.body} onChange={(e) => setTreatyForm({ ...treatyForm, body: e.target.value })} rows={8} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
-          </div>
+        <form onSubmit={handleCreateTreaty}>
+          <section className="form-section">
+            <div className="form-section-heading"><div><strong>Регистрация договора</strong><span>Автоматический номер защищает реестр от дубликатов</span></div></div>
+            <div className="number-mode">
+              <button type="button" className={treatyForm.auto_number ? 'is-active' : ''} onClick={() => setTreatyForm({ ...treatyForm, auto_number: true, number: '' })}>Автоматический номер</button>
+              <button type="button" className={!treatyForm.auto_number ? 'is-active' : ''} onClick={() => setTreatyForm({ ...treatyForm, auto_number: false })}>Указать вручную</button>
+            </div>
+            {treatyForm.auto_number ? (
+              <div className="document-preview">Формат номера: <strong>ДПЛ-{new Date(treatyForm.signed_at || Date.now()).getFullYear()}-0001</strong> · ШК будет создан автоматически</div>
+            ) : (
+              <div style={{ marginTop: 12 }}><Input label="Регистрационный номер *" value={treatyForm.number} onChange={(e) => setTreatyForm({ ...treatyForm, number: e.target.value })} placeholder="Например: ДПЛ-2026-0012" /></div>
+            )}
+          </section>
+          <section className="form-section">
+            <div className="form-section-heading"><div><strong>Стороны и реквизиты</strong><span>Партнёр, вид договора и дата подписания</span></div></div>
+            <div className="form-grid">
+              <Select label="Государство *" options={states.map((s) => ({ value: s.id, label: s.name }))} placeholder="— Выберите —" value={treatyForm.state_id} onChange={(e) => setTreatyForm({ ...treatyForm, state_id: e.target.value })} />
+              <Select label="Тип договора *" options={TREATY_TYPE_OPTIONS} value={treatyForm.type} onChange={(e) => setTreatyForm({ ...treatyForm, type: e.target.value })} />
+              <div className="span-2"><Input label="Дата подписания *" type="date" value={treatyForm.signed_at} onChange={(e) => setTreatyForm({ ...treatyForm, signed_at: e.target.value })} /></div>
+            </div>
+          </section>
+          <section className="form-section">
+            <div className="form-section-heading"><div><strong>Текст договора</strong><span>Полный текст согласованных обязательств</span></div></div>
+            <textarea className="document-textarea" value={treatyForm.body} onChange={(e) => setTreatyForm({ ...treatyForm, body: e.target.value })} rows={9} placeholder="Введите текст договора..." />
+          </section>
           {treatyError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{treatyError}</div>}
         </form>
+      </Modal>
+
+      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Подтвердите удаление" description="Удалённая запись не сможет быть восстановлена"
+        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить</Button></>}
+      >
+        <div className="danger-confirm">Вы собираетесь удалить {deleteTarget?.kind === 'state' ? 'государство' : 'договор'} <strong>{deleteTarget?.label}</strong>. Государство со связанными договорами удалить нельзя.</div>
+        {deleteError && <div className="form-error">{deleteError}</div>}
       </Modal>
     </div>
   )

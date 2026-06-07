@@ -41,6 +41,7 @@ export function PunishmentsPage() {
 
   const [punishments, setPunishments] = useState<Punishment[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -68,6 +69,7 @@ export function PunishmentsPage() {
       const params = new URLSearchParams()
       if (typeFilter) params.set('type', typeFilter)
       if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
       const res = await apiClient.get<Punishment[]>(`/punishments?${params.toString()}`)
       setPunishments(res.data)
     } catch {
@@ -75,7 +77,7 @@ export function PunishmentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [typeFilter, statusFilter])
+  }, [typeFilter, statusFilter, search])
 
   useEffect(() => {
     fetchPunishments()
@@ -133,6 +135,12 @@ export function PunishmentsPage() {
 
   const columns: TableColumn<Punishment>[] = [
     {
+      key: 'number',
+      header: 'Номер',
+      width: '150px',
+      render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 600 }}>{row.number ?? 'Формируется'}</span>,
+    },
+    {
       key: 'citizen',
       header: 'Гражданин',
       render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.citizen?.nickname ?? '—'}</span>,
@@ -147,6 +155,12 @@ export function PunishmentsPage() {
       key: 'reason',
       header: 'Причина',
       render: (row) => <span style={{ fontSize: '13px', color: '#374151' }}>{row.reason}</span>,
+    },
+    {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '150px',
+      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
     },
     {
       key: 'issued_by',
@@ -211,6 +225,7 @@ export function PunishmentsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер, ШК или причина..." />
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '180px' }} />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '180px' }} />
       </div>
@@ -235,6 +250,8 @@ export function PunishmentsPage() {
       <Modal
         open={showIssueModal}
         onClose={() => setShowIssueModal(false)}
+        description="СОНАР автоматически присвоит постановлению официальный номер и ШК."
+        width={640}
         title="Выдать наказание"
         footer={
           <>

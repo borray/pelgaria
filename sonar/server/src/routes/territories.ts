@@ -6,6 +6,21 @@ import { requirePermission } from '../middleware/permissions'
 const router = Router()
 const prisma = new PrismaClient()
 
+// GET /api/territories/managers
+router.get('/managers', requireAuth, requirePermission('territories.manage'), async (_req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { is_active: true },
+      orderBy: { login: 'asc' },
+      select: { id: true, login: true },
+    })
+    res.json(users)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 // GET /api/territories
 router.get('/', requireAuth, requirePermission('territories.view'), async (_req: Request, res: Response) => {
   try {
@@ -78,6 +93,23 @@ router.put('/:id', requireAuth, requirePermission('territories.manage'), async (
     })
 
     res.json(territory)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
+// DELETE /api/territories/:id
+router.delete('/:id', requireAuth, requirePermission('territories.manage'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.territory.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Территория не найдена' })
+      return
+    }
+    await prisma.territory.delete({ where: { id } })
+    res.status(204).send()
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })

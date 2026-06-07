@@ -123,6 +123,7 @@ export function LawDetailPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#1B3A6B' }}>{law.number}</span>
+            {law.registry_code && <span className="registry-code">{law.registry_code}</span>}
             <Badge status={law.type} />
             <Badge status={law.status} />
           </div>
