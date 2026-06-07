@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { TaxPeriod, TaxCharge, Citizen } from '../types'
@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDate, formatAmount } from '../utils/formatters'
+import { downloadPdf } from '../utils/pdf'
 
 const CHARGE_STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -52,6 +53,18 @@ export function TaxesPage() {
   const [autoPeriodId, setAutoPeriodId] = useState('')
   const [autoLoading, setAutoLoading] = useState(false)
   const [payLoadingId, setPayLoadingId] = useState<string | null>(null)
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+
+  const handleDownloadPeriodPdf = async (period: TaxPeriod) => {
+    setPdfLoadingId(period.id)
+    try {
+      await downloadPdf(`/api/taxes/periods/${period.id}/pdf`, `taxes-${period.name.replace(/\s+/g, '-')}.pdf`)
+    } catch {
+      alert('Ошибка генерации PDF')
+    } finally {
+      setPdfLoadingId(null)
+    }
+  }
 
   const fetchPeriods = useCallback(async () => {
     try {
@@ -193,6 +206,22 @@ export function TaxesPage() {
       key: 'ends_at',
       header: 'Конец',
       render: (row) => <span style={{ fontSize: '13px', color: '#6B7280' }}>{formatDate(row.ends_at)}</span>,
+    },
+    {
+      key: 'pdf',
+      header: '',
+      width: '80px',
+      render: (row) => (
+        <Button
+          variant="secondary"
+          size="sm"
+          loading={pdfLoadingId === row.id}
+          onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}
+          title="Скачать ведомость PDF"
+        >
+          <IconFileTypePdf size={14} />
+        </Button>
+      ),
     },
   ]
 

@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
-import puppeteer from 'puppeteer-core'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { htmlToPdf } from '../services/pdf'
+import { guillochePattern } from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -14,23 +15,6 @@ async function generateLawNumber(type: LawType): Promise<string> {
   return `${prefix}-${String(seq).padStart(3, '0')}`
 }
 
-function generateGuilloché(seed: string): string {
-  const chars = seed.split('').map((c) => c.charCodeAt(0))
-  const lines: string[] = []
-  for (let i = 0; i < 6; i++) {
-    const amp = 6 + (chars[i % chars.length] % 8)
-    const freq = 0.015 + (chars[(i + 1) % chars.length] % 10) * 0.003
-    const phase = (chars[(i + 2) % chars.length] % 10) * 0.5
-    const yBase = 8 + i * 14
-    const pts: string[] = []
-    for (let x = 0; x <= 700; x += 5) {
-      const y = yBase + amp * Math.sin(freq * x + phase)
-      pts.push(`${x},${y.toFixed(2)}`)
-    }
-    lines.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="#1B3A6B" stroke-width="0.8" opacity="0.15"/>`)
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="96">${lines.join('')}</svg>`
-}
 
 async function renderLawPdf(law: {
   number: string
@@ -41,10 +25,13 @@ async function renderLawPdf(law: {
   adopted_at: Date
   repealed_at: Date | null
 }): Promise<Buffer> {
-  const guilloché = generateGuilloché(law.number)
   const typeLabel = law.type === 'LAW' ? 'ЗАКОН' : 'УКАЗ'
-  const docTitle = `${typeLabel} №${law.number}`
+  const docNumber = `${typeLabel} №${law.number}`
   const adoptedDate = law.adopted_at.toLocaleDateString('ru-RU')
+  const guilloche = guillochePattern(law.number, 794, 50)
+
+  const statusLabel = law.status === 'ACTIVE' ? 'ДЕЙСТВУЕТ' : law.status === 'REPEALED' ? 'ОТМЕНЁН' : 'ПРИОСТАНОВЛЕН'
+  const statusColor = law.status === 'ACTIVE' ? '#16A34A' : law.status === 'REPEALED' ? '#DC2626' : '#D97706'
 
   const bodyHtml = law.body
     .split('\n')
@@ -58,53 +45,142 @@ async function renderLawPdf(law: {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #F2F4F7; font-family: 'Inter', sans-serif; padding: 32px; }
-  .card { background: #FFFFFF; max-width: 640px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
-  .header { background: #0A1628; padding: 28px 36px 24px; }
-  .header-state { color: rgba(255,255,255,0.5); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
-  .header-doctype { color: #FFFFFF; font-size: 22px; font-weight: 700; letter-spacing: 0.04em; }
-  .guilloché { background: #F8F9FB; overflow: hidden; height: 96px; }
-  .body-section { padding: 28px 36px; }
-  .doc-title { font-size: 18px; font-weight: 700; color: #0A1628; margin-bottom: 20px; line-height: 1.4; }
-  .doc-body p { font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 8px; }
-  .footer { border-top: 1px solid #E5E7EB; padding: 20px 36px; display: flex; justify-content: space-between; align-items: flex-end; background: #F8F9FB; }
-  .date-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+
+  .header {
+    background: #0A1628;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+  }
+  .header-left {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    width: 180px;
+    flex-shrink: 0;
+    line-height: 1.6;
+  }
+  .header-center { flex: 1; text-align: center; }
+  .header-doctype {
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+  }
+  .header-right {
+    width: 180px;
+    text-align: right;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .guilloche-bar { overflow: hidden; height: 50px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
+
+  .content { padding: 36px 40px 28px; }
+  .doc-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #4A90D9;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .doc-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0A1628;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .doc-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${statusColor};
+    background: ${statusColor}18;
+    border: 1px solid ${statusColor}44;
+    border-radius: 3px;
+    padding: 2px 8px;
+    margin-bottom: 24px;
+  }
+  .doc-body p {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.8;
+    margin-bottom: 8px;
+  }
+
+  .footer {
+    border-top: 1px solid #E5E7EB;
+    background: #F8F9FB;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .date-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
   .date-value { font-size: 14px; color: #374151; font-weight: 500; }
-  .signature { font-size: 12px; color: #6B7280; font-style: italic; }
+  .signature-block { text-align: right; }
+  .signature-line { width: 160px; border-bottom: 1px solid #6B7280; height: 22px; margin-left: auto; }
+  .signature-label { font-size: 11px; color: #6B7280; font-style: italic; margin-top: 4px; }
+  .doc-footer-strip {
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #C4C9D4;
+    border-top: 1px solid #F0F2F5;
+  }
 </style>
 </head>
 <body>
-<div class="card">
   <div class="header">
-    <div class="header-state">Государство Пельагрия</div>
-    <div class="header-doctype">${docTitle}</div>
+    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+    <div class="header-center">
+      <div class="header-doctype">${typeLabel}</div>
+      <div class="header-sub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ</div>
+    </div>
+    <div class="header-right">${adoptedDate}</div>
   </div>
-  <div class="guilloché">${guilloché}</div>
-  <div class="body-section">
+  <div class="guilloche-bar">${guilloche}</div>
+
+  <div class="content">
+    <div class="doc-number">${docNumber}</div>
     <div class="doc-title">${law.title}</div>
+    <div class="doc-status">${statusLabel}</div>
     <div class="doc-body">${bodyHtml}</div>
   </div>
+
   <div class="footer">
     <div>
       <div class="date-label">Дата принятия</div>
       <div class="date-value">${adoptedDate}</div>
+      ${law.repealed_at ? `<div class="date-label" style="margin-top:8px;">Дата отмены</div><div class="date-value">${law.repealed_at.toLocaleDateString('ru-RU')}</div>` : ''}
     </div>
-    <div class="signature">Глава государства</div>
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      <div class="signature-label">Глава государства</div>
+    </div>
   </div>
-</div>
+  <div class="doc-footer-strip">
+    <span>Государственная информационная система СОНАР</span>
+    <span>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</span>
+  </div>
 </body>
 </html>`
 
-  const browser = await puppeteer.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
-  const page = await browser.newPage()
-  await page.setContent(html, { waitUntil: 'networkidle0' })
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' },
-  })
-  await browser.close()
-  return Buffer.from(pdfBuffer)
+  return htmlToPdf(html)
 }
 
 // GET /api/laws

@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, PassportStatus } from '@prisma/client'
 import crypto from 'crypto'
-import puppeteer from 'puppeteer-core'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { htmlToPdf } from '../services/pdf'
+import { guillochePattern, barcodeStripes } from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -17,51 +18,6 @@ async function generatePassportNumber(): Promise<string> {
   return `PSP-${String(seq).padStart(4, '0')}-${year}`
 }
 
-function generateGuillochesvg(seed: string): string {
-  const digits = seed.replace(/\D/g, '').split('').map(Number)
-  const lines: string[] = []
-  for (let i = 0; i < 8; i++) {
-    const amp = 8 + (digits[i % digits.length] ?? 5) * 2
-    const freq = 0.02 + (digits[(i + 1) % digits.length] ?? 3) * 0.005
-    const phase = (digits[(i + 2) % digits.length] ?? 0) * 0.6
-    const yBase = 10 + i * 12
-    const points: string[] = []
-    for (let x = 0; x <= 600; x += 4) {
-      const y = yBase + amp * Math.sin(freq * x + phase)
-      points.push(`${x},${y.toFixed(2)}`)
-    }
-    lines.push(`<polyline points="${points.join(' ')}" fill="none" stroke="#1B3A6B" stroke-width="0.7" opacity="0.15"/>`)
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="110">${lines.join('')}</svg>`
-}
-
-function generateBarcode(data: string): string {
-  const hash = crypto.createHash('sha256').update(data).digest('hex')
-  const hash8 = hash.slice(0, 8)
-  const fullData = `${data}|${hash8}`
-
-  const pattern: number[] = []
-  for (let i = 0; i < fullData.length; i++) {
-    const code = fullData.charCodeAt(i)
-    const widths = [1, 1, 2, 1, 2]
-    for (let b = 0; b < 5; b++) {
-      pattern.push(widths[b % 5] * (1 + (code >> b) % 2))
-    }
-  }
-
-  const totalWidth = pattern.reduce((a, b) => a + b, 0)
-  const scale = 200 / totalWidth
-  let x = 0
-  const bars: string[] = []
-  pattern.forEach((w, i) => {
-    const scaledW = w * scale
-    if (i % 2 === 0) {
-      bars.push(`<rect x="${x.toFixed(1)}" y="0" width="${scaledW.toFixed(1)}" height="40" fill="#0A1628"/>`)
-    }
-    x += scaledW
-  })
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40">${bars.join('')}</svg>`
-}
 
 async function renderPassportPdf(passport: {
   number: string
@@ -75,9 +31,10 @@ async function renderPassportPdf(passport: {
   }
   issued_by: { login: string } | null
 }): Promise<Buffer> {
-  const guilloché = generateGuillochesvg(passport.number)
+  const guilloche = guillochePattern(passport.number, 794, 60)
   const barcodeData = `${passport.number}|${passport.citizen.nickname}|${passport.issued_at.toISOString().slice(0, 10)}`
-  const barcode = generateBarcode(barcodeData)
+  const hash8 = crypto.createHash('sha256').update(barcodeData).digest('hex').slice(0, 8)
+  const barcode = barcodeStripes(`${barcodeData}|${hash8}`, 260, 44)
 
   const issuedDate = passport.issued_at.toLocaleDateString('ru-RU')
   const expiresDate = passport.expires_at
@@ -91,58 +48,72 @@ async function renderPassportPdf(passport: {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #F2F4F7; font-family: 'Inter', sans-serif; padding: 32px; }
-  .card {
-    width: 560px;
-    background: #FFFFFF;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  }
+  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+
   .header {
     background: #0A1628;
-    padding: 24px 32px 20px;
-    position: relative;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+  }
+  .header-left {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    width: 180px;
+    flex-shrink: 0;
+    line-height: 1.6;
+  }
+  .header-center {
+    flex: 1;
+    text-align: center;
   }
   .header-title {
     color: #FFFFFF;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
   .header-sub {
     color: rgba(255,255,255,0.5);
-    font-size: 12px;
-    margin-top: 4px;
-    letter-spacing: 0.03em;
+    font-size: 11px;
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+  }
+  .header-right {
+    width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
   }
   .heraldry {
-    width: 60px; height: 60px;
+    width: 52px; height: 52px;
     border: 1.5px dashed rgba(255,255,255,0.3);
     border-radius: 4px;
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .heraldry-text {
-    color: rgba(255,255,255,0.2);
     font-size: 9px;
+    color: rgba(255,255,255,0.2);
     text-align: center;
-    font-family: 'Inter', sans-serif;
   }
-  .guilloché {
+
+  .guilloche-bar {
     overflow: hidden;
-    height: 110px;
+    height: 60px;
     background: #F8F9FB;
-  }
-  .passport-number-section {
-    padding: 20px 32px 16px;
     border-bottom: 1px solid #E5E7EB;
+  }
+
+  .passport-number-row {
+    padding: 22px 40px 18px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
   }
   .passport-number-label {
     font-size: 10px;
@@ -153,13 +124,28 @@ async function renderPassportPdf(passport: {
   }
   .passport-number {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: #0A1628;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
-  .fields {
-    padding: 20px 32px;
+  .photo-placeholder {
+    width: 90px;
+    height: 110px;
+    border: 1.5px dashed #D0D7E3;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #D0D7E3;
+    text-align: center;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+  }
+
+  .fields-section {
+    padding: 20px 40px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
@@ -176,45 +162,75 @@ async function renderPassportPdf(passport: {
     color: #1F2937;
     font-weight: 500;
   }
+
   .footer {
+    border-top: 1px solid #E5E7EB;
     background: #F8F9FB;
-    padding: 16px 32px;
+    padding: 16px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #E5E7EB;
+  }
+  .signature-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .signature-line {
+    width: 180px;
+    border-bottom: 1px solid #6B7280;
+    height: 22px;
   }
   .signature-label {
     font-size: 11px;
     color: #6B7280;
     font-style: italic;
   }
-  .barcode-wrap {
+  .barcode-block {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
   }
   .barcode-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     color: #9CA3AF;
+    letter-spacing: 0.05em;
+  }
+  .doc-footer-strip {
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #C4C9D4;
+    border-top: 1px solid #F0F2F5;
   }
 </style>
 </head>
 <body>
-<div class="card">
   <div class="header">
-    <div class="header-title">Государство Пельагрия</div>
-    <div class="header-sub">Внутренний паспорт гражданина</div>
-    <div class="heraldry"><span class="heraldry-text">ГЕРБ</span></div>
+    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+    <div class="header-center">
+      <div class="header-title">Внутренний паспорт гражданина</div>
+      <div class="header-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
+    </div>
+    <div class="header-right">
+      <div class="heraldry">ГЕРБ</div>
+    </div>
   </div>
-  <div class="guilloché">${guilloché}</div>
-  <div class="passport-number-section">
-    <div class="passport-number-label">Номер паспорта</div>
-    <div class="passport-number">${passport.number}</div>
+
+  <div class="guilloche-bar">${guilloche}</div>
+
+  <div class="passport-number-row">
+    <div>
+      <div class="passport-number-label">Номер паспорта</div>
+      <div class="passport-number">${passport.number}</div>
+    </div>
+    <div class="photo-placeholder">МЕСТО<br>ДЛЯ<br>ФОТО</div>
   </div>
-  <div class="fields">
+
+  <div class="fields-section">
     <div>
       <div class="field-label">Никнейм</div>
       <div class="field-value">${passport.citizen.nickname}</div>
@@ -224,12 +240,12 @@ async function renderPassportPdf(passport: {
       <div class="field-value">${passport.citizen.discord_username ?? '—'}</div>
     </div>
     <div>
-      <div class="field-label">Роль / Звание</div>
+      <div class="field-label">Роль в государстве</div>
       <div class="field-value">${passport.citizen.role_title}</div>
     </div>
     <div>
       <div class="field-label">Рег. номер</div>
-      <div class="field-value" style="font-family:'JetBrains Mono',monospace;">${passport.citizen.reg_number}</div>
+      <div class="field-value" style="font-family:'JetBrains Mono',monospace;color:#1B3A6B;">${passport.citizen.reg_number}</div>
     </div>
     <div>
       <div class="field-label">Дата выдачи</div>
@@ -240,27 +256,25 @@ async function renderPassportPdf(passport: {
       <div class="field-value">${expiresDate}</div>
     </div>
   </div>
+
   <div class="footer">
-    <div class="signature-label">Глава государства</div>
-    <div class="barcode-wrap">
+    <div class="signature-block">
+      <div class="signature-line"></div>
+      <div class="signature-label">Глава государства</div>
+    </div>
+    <div class="barcode-block">
       ${barcode}
       <div class="barcode-text">${passport.number}</div>
     </div>
   </div>
-</div>
+  <div class="doc-footer-strip">
+    <span>Государственная информационная система СОНАР</span>
+    <span>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</span>
+  </div>
 </body>
 </html>`
 
-  const browser = await puppeteer.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
-  const page = await browser.newPage()
-  await page.setContent(html, { waitUntil: 'networkidle0' })
-  const pdfBuffer = await page.pdf({
-    format: 'A5',
-    printBackground: true,
-    margin: { top: '16px', bottom: '16px', left: '16px', right: '16px' },
-  })
-  await browser.close()
-  return Buffer.from(pdfBuffer)
+  return htmlToPdf(html)
 }
 
 // GET /api/passports

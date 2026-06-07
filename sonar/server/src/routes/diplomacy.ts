@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, RelationStatus, TreatyType, TreatyStatus } from '@prisma/client'
-import puppeteer from 'puppeteer-core'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { htmlToPdf } from '../services/pdf'
+import { guillochePattern } from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -13,23 +14,6 @@ async function generateTreatyNumber(): Promise<string> {
   return `ДПЛ-${String(seq).padStart(3, '0')}`
 }
 
-function generateGuilloché(seed: string): string {
-  const chars = seed.split('').map((c) => c.charCodeAt(0))
-  const lines: string[] = []
-  for (let i = 0; i < 6; i++) {
-    const amp = 5 + (chars[i % chars.length] % 7)
-    const freq = 0.012 + (chars[(i + 1) % chars.length] % 10) * 0.003
-    const phase = (chars[(i + 2) % chars.length] % 10) * 0.4
-    const yBase = 8 + i * 13
-    const pts: string[] = []
-    for (let x = 0; x <= 700; x += 5) {
-      const y = yBase + amp * Math.sin(freq * x + phase)
-      pts.push(`${x},${y.toFixed(2)}`)
-    }
-    lines.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="#1B3A6B" stroke-width="0.8" opacity="0.15"/>`)
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="90">${lines.join('')}</svg>`
-}
 
 async function renderTreatyPdf(treaty: {
   number: string
@@ -38,7 +22,6 @@ async function renderTreatyPdf(treaty: {
   signed_at: Date
   state: { name: string } | null
 }): Promise<Buffer> {
-  const guilloché = generateGuilloché(treaty.number)
   const typeLabels: Record<TreatyType, string> = {
     NON_AGGRESSION: 'Пакт о ненападении',
     ALLIANCE: 'Договор о союзе',
@@ -47,6 +30,7 @@ async function renderTreatyPdf(treaty: {
   }
   const typeLabel = typeLabels[treaty.type] ?? 'Договор'
   const signedDate = treaty.signed_at.toLocaleDateString('ru-RU')
+  const guilloche = guillochePattern(treaty.number, 794, 50)
   const bodyHtml = treaty.body
     .split('\n')
     .map((line) => `<p>${line || '&nbsp;'}</p>`)
@@ -57,57 +41,115 @@ async function renderTreatyPdf(treaty: {
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#F2F4F7; font-family:'Inter',sans-serif; padding:32px; }
-  .card { background:#FFFFFF; max-width:640px; margin:0 auto; border-radius:8px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.1); }
-  .header { background:#0A1628; padding:28px 36px 24px; }
-  .header-state { color:rgba(255,255,255,0.5); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
-  .header-docnum { color:#FFFFFF; font-size:22px; font-weight:700; letter-spacing:0.04em; margin-bottom:4px; }
-  .header-parties { color:rgba(255,255,255,0.7); font-size:13px; }
-  .guilloché { background:#F8F9FB; overflow:hidden; height:90px; }
-  .body-section { padding:28px 36px; }
-  .doc-title { font-size:16px; font-weight:700; color:#0A1628; margin-bottom:20px; }
-  .doc-body p { font-size:14px; color:#374151; line-height:1.7; margin-bottom:8px; }
-  .footer { border-top:1px solid #E5E7EB; padding:20px 36px; display:flex; justify-content:space-between; align-items:flex-end; background:#F8F9FB; }
-  .date-wrap .date-label { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
-  .date-wrap .date-value { font-size:14px; color:#374151; font-weight:500; }
-  .signature { font-size:12px; color:#6B7280; font-style:italic; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+
+  .header {
+    background: #0A1628;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+  }
+  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
+  .header-center { flex: 1; text-align: center; }
+  .header-doctype { color: #FFFFFF; font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .header-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 5px; }
+  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  .guilloche-bar { overflow: hidden; height: 50px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
+
+  .parties-banner {
+    background: #F0F4FA;
+    border-bottom: 1px solid #D0D7E3;
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0A1628;
+  }
+  .party-arrow { color: #4A90D9; font-size: 18px; }
+
+  .content { padding: 32px 40px 28px; }
+  .doc-number { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A90D9; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .doc-type-title { font-size: 18px; font-weight: 700; color: #0A1628; margin-bottom: 24px; }
+  .doc-body p { font-size: 14px; color: #374151; line-height: 1.8; margin-bottom: 8px; }
+
+  .footer {
+    border-top: 1px solid #E5E7EB;
+    background: #F8F9FB;
+    padding: 20px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .sig-block { }
+  .sig-line { border-bottom: 1px solid #6B7280; height: 28px; margin-bottom: 6px; }
+  .sig-label { font-size: 11px; color: #6B7280; font-style: italic; }
+  .sig-party { font-size: 12px; color: #374151; font-weight: 500; margin-bottom: 4px; }
+  .date-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .date-value { font-size: 13px; color: #374151; font-weight: 500; }
+  .doc-footer-strip {
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #C4C9D4;
+    border-top: 1px solid #F0F2F5;
+  }
 </style>
 </head>
 <body>
-<div class="card">
   <div class="header">
-    <div class="header-state">Государство Пельагрия</div>
-    <div class="header-docnum">Договор №${treaty.number}</div>
-    <div class="header-parties">${typeLabel}${treaty.state ? ' · ' + treaty.state.name : ''}</div>
+    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+    <div class="header-center">
+      <div class="header-doctype">Дипломатический договор</div>
+      <div class="header-sub">№${treaty.number}</div>
+    </div>
+    <div class="header-right">${signedDate}</div>
   </div>
-  <div class="guilloché">${guilloché}</div>
-  <div class="body-section">
-    <div class="doc-title">${typeLabel}</div>
+  <div class="guilloche-bar">${guilloche}</div>
+
+  <div class="parties-banner">
+    <span>Государство Пельагрия</span>
+    <span class="party-arrow">⟺</span>
+    <span>${treaty.state?.name ?? 'Неизвестное государство'}</span>
+  </div>
+
+  <div class="content">
+    <div class="doc-number">Договор №${treaty.number}</div>
+    <div class="doc-type-title">${typeLabel}</div>
     <div class="doc-body">${bodyHtml}</div>
   </div>
+
   <div class="footer">
-    <div class="date-wrap">
-      <div class="date-label">Дата подписания</div>
-      <div class="date-value">${signedDate}</div>
+    <div class="sig-block">
+      <div class="sig-party">Государство Пельагрия</div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Глава государства</div>
+      <div style="margin-top:12px;">
+        <div class="date-label">Дата подписания</div>
+        <div class="date-value">${signedDate}</div>
+      </div>
     </div>
-    <div class="signature">Глава государства</div>
+    <div class="sig-block">
+      <div class="sig-party">${treaty.state?.name ?? '—'}</div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Уполномоченный представитель</div>
+    </div>
   </div>
-</div>
+  <div class="doc-footer-strip">
+    <span>Государственная информационная система СОНАР</span>
+    <span>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</span>
+  </div>
 </body>
 </html>`
 
-  const browser = await puppeteer.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] })
-  const page = await browser.newPage()
-  await page.setContent(html, { waitUntil: 'networkidle0' })
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' },
-  })
-  await browser.close()
-  return Buffer.from(pdfBuffer)
+  return htmlToPdf(html)
 }
 
 // GET /api/diplomacy/states

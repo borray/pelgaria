@@ -5,6 +5,8 @@ import path from 'path'
 import fs from 'fs'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { htmlToPdf } from '../services/pdf'
+import { guillochePattern } from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -95,6 +97,155 @@ router.post('/', requireAuth, requirePermission('relict.create'), async (req: Re
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
+// GET /api/buildings/registry/pdf  — must be before /:id to avoid route shadowing
+router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async (_req: Request, res: Response) => {
+  try {
+    const buildings = await prisma.building.findMany({
+      orderBy: { reg_number: 'asc' },
+      include: {
+        owner: { select: { id: true, reg_number: true, nickname: true } },
+      },
+    })
+
+    const guilloche = guillochePattern('buildings-registry', 794, 40)
+    const printDate = new Date().toLocaleDateString('ru-RU')
+
+    const totalTax = buildings.reduce((s, b) => s + b.tax_rate, 0)
+
+    const typeLabels: Record<BuildingType, string> = {
+      RESIDENTIAL: 'Жилое',
+      GOVERNMENT: 'Государственное',
+      COMMERCIAL: 'Коммерческое',
+      MILITARY: 'Военное',
+    }
+    const statusLabels: Record<BuildingStatus, string> = {
+      ACTIVE: 'Активен',
+      UNDER_CONSTRUCTION: 'В строительстве',
+      ABANDONED: 'Заброшен',
+      DEMOLISHED: 'Снесён',
+    }
+    const statusColors: Record<BuildingStatus, string> = {
+      ACTIVE: '#16A34A',
+      UNDER_CONSTRUCTION: '#D97706',
+      ABANDONED: '#6B7280',
+      DEMOLISHED: '#DC2626',
+    }
+
+    const rowsHtml = buildings.map((b, i) => `
+      <tr style="background:${i % 2 === 0 ? '#FFFFFF' : '#F9FAFB'};">
+        <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#1B3A6B;border-bottom:1px solid #F3F4F6;">${b.reg_number}</td>
+        <td style="padding:6px 8px;font-size:12px;font-weight:500;color:#0A1628;border-bottom:1px solid #F3F4F6;">${b.name}</td>
+        <td style="padding:6px 8px;font-size:11px;color:#374151;border-bottom:1px solid #F3F4F6;">${typeLabels[b.type] ?? b.type}</td>
+        <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${b.coord_x},${b.coord_y},${b.coord_z}</td>
+        <td style="padding:6px 8px;font-size:12px;color:#374151;border-bottom:1px solid #F3F4F6;">${b.owner?.nickname ?? '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:600;color:${statusColors[b.status]};border-bottom:1px solid #F3F4F6;">${statusLabels[b.status] ?? b.status}</td>
+        <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#374151;text-align:right;border-bottom:1px solid #F3F4F6;">${b.tax_rate}</td>
+      </tr>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+  .header { background: #0A1628; height: 80px; display: flex; align-items: center; padding: 0 40px; }
+  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
+  .header-center { flex: 1; text-align: center; }
+  .header-doctype { color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 3px; }
+  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
+  .guilloche-bar { overflow: hidden; height: 40px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
+  .summary-bar { padding: 14px 40px; background: #F0F4FA; border-bottom: 1px solid #D0D7E3; display: flex; gap: 40px; }
+  .sum-item .sum-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .sum-item .sum-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #0A1628; }
+  .content { padding: 24px 40px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; padding: 7px 8px; text-align: left; border-bottom: 2px solid #E5E7EB; background: #F8F9FB; }
+  .totals-row td { padding: 9px 8px; font-size: 12px; font-weight: 700; color: #0A1628; border-top: 2px solid #0A1628; background: #F0F4FA; }
+  .footer { border-top: 1px solid #E5E7EB; background: #F8F9FB; padding: 14px 40px; display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; }
+  .doc-footer-strip { padding: 10px 40px; display: flex; justify-content: space-between; font-size: 10px; color: #C4C9D4; border-top: 1px solid #F0F2F5; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+    <div class="header-center">
+      <div class="header-doctype">Реестр построек — Реликт</div>
+      <div class="header-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
+    </div>
+    <div class="header-right">${printDate}</div>
+  </div>
+  <div class="guilloche-bar">${guilloche}</div>
+
+  <div class="summary-bar">
+    <div class="sum-item">
+      <div class="sum-label">Объектов всего</div>
+      <div class="sum-value">${buildings.length}</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Активных</div>
+      <div class="sum-value">${buildings.filter((b) => b.status === 'ACTIVE').length}</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Суммарный налог</div>
+      <div class="sum-value">${totalTax} у.е.</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:90px;">Номер</th>
+          <th>Название</th>
+          <th style="width:90px;">Тип</th>
+          <th style="width:110px;">Координаты</th>
+          <th style="width:110px;">Владелец</th>
+          <th style="width:90px;">Статус</th>
+          <th style="width:60px;text-align:right;">Налог</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+        <tr class="totals-row">
+          <td></td>
+          <td>ИТОГО</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>${buildings.filter((b) => b.status === 'ACTIVE').length} активных</td>
+          <td style="font-family:'JetBrains Mono',monospace;text-align:right;">${totalTax}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>Дата составления: ${printDate}</span>
+    <span>Государственная информационная система СОНАР</span>
+  </div>
+  <div class="doc-footer-strip">
+    <span>Реестр объектов государства Пельагрия</span>
+    <span>Дата печати: ${printDate}</span>
+  </div>
+</body>
+</html>`
+
+    const pdfBuffer = await htmlToPdf(html)
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="buildings-registry-${printDate.replace(/\./g, '-')}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    })
+    res.send(pdfBuffer)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Ошибка генерации PDF' })
   }
 })
 
