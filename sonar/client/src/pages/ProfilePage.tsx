@@ -9,7 +9,7 @@ import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 
 export function ProfilePage() {
-  const { user, refresh } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [discordStatus, setDiscordStatus] = useState<string | null>(null)
 
@@ -31,7 +31,8 @@ export function ProfilePage() {
   const handleUnlinkDiscord = async () => {
     try {
       await api.delete('/auth/discord')
-      await refresh()
+      const profile = await api.get('/auth/me')
+      setUser(profile.data)
       setDiscordStatus('Discord отвязан')
     } catch {
       setDiscordStatus('Ошибка при отвязке Discord')
@@ -55,8 +56,8 @@ export function ProfilePage() {
     setPwLoading(true)
     try {
       await api.post('/auth/change-password', {
-        current_password: pwForm.current,
-        new_password: pwForm.next,
+        currentPassword: pwForm.current,
+        newPassword: pwForm.next,
       })
       setPwSuccess(true)
       setPwForm({ current: '', next: '', confirm: '' })

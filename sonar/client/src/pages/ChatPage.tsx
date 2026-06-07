@@ -9,12 +9,12 @@ import { Select } from '../components/ui/Select'
 import { formatDateTime } from '../utils/formatters'
 
 let socket: Socket | null = null
+type ChatUser = Pick<User, 'id' | 'login' | 'discord_username' | 'discord_avatar'>
 
-function getSocket(userId: string, token: string): Socket {
+function getSocket(token: string): Socket {
   if (!socket || !socket.connected) {
     socket = io('/', {
-      auth: { userId },
-      extraHeaders: { Authorization: `Bearer ${token}` },
+      auth: { token },
       transports: ['websocket', 'polling'],
     })
   }
@@ -29,7 +29,7 @@ export function ChatPage() {
   const [body, setBody] = useState('')
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [users, setUsers] = useState<User[]>([])
+  const [users, setUsers] = useState<ChatUser[]>([])
   const [showNewConvModal, setShowNewConvModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -45,10 +45,10 @@ export function ChatPage() {
 
   useEffect(() => {
     fetchConversations()
-    apiClient.get<User[]>('/accounts').then((r) => setUsers(r.data)).catch(() => {})
+    apiClient.get<ChatUser[]>('/chat/users').then((r) => setUsers(r.data)).catch(() => {})
 
     if (user && accessToken) {
-      const sock = getSocket(user.id, accessToken)
+      const sock = getSocket(accessToken)
       socketRef.current = sock
 
       sock.on('new_message', (message: ChatMessage) => {

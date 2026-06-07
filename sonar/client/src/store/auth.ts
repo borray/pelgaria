@@ -11,6 +11,7 @@ interface AuthState {
   logout: () => void
   refresh: () => Promise<void>
   setTokens: (accessToken: string, refreshToken: string, user: User) => void
+  setUser: (user: User) => void
   hasPermission: (perm: string) => boolean
 }
 
@@ -78,6 +79,8 @@ export const useAuthStore = create<AuthState>()(
       setTokens: (accessToken: string, refreshToken: string, user: User) => {
         set({ accessToken, refreshToken, user })
       },
+
+      setUser: (user: User) => set({ user }),
 
       hasPermission: (perm: string) => {
         const { user } = get()

@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
+import type { Server as SocketIOServer } from 'socket.io'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 
@@ -21,7 +22,64 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`)
   },
 })
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } })
+const blockedAttachmentTypes = new Set([
+  'text/html',
+  'image/svg+xml',
+  'application/javascript',
+  'text/javascript',
+])
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, !blockedAttachmentTypes.has(file.mimetype))
+  },
+})
+
+async function isParticipant(conversationId: string, userId: string): Promise<boolean> {
+  const participant = await prisma.chatParticipant.findFirst({
+    where: { conversation_id: conversationId, user_id: userId },
+    select: { id: true },
+  })
+  return Boolean(participant)
+}
+
+async function emitMessage(
+  io: SocketIOServer,
+  conversationId: string,
+  message: unknown
+): Promise<void> {
+  const participants = await prisma.chatParticipant.findMany({
+    where: { conversation_id: conversationId },
+    select: { user_id: true },
+  })
+  for (const participant of participants) {
+    io.to(`user:${participant.user_id}`).emit('new_message', message)
+  }
+}
+
+// GET /api/chat/users
+router.get('/users', requireAuth, requirePermission('chat.send'), async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        is_active: true,
+        id: { not: req.user!.id },
+      },
+      orderBy: { login: 'asc' },
+      select: {
+        id: true,
+        login: true,
+        discord_username: true,
+        discord_avatar: true,
+      },
+    })
+    res.json(users)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
 
 // GET /api/chat/conversations
 router.get('/conversations', requireAuth, requirePermission('chat.send'), async (req: Request, res: Response) => {
@@ -146,6 +204,11 @@ router.get('/conversations/:id/messages', requireAuth, requirePermission('chat.s
     const limit = parseInt((req.query.limit as string) || '50', 10)
     const before = req.query.before as string | undefined
 
+    if (!(await isParticipant(id, req.user!.id))) {
+      res.status(403).json({ error: 'Нет доступа к этой беседе' })
+      return
+    }
+
     const where: { conversation_id: string; created_at?: { lt: Date } } = { conversation_id: id }
     if (before) {
       where.created_at = { lt: new Date(before) }
@@ -187,9 +250,8 @@ router.post('/conversations/:id/messages', requireAuth, requirePermission('chat.
       return
     }
 
-    const conv = await prisma.chatConversation.findUnique({ where: { id } })
-    if (!conv) {
-      res.status(404).json({ error: 'Беседа не найдена' })
+    if (!(await isParticipant(id, userId))) {
+      res.status(403).json({ error: 'Нет доступа к этой беседе' })
       return
     }
 
@@ -213,6 +275,8 @@ router.post('/conversations/:id/messages', requireAuth, requirePermission('chat.
       },
     })
 
+    const io = req.app.get('io') as SocketIOServer
+    await emitMessage(io, id, message)
     res.status(201).json(message)
   } catch (err) {
     console.error(err)
@@ -231,9 +295,11 @@ router.post('/conversations/:id/attachments', requireAuth, requirePermission('ch
       return
     }
 
-    const conv = await prisma.chatConversation.findUnique({ where: { id } })
-    if (!conv) {
-      res.status(404).json({ error: 'Беседа не найдена' })
+    if (!(await isParticipant(id, req.user!.id))) {
+      for (const file of files) {
+        fs.unlink(file.path, () => {})
+      }
+      res.status(403).json({ error: 'Нет доступа к этой беседе' })
       return
     }
 
@@ -259,6 +325,8 @@ router.post('/conversations/:id/attachments', requireAuth, requirePermission('ch
       },
     })
 
+    const io = req.app.get('io') as SocketIOServer
+    await emitMessage(io, id, message)
     res.status(201).json(message)
   } catch (err) {
     console.error(err)
