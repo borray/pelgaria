@@ -19,6 +19,7 @@ const PATH_LABELS: Record<string, string> = {
   login: 'Вход',
   'change-password': 'Смена пароля',
   profile: 'Профиль',
+  'print-center': 'Центр печати',
 }
 
 interface Crumb {

@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -128,8 +129,8 @@ export function CasesPage() {
     {
       key: 'registry_code',
       header: 'ШК',
-      width: '150px',
-      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
+      width: '210px',
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'judge',

@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { printPdf } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -146,12 +147,8 @@ export function BuildingsPage() {
     {
       key: 'reg_number',
       header: 'Рег. номер',
-      width: '120px',
-      render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
-          {row.reg_number}
-        </span>
-      ),
+      width: '210px',
+      render: (row) => <RegistryMark code={row.reg_number} compact />,
     },
     {
       key: 'name',
@@ -253,7 +250,8 @@ export function BuildingsPage() {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Зарегистрировать объект"
-        width={560}
+        description="Новая запись РЕЛИКТ получит регистрационный номер и защищенный технический паспорт."
+        width={680}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>

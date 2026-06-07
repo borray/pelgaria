@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { formatDate } from '../utils/formatters'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -107,12 +108,8 @@ export function CitizensPage() {
     {
       key: 'reg_number',
       header: 'Рег. номер',
-      width: '130px',
-      render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B' }}>
-          {row.reg_number}
-        </span>
-      ),
+      width: '210px',
+      render: (row) => <RegistryMark code={row.reg_number} compact />,
     },
     {
       key: 'nickname',

@@ -12,6 +12,10 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, width = 520 }: ModalProps) {
+  const destructive = /удал|отоз|списат|закрыть дело/i.test(title)
+  const contextDescription = description ?? (destructive
+    ? 'Необратимая служебная операция. Проверьте выбранную запись и последствия действия.'
+    : 'Служебная операция СОНАР. Проверьте сведения перед подтверждением.')
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -47,7 +51,10 @@ export function Modal({ open, onClose, title, description, children, footer, wid
       }}
     >
       <div
-        className="modal-dialog"
+        className={`modal-dialog${destructive ? ' is-destructive' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#FFFFFF',
@@ -81,7 +88,7 @@ export function Modal({ open, onClose, title, description, children, footer, wid
           <div className="modal-heading">
             <span>СОНАР · Операция</span>
             <h2>{title}</h2>
-            {description && <p>{description}</p>}
+            <p>{contextDescription}</p>
           </div>
           <button
             onClick={onClose}

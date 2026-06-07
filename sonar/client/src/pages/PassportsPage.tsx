@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -32,6 +33,7 @@ export function PassportsPage() {
   const [selectedCitizenId, setSelectedCitizenId] = useState('')
   const [issuedAt, setIssuedAt] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
+  const [validity, setValidity] = useState<'2Y' | '5Y' | 'PERMANENT'>('2Y')
   const [issueLoading, setIssueLoading] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
@@ -69,6 +71,7 @@ export function PassportsPage() {
     setSelectedCitizenId('')
     setIssuedAt('')
     setExpiresAt('')
+    setValidity('2Y')
     setIssueError(null)
     fetchCitizens()
   }
@@ -108,6 +111,25 @@ export function PassportsPage() {
     }
   }
 
+  const updateIssueDate = (value: string) => {
+    setIssuedAt(value)
+    if (!value || validity === 'PERMANENT') return
+    const date = new Date(`${value}T00:00:00`)
+    date.setFullYear(date.getFullYear() + (validity === '5Y' ? 5 : 2))
+    setExpiresAt(date.toISOString().slice(0, 10))
+  }
+
+  const updateValidity = (value: '2Y' | '5Y' | 'PERMANENT') => {
+    setValidity(value)
+    if (value === 'PERMANENT') {
+      setExpiresAt('')
+    } else if (issuedAt) {
+      const date = new Date(`${issuedAt}T00:00:00`)
+      date.setFullYear(date.getFullYear() + (value === '5Y' ? 5 : 2))
+      setExpiresAt(date.toISOString().slice(0, 10))
+    }
+  }
+
   const columns: TableColumn<Passport>[] = [
     {
       key: 'number',
@@ -141,8 +163,8 @@ export function PassportsPage() {
     {
       key: 'registry_code',
       header: 'ШК',
-      width: '150px',
-      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
+      width: '210px',
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'expires_at',
@@ -232,7 +254,7 @@ export function PassportsPage() {
         open={showIssueModal}
         onClose={() => setShowIssueModal(false)}
         description="Номер паспорта и ШК будут присвоены автоматически реестром СОНАР."
-        width={620}
+        width={760}
         title="Выдать паспорт"
         footer={
           <>
@@ -241,31 +263,31 @@ export function PassportsPage() {
           </>
         }
       >
-        <form onSubmit={handleIssue} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Select
-            label="Гражданин *"
-            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
-            placeholder="— Выберите гражданина —"
-            value={selectedCitizenId}
-            onChange={(e) => setSelectedCitizenId(e.target.value)}
-            searchable
-          />
-          <Input
-            label="Дата выдачи"
-            type="date"
-            value={issuedAt}
-            onChange={(e) => setIssuedAt(e.target.value)}
-          />
-          <Input
-            label="Действителен до"
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-          />
-          {issueError && (
-            <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>
-              {issueError}
+        <form onSubmit={handleIssue} className="form-section-stack">
+          <section className="form-section">
+            <div className="form-section-heading"><span>01</span><div><strong>Получатель документа</strong><small>Проверьте реестровую запись перед выдачей</small></div></div>
+            <Select label="Гражданин *" options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))} placeholder="— Найдите гражданина —" value={selectedCitizenId} onChange={(e) => setSelectedCitizenId(e.target.value)} searchable />
+            {selectedCitizenId && <div className="document-preview"><RegistryMark code={citizens.find((c) => c.id === selectedCitizenId)?.reg_number} compact /><span>Паспорт будет связан с выбранной записью гражданина</span></div>}
+          </section>
+          <section className="form-section">
+            <div className="form-section-heading"><span>02</span><div><strong>Срок и реквизиты</strong><small>Номер паспорта и ШК создаются автоматически</small></div></div>
+            <div className="number-mode passport-validity">
+              <button type="button" className={validity === '2Y' ? 'is-active' : ''} onClick={() => updateValidity('2Y')}>2 года</button>
+              <button type="button" className={validity === '5Y' ? 'is-active' : ''} onClick={() => updateValidity('5Y')}>5 лет</button>
+              <button type="button" className={validity === 'PERMANENT' ? 'is-active' : ''} onClick={() => updateValidity('PERMANENT')}>Бессрочно</button>
             </div>
+            <div className="form-grid" style={{ marginTop: 14 }}>
+              <Input label="Дата выдачи" type="date" value={issuedAt} onChange={(e) => updateIssueDate(e.target.value)} />
+              <Input label="Действителен до" type="date" disabled={validity === 'PERMANENT'} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+            </div>
+          </section>
+          <section className="passport-confirm">
+            <div><span>Серия</span><strong>ПСП · автоматически</strong></div>
+            <div><span>Защита</span><strong>ШК + штрихкод + гильош</strong></div>
+            <div><span>Вывод</span><strong>PDF для ч/б печати</strong></div>
+          </section>
+          {issueError && (
+            <div className="form-error">{issueError}</div>
           )}
         </form>
       </Modal>

@@ -43,7 +43,7 @@ async function renderPassportPdf(passport: {
   issued_by: { login: string } | null
 }): Promise<Buffer> {
   const seed = passport.number
-  const barcodeData = `${passport.number}|${passport.citizen.nickname}|${passport.issued_at.toISOString().slice(0, 10)}`
+  const barcodeData = passport.registry_code ?? `${passport.number}|${passport.citizen.nickname}|${passport.issued_at.toISOString().slice(0, 10)}`
   const hash8 = crypto.createHash('sha256').update(barcodeData).digest('hex').slice(0, 8)
   const barcode = barcodeStripes(`${barcodeData}|${hash8}`, 320, 40)
   const rosette = guillocheRosette(seed, 150)
@@ -83,7 +83,7 @@ async function renderPassportPdf(passport: {
 
   const body = `
     <div class="pp-numberbar">
-      <div><div class="pp-label">НОМЕР ПАСПОРТА / PASSPORT №</div><div class="pp-number">${passport.number}</div></div>
+      <div><div class="pp-label">НОМЕР ПАСПОРТА / PASSPORT №</div><div class="pp-number">${passport.number}</div><div class="pp-registry">${passport.registry_code ?? ''}</div></div>
       <div class="pp-emblem">⬢</div>
     </div>
     <div class="pp-grid">
@@ -117,6 +117,7 @@ async function renderPassportPdf(passport: {
     .pp-numberbar { display:flex; align-items:flex-end; justify-content:space-between; padding:24px 4px 18px; border-bottom:2px solid ${ACCENT}33; }
     .pp-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
     .pp-number { font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:700; color:${INK}; letter-spacing:0.06em; }
+    .pp-registry { font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:5px; letter-spacing:.05em; color:#374151; }
     .pp-emblem { font-size:40px; color:${ACCENT}55; }
     .pp-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px 28px; padding:26px 4px; }
     .pp-value { font-size:15px; color:#1F2937; font-weight:500; }

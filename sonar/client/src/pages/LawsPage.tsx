@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -122,12 +123,8 @@ export function LawsPage() {
     {
       key: 'registry_code',
       header: 'ШК',
-      width: '150px',
-      render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#64748B' }}>
-          {row.registry_code ?? 'Формируется'}
-        </span>
-      ),
+      width: '210px',
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'type',

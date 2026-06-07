@@ -7,6 +7,7 @@ import type { ChatConversation, ChatMessage, User } from '../types'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { formatDateTime } from '../utils/formatters'
+import { Modal } from '../components/ui/Modal'
 
 let socket: Socket | null = null
 type ChatUser = Pick<User, 'id' | 'login' | 'discord_username' | 'discord_avatar'>
@@ -288,35 +289,26 @@ export function ChatPage() {
         )}
       </div>
 
-      {showNewConvModal && (
-        <div onClick={() => setShowNewConvModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: '4px', padding: '24px', width: '360px', fontFamily: 'Inter, sans-serif' }}>
-            <h2 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#0A1628' }}>Новая беседа</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Button variant="secondary" onClick={() => handleCreateConversation('GENERAL')} style={{ justifyContent: 'flex-start' }}>
-                Общий чат
-              </Button>
-              <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '12px' }}>
-                <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Личная беседа</div>
-                <Select
-                  options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))}
-                  placeholder="— Выберите пользователя —"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  searchable
-                  style={{ marginBottom: '8px' }}
-                />
-                <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')}>
-                  Начать беседу
-                </Button>
-              </div>
-            </div>
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-              <Button variant="secondary" size="sm" onClick={() => setShowNewConvModal(false)}>Закрыть</Button>
-            </div>
-          </div>
+      <Modal
+        open={showNewConvModal}
+        onClose={() => setShowNewConvModal(false)}
+        title="Новая служебная беседа"
+        description="Создайте общий канал или защищённый диалог с сотрудником."
+        width={520}
+        footer={<Button variant="secondary" onClick={() => setShowNewConvModal(false)}>Закрыть</Button>}
+      >
+        <div className="form-section-stack">
+          <section className="form-section">
+            <div className="form-section-heading"><span>Канал</span><div><strong>Общая служебная связь</strong><small>Доступна участникам общего канала</small></div></div>
+            <Button variant="secondary" onClick={() => handleCreateConversation('GENERAL')}>Открыть общий чат</Button>
+          </section>
+          <section className="form-section">
+            <div className="form-section-heading"><span>Диалог</span><div><strong>Личная беседа</strong><small>Выберите одного получателя</small></div></div>
+            <Select options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))} placeholder="— Выберите пользователя —" value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} searchable />
+            <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')} style={{ marginTop: 12 }}>Начать беседу</Button>
+          </section>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }
