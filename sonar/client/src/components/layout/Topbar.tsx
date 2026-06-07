@@ -1,4 +1,4 @@
-import { IconLogout } from '@tabler/icons-react'
+import { IconLogout, IconMenu2 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 import { useNavigate, Link } from 'react-router-dom'
 
@@ -14,7 +14,7 @@ function RadarIcon() {
   )
 }
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -25,20 +25,44 @@ export function Topbar() {
 
   return (
     <header
+      className="app-topbar"
       style={{
         height: '56px',
         background: '#0A1628',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 24px',
         flexShrink: 0,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <RadarIcon />
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+        <button
+          className="mobile-menu-button"
+          onClick={onMenuClick}
+          aria-label="Открыть меню"
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: '#FFFFFF',
+            borderRadius: 8,
+            width: 36,
+            height: 36,
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <IconMenu2 size={20} />
+        </button>
+        <Link
+          to="/"
+          aria-label="Главная СОНАР"
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}
+        >
+          <RadarIcon />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
           <span
+            className="app-subtitle"
             style={{
               fontFamily: "'Unbounded', sans-serif",
               fontWeight: 800,
@@ -64,7 +88,8 @@ export function Topbar() {
           >
             Государство Пельагрия
           </span>
-        </div>
+          </div>
+        </Link>
       </div>
 
       {user && (

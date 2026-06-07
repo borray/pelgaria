@@ -14,6 +14,7 @@ import {
   IconMessageCircle,
   IconUserCog,
   IconShield,
+  IconLayoutDashboard,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 
@@ -30,10 +31,20 @@ interface NavSection {
   items: NavItem[]
 }
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { hasPermission } = useAuthStore()
 
   const sections: NavSection[] = [
+    {
+      title: 'Сводка',
+      items: [
+        {
+          to: '/',
+          label: 'Главная',
+          icon: <IconLayoutDashboard size={16} />,
+        },
+      ],
+    },
     {
       title: 'Реестр',
       items: [
@@ -155,17 +166,24 @@ export function Sidebar() {
   ]
 
   return (
-    <nav
-      style={{
-        width: '240px',
-        background: '#0D1E35',
-        flexShrink: 0,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '8px 0',
-      }}
-    >
+    <>
+      <button
+        className={`sidebar-backdrop${open ? ' is-open' : ''}`}
+        onClick={onClose}
+        aria-label="Закрыть меню"
+      />
+      <nav
+        className={`app-sidebar${open ? ' is-open' : ''}`}
+        style={{
+          width: '240px',
+          background: '#0D1E35',
+          flexShrink: 0,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '8px 0',
+        }}
+      >
       {sections.map((section) => {
         const visibleItems = section.items.filter(
           (item) => !item.permission || hasPermission(item.permission)
@@ -191,6 +209,8 @@ export function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === '/'}
+                onClick={onClose}
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
@@ -248,6 +268,7 @@ export function Sidebar() {
           </div>
         )
       })}
-    </nav>
+      </nav>
+    </>
   )
 }

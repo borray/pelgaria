@@ -32,7 +32,12 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`)
   },
 })
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } })
+const allowedScreenshotTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, allowedScreenshotTypes.has(file.mimetype)),
+})
 
 async function generateBuildingNumber(): Promise<string> {
   const count = await prisma.building.count()

@@ -18,6 +18,7 @@ const PATH_LABELS: Record<string, string> = {
   roles: 'Роли',
   login: 'Вход',
   'change-password': 'Смена пароля',
+  profile: 'Профиль',
 }
 
 interface Crumb {
