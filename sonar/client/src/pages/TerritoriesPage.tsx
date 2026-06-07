@@ -163,13 +163,14 @@ export function TerritoriesPage() {
   const TerritoryFormContent = (
     <form onSubmit={showCreateModal ? handleCreate : handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <Input label="Название *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Ответственный</label>
-        <select value={form.minister_id} onChange={(e) => setForm({ ...form, minister_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-          <option value="">— Не назначен —</option>
-          {users.map((u) => <option key={u.id} value={u.id}>{u.login}</option>)}
-        </select>
-      </div>
+      <Select
+        label="Ответственный"
+        options={users.map((u) => ({ value: u.id, label: u.login }))}
+        placeholder="— Не назначен —"
+        value={form.minister_id}
+        onChange={(e) => setForm({ ...form, minister_id: e.target.value })}
+        searchable
+      />
       <Input label="Координаты" value={form.coordinates} onChange={(e) => setForm({ ...form, coordinates: e.target.value })} placeholder="X, Y, Z или описание" />
       <Select label="Статус" options={STATUS_OPTIONS} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

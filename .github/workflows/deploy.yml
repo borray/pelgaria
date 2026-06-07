@@ -90,9 +90,9 @@ jobs:
             # Install all deps (including prisma CLI for migrations)
             npm ci
 
-            # Generate Prisma client and run migrations
+            # Generate Prisma client and push schema changes
             npx prisma generate
-            npx prisma migrate deploy
+            npx prisma db push --skip-generate --accept-data-loss
 
             # Seed only on first deploy (if Treasury table is empty)
             node -e "

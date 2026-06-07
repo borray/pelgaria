@@ -5,6 +5,7 @@ import apiClient from '../api/client'
 import { useAuthStore } from '../store/auth'
 import type { ChatConversation, ChatMessage, User } from '../types'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Select'
 import { formatDateTime } from '../utils/formatters'
 
 let socket: Socket | null = null
@@ -297,16 +298,14 @@ export function ChatPage() {
               </Button>
               <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '12px' }}>
                 <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Личная беседа</div>
-                <select
+                <Select
+                  options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))}
+                  placeholder="— Выберите пользователя —"
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  style={{ width: '100%', height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', marginBottom: '8px' }}
-                >
-                  <option value="">— Выберите пользователя —</option>
-                  {users.filter((u) => u.id !== user?.id).map((u) => (
-                    <option key={u.id} value={u.id}>{u.login}</option>
-                  ))}
-                </select>
+                  searchable
+                  style={{ marginBottom: '8px' }}
+                />
                 <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')}>
                   Начать беседу
                 </Button>

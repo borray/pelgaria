@@ -195,32 +195,21 @@ export function CasesPage() {
         }
       >
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Обвиняемый *</label>
-            <select
-              value={form.accused_id}
-              onChange={(e) => setForm({ ...form, accused_id: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              <option value="">— Выберите гражданина —</option>
-              {citizens.map((c) => (
-                <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Статья закона</label>
-            <select
-              value={form.law_id}
-              onChange={(e) => setForm({ ...form, law_id: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              <option value="">— Не указано —</option>
-              {laws.map((l) => (
-                <option key={l.id} value={l.id}>{l.number}: {l.title}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Обвиняемый *"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Выберите гражданина —"
+            value={form.accused_id}
+            onChange={(e) => setForm({ ...form, accused_id: e.target.value })}
+            searchable
+          />
+          <Select
+            label="Статья закона"
+            options={laws.map((l) => ({ value: l.id, label: `${l.number}: ${l.title}` }))}
+            placeholder="— Не указано —"
+            value={form.law_id}
+            onChange={(e) => setForm({ ...form, law_id: e.target.value })}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание *</label>
             <textarea

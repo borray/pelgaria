@@ -413,20 +413,21 @@ export function TaxesPage() {
         }
       >
         <form onSubmit={handleCharge} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Гражданин *</label>
-            <select value={chargeForm.citizen_id} onChange={(e) => setChargeForm({ ...chargeForm, citizen_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите —</option>
-              {citizens.map((c) => <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Период *</label>
-            <select value={chargeForm.period_id} onChange={(e) => setChargeForm({ ...chargeForm, period_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите период —</option>
-              {periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Гражданин *"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Выберите —"
+            value={chargeForm.citizen_id}
+            onChange={(e) => setChargeForm({ ...chargeForm, citizen_id: e.target.value })}
+            searchable
+          />
+          <Select
+            label="Период *"
+            options={periods.map((p) => ({ value: p.id, label: p.name }))}
+            placeholder="— Выберите период —"
+            value={chargeForm.period_id}
+            onChange={(e) => setChargeForm({ ...chargeForm, period_id: e.target.value })}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Сумма (у.е.) *</label>
             <input type="number" min="0" value={chargeForm.amount} onChange={(e) => setChargeForm({ ...chargeForm, amount: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }} />
@@ -450,13 +451,13 @@ export function TaxesPage() {
           <p style={{ fontSize: '14px', color: '#374151', fontFamily: 'Inter, sans-serif', margin: 0 }}>
             Будут созданы начисления для всех активных зданий с tax_rate &gt; 0.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Период *</label>
-            <select value={autoPeriodId} onChange={(e) => setAutoPeriodId(e.target.value)} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите период —</option>
-              {periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Период *"
+            options={periods.map((p) => ({ value: p.id, label: p.name }))}
+            placeholder="— Выберите период —"
+            value={autoPeriodId}
+            onChange={(e) => setAutoPeriodId(e.target.value)}
+          />
         </form>
       </Modal>
     </div>

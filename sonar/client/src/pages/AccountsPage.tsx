@@ -8,6 +8,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDateTime } from '../utils/formatters'
 
@@ -251,20 +252,21 @@ export function AccountsPage() {
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Input label="Логин *" value={createForm.login} onChange={(e) => setCreateForm({ ...createForm, login: e.target.value })} autoFocus />
           <Input label="Пароль *" type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Роль *</label>
-            <select value={createForm.role_id} onChange={(e) => setCreateForm({ ...createForm, role_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите роль —</option>
-              {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Гражданин</label>
-            <select value={createForm.citizen_id} onChange={(e) => setCreateForm({ ...createForm, citizen_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Не привязан —</option>
-              {citizens.map((c) => <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>)}
-            </select>
-          </div>
+          <Select
+            label="Роль *"
+            options={roles.map((r) => ({ value: r.id, label: r.name }))}
+            placeholder="— Выберите роль —"
+            value={createForm.role_id}
+            onChange={(e) => setCreateForm({ ...createForm, role_id: e.target.value })}
+          />
+          <Select
+            label="Гражданин"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Не привязан —"
+            value={createForm.citizen_id}
+            onChange={(e) => setCreateForm({ ...createForm, citizen_id: e.target.value })}
+            searchable
+          />
           {createError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{createError}</div>}
         </form>
       </Modal>
@@ -273,19 +275,20 @@ export function AccountsPage() {
         footer={<><Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button><Button variant="primary" loading={editLoading} onClick={handleEdit}>Сохранить</Button></>}
       >
         <form onSubmit={handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Роль</label>
-            <select value={editForm.role_id} onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Гражданин</label>
-            <select value={editForm.citizen_id} onChange={(e) => setEditForm({ ...editForm, citizen_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Не привязан —</option>
-              {citizens.map((c) => <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>)}
-            </select>
-          </div>
+          <Select
+            label="Роль"
+            options={roles.map((r) => ({ value: r.id, label: r.name }))}
+            value={editForm.role_id}
+            onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
+          />
+          <Select
+            label="Гражданин"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Не привязан —"
+            value={editForm.citizen_id}
+            onChange={(e) => setEditForm({ ...editForm, citizen_id: e.target.value })}
+            searchable
+          />
           {editError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{editError}</div>}
         </form>
       </Modal>

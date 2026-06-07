@@ -278,13 +278,14 @@ export function BuildingDetailPage() {
         <form onSubmit={handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <Input label="Название" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
           <Select label="Тип" options={TYPE_OPTIONS} value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Владелец</label>
-            <select value={editForm.owner_id} onChange={(e) => setEditForm({ ...editForm, owner_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите —</option>
-              {citizens.map((c) => <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>)}
-            </select>
-          </div>
+          <Select
+            label="Владелец"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Выберите —"
+            value={editForm.owner_id}
+            onChange={(e) => setEditForm({ ...editForm, owner_id: e.target.value })}
+            searchable
+          />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
             <Input label="X" type="number" value={editForm.coord_x} onChange={(e) => setEditForm({ ...editForm, coord_x: e.target.value })} />
             <Input label="Y" type="number" value={editForm.coord_y} onChange={(e) => setEditForm({ ...editForm, coord_y: e.target.value })} />

@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
+import { Select } from '../components/ui/Select'
 import { formatDate } from '../utils/formatters'
 import { downloadPdfPost } from '../utils/pdf'
 
@@ -264,19 +265,14 @@ export function CaseDetailPage() {
         }
       >
         <form onSubmit={handleAssignJudge} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Судья</label>
-            <select
-              value={selectedJudgeId}
-              onChange={(e) => setSelectedJudgeId(e.target.value)}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              <option value="">— Не назначен —</option>
-              {judges.map((j) => (
-                <option key={j.id} value={j.id}>{j.login}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Судья"
+            options={judges.map((j) => ({ value: j.id, label: j.login }))}
+            placeholder="— Не назначен —"
+            value={selectedJudgeId}
+            onChange={(e) => setSelectedJudgeId(e.target.value)}
+            searchable
+          />
         </form>
       </Modal>
 
@@ -292,32 +288,24 @@ export function CaseDetailPage() {
         }
       >
         <form onSubmit={handleClose} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Исход *</label>
-            <select
-              value={closeForm.outcome}
-              onChange={(e) => setCloseForm({ ...closeForm, outcome: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              <option value="ACQUITTED">Оправдан</option>
-              <option value="CONVICTED">Осуждён</option>
-            </select>
-          </div>
+          <Select
+            label="Исход *"
+            options={[
+              { value: 'ACQUITTED', label: 'Оправдан' },
+              { value: 'CONVICTED', label: 'Осуждён' },
+            ]}
+            value={closeForm.outcome}
+            onChange={(e) => setCloseForm({ ...closeForm, outcome: e.target.value })}
+          />
           {closeForm.outcome === 'CONVICTED' && (
             <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Тип приговора</label>
-                <select
-                  value={closeForm.verdict_type}
-                  onChange={(e) => setCloseForm({ ...closeForm, verdict_type: e.target.value })}
-                  style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-                >
-                  <option value="">— Не указан —</option>
-                  {VERDICT_TYPE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Тип приговора"
+                options={VERDICT_TYPE_OPTIONS}
+                placeholder="— Не указан —"
+                value={closeForm.verdict_type}
+                onChange={(e) => setCloseForm({ ...closeForm, verdict_type: e.target.value })}
+              />
               {closeForm.verdict_type === 'FINE' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Сумма штрафа (у.е.)</label>
