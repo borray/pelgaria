@@ -3,7 +3,13 @@ import { PrismaClient, TaxChargeStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
-import { guillochePattern } from '../services/templates'
+import {
+  guillocheRosette,
+  sealBlock,
+  pageShell,
+  ACCENT,
+  INK,
+} from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -211,7 +217,7 @@ router.get('/periods/:id/pdf', requireAuth, requirePermission('taxes.view'), asy
       },
     })
 
-    const guilloche = guillochePattern(id.slice(0, 8), 794, 40)
+    const seed = period.name + ':' + id.slice(0, 8)
     const printDate = new Date().toLocaleDateString('ru-RU')
     const startsDate = new Date(period.starts_at).toLocaleDateString('ru-RU')
     const endsDate = new Date(period.ends_at).toLocaleDateString('ru-RU')
@@ -233,91 +239,89 @@ router.get('/periods/:id/pdf', requireAuth, requirePermission('taxes.view'), asy
         <td style="padding:7px 10px;font-size:12px;font-weight:600;color:${statusColors[c.status]};border-bottom:1px solid #F3F4F6;">${statusLabels[c.status]}</td>
       </tr>`).join('')
 
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
-  .header { background: #0A1628; height: 80px; display: flex; align-items: center; padding: 0 40px; }
-  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
-  .header-center { flex: 1; text-align: center; }
-  .header-doctype { color: #FFFFFF; font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 3px; }
-  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
-  .guilloche-bar { overflow: hidden; height: 40px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
-  .period-banner { padding: 16px 40px; background: #F0F4FA; border-bottom: 1px solid #D0D7E3; display: flex; justify-content: space-between; align-items: center; }
-  .period-name { font-size: 18px; font-weight: 700; color: #0A1628; }
-  .period-dates { font-size: 13px; color: #6B7280; }
-  .content { padding: 28px 40px; }
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 10px; text-align: left; border-bottom: 2px solid #E5E7EB; background: #F8F9FB; }
-  .totals-row td { padding: 10px 10px; font-size: 13px; font-weight: 700; color: #0A1628; border-top: 2px solid #0A1628; background: #F0F4FA; }
-  .footer { border-top: 1px solid #E5E7EB; background: #F8F9FB; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; }
-  .doc-footer-strip { padding: 10px 40px; display: flex; justify-content: space-between; font-size: 10px; color: #C4C9D4; border-top: 1px solid #F0F2F5; }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
-    <div class="header-center">
-      <div class="header-doctype">Налоговая ведомость</div>
-      <div class="header-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
-    </div>
-    <div class="header-right">${printDate}</div>
-  </div>
-  <div class="guilloche-bar">${guilloche}</div>
+    const seal = sealBlock({ number: `НАЛОГ-${period.name}`, signer: 'Налоговый инспектор', role: 'Налог. инспектор', date: printDate, size: 120 })
 
-  <div class="period-banner">
-    <div>
-      <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Налоговый период</div>
-      <div class="period-name">${period.name}</div>
-    </div>
-    <div class="period-dates">${startsDate} — ${endsDate}</div>
-  </div>
+    const header = `<div class="tx-header">
+      <div class="tx-emblem">${guillocheRosette(seed, 64)}</div>
+      <div class="tx-head-text">
+        <div class="tx-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="tx-title">НАЛОГОВАЯ ВЕДОМОСТЬ</div>
+        <div class="tx-sub">Государственная информационная система СОНАР · ${printDate}</div>
+      </div>
+    </div>`
 
-  <div class="content">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:40px;">№</th>
-          <th>Гражданин</th>
-          <th style="width:100px;">Начислено</th>
-          <th style="width:100px;">Оплачено</th>
-          <th style="width:80px;">Долг</th>
-          <th style="width:100px;">Статус</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}
-        <tr class="totals-row">
-          <td></td>
-          <td>ИТОГО (${charges.length} чел.)</td>
-          <td style="font-family:'JetBrains Mono',monospace;">${totalCharged}</td>
-          <td style="font-family:'JetBrains Mono',monospace;color:#16A34A;">${totalPaid}</td>
-          <td style="font-family:'JetBrains Mono',monospace;color:${totalDebt > 0 ? '#DC2626' : '#16A34A'};">${totalDebt}</td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    const body = `
+      <div class="tx-periodbar">
+        <div>
+          <div class="tx-label">Налоговый период</div>
+          <div class="tx-period-name">${period.name}</div>
+        </div>
+        <div class="tx-period-dates">${startsDate} — ${endsDate}</div>
+      </div>
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th style="width:38px;">№</th>
+            <th>Гражданин</th>
+            <th style="width:100px;text-align:right;">Начислено</th>
+            <th style="width:100px;text-align:right;">Оплачено</th>
+            <th style="width:90px;text-align:right;">Долг</th>
+            <th style="width:100px;">Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+          <tr class="tx-totals">
+            <td></td>
+            <td>ИТОГО (${charges.length} чел.)</td>
+            <td style="font-family:'JetBrains Mono',monospace;text-align:right;">${totalCharged}</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:#16A34A;text-align:right;">${totalPaid}</td>
+            <td style="font-family:'JetBrains Mono',monospace;color:${totalDebt > 0 ? '#DC2626' : '#16A34A'};text-align:right;">${totalDebt}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    `
 
-  <div class="footer">
-    <div style="font-size:12px;color:#6B7280;">Дата составления: ${printDate}</div>
-    <div>
-      <div style="width:200px;border-bottom:1px solid #6B7280;height:24px;"></div>
-      <div style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;">Налоговый инспектор</div>
-    </div>
-  </div>
-  <div class="doc-footer-strip">
-    <span>Государственная информационная система СОНАР</span>
-    <span>Дата печати: ${printDate}</span>
-  </div>
-</body>
-</html>`
+    const footer = `
+      <div class="tx-footer">
+        <div>
+          <div class="tx-label">Дата составления</div>
+          <div class="tx-foot-date">${printDate}</div>
+        </div>
+        <div class="tx-sign">
+          ${seal}
+          <div class="tx-sign-line"></div>
+          <div class="tx-sign-label">Налоговый инспектор</div>
+        </div>
+      </div>
+      <div class="tx-foot-strip">Государственная информационная система СОНАР · Дата печати: ${printDate}</div>
+    `
 
+    const styles = `
+      .tx-header { display:flex; align-items:center; gap:16px; border-bottom:3px solid ${INK}; padding-bottom:14px; }
+      .tx-emblem { width:54px; height:54px; flex-shrink:0; }
+      .tx-emblem svg { width:54px; height:54px; }
+      .tx-head-text { flex:1; text-align:center; }
+      .tx-state { font-size:11px; letter-spacing:4px; color:${ACCENT}; font-weight:600; }
+      .tx-title { font-size:23px; font-weight:700; letter-spacing:0.08em; color:${INK}; margin-top:4px; }
+      .tx-sub { font-size:10px; color:#9CA3AF; margin-top:5px; }
+      .tx-periodbar { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; background:#F0F4FA; border-left:4px solid ${ACCENT}; border-radius:0 4px 4px 0; margin:20px 0; }
+      .tx-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+      .tx-period-name { font-size:18px; font-weight:700; color:${INK}; }
+      .tx-period-dates { font-size:13px; color:#6B7280; }
+      .tx-table { width:100%; border-collapse:collapse; }
+      .tx-table th { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.06em; padding:8px 10px; text-align:left; border-bottom:2px solid ${INK}; }
+      .tx-totals td { padding:10px; font-size:13px; font-weight:700; color:${INK}; border-top:2px solid ${INK}; background:#F0F4FA; }
+      .tx-footer { display:flex; justify-content:space-between; align-items:flex-end; border-top:2px solid ${INK}; padding-top:18px; margin-top:20px; }
+      .tx-foot-date { font-size:14px; color:#374151; font-weight:500; }
+      .tx-sign { text-align:center; }
+      .tx-sign-line { width:200px; border-bottom:1px solid #6B7280; height:8px; margin:6px auto 0; }
+      .tx-sign-label { font-size:11px; color:#6B7280; font-style:italic; margin-top:5px; }
+      .tx-foot-strip { text-align:center; font-size:9px; color:#9CA3AF; margin-top:12px; }
+    `
+
+    const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'taxes' })
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',

@@ -30,6 +30,7 @@ interface CreateLawForm {
   type: string
   title: string
   body: string
+  adopted_at: string
 }
 
 export function LawsPage() {
@@ -44,7 +45,7 @@ export function LawsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [form, setForm] = useState<CreateLawForm>({ type: 'LAW', title: '', body: '' })
+  const [form, setForm] = useState<CreateLawForm>({ type: 'LAW', title: '', body: '', adopted_at: '' })
 
   const fetchLaws = useCallback(async () => {
     setLoading(true)
@@ -80,9 +81,10 @@ export function LawsPage() {
         type: form.type,
         title: form.title.trim(),
         body: form.body.trim(),
+        ...(form.adopted_at ? { adopted_at: form.adopted_at } : {}),
       })
       setShowCreateModal(false)
-      setForm({ type: 'LAW', title: '', body: '' })
+      setForm({ type: 'LAW', title: '', body: '', adopted_at: '' })
       fetchLaws()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка создания'
@@ -131,7 +133,7 @@ export function LawsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Законодательство
         </h1>
         {canCreate && (
@@ -157,7 +159,7 @@ export function LawsPage() {
       </div>
 
       {!loading && laws.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
           <EmptyState title="Законы не найдены" description={search || typeFilter || statusFilter ? 'Измените параметры поиска' : 'Создайте первый закон'} action={canCreate ? <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}><IconPlus size={14} />Создать</Button> : undefined} />
         </div>
       ) : (
@@ -176,7 +178,7 @@ export function LawsPage() {
 
       <Modal
         open={showCreateModal}
-        onClose={() => { setShowCreateModal(false); setCreateError(null); setForm({ type: 'LAW', title: '', body: '' }) }}
+        onClose={() => { setShowCreateModal(false); setCreateError(null); setForm({ type: 'LAW', title: '', body: '', adopted_at: '' }) }}
         title="Создать закон / указ"
         width={600}
         footer={
@@ -198,6 +200,12 @@ export function LawsPage() {
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             autoFocus
+          />
+          <Input
+            label="Дата принятия"
+            type="date"
+            value={form.adopted_at}
+            onChange={(e) => setForm({ ...form, adopted_at: e.target.value })}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>

@@ -27,10 +27,10 @@ const TREATY_TYPE_OPTIONS = [
 ]
 
 interface StateForm { name: string; relation_status: string; description: string }
-interface TreatyForm { state_id: string; type: string; body: string }
+interface TreatyForm { state_id: string; type: string; body: string; signed_at: string }
 
 const emptyStateForm = (): StateForm => ({ name: '', relation_status: 'NEUTRAL', description: '' })
-const emptyTreatyForm = (states: DiplomaticState[]): TreatyForm => ({ state_id: states[0]?.id ?? '', type: 'NON_AGGRESSION', body: '' })
+const emptyTreatyForm = (states: DiplomaticState[]): TreatyForm => ({ state_id: states[0]?.id ?? '', type: 'NON_AGGRESSION', body: '', signed_at: '' })
 
 export function DiplomacyPage() {
   const canManage = usePermission('diplomacy.manage')
@@ -48,7 +48,7 @@ export function DiplomacyPage() {
   const [stateError, setStateError] = useState<string | null>(null)
 
   const [showTreatyModal, setShowTreatyModal] = useState(false)
-  const [treatyForm, setTreatyForm] = useState<TreatyForm>({ state_id: '', type: 'NON_AGGRESSION', body: '' })
+  const [treatyForm, setTreatyForm] = useState<TreatyForm>({ state_id: '', type: 'NON_AGGRESSION', body: '', signed_at: '' })
   const [treatyLoading, setTreatyLoading] = useState(false)
   const [treatyError, setTreatyError] = useState<string | null>(null)
 
@@ -108,7 +108,7 @@ export function DiplomacyPage() {
     if (!treatyForm.state_id || !treatyForm.body.trim()) { setTreatyError('Государство и текст обязательны'); return }
     setTreatyLoading(true); setTreatyError(null)
     try {
-      await apiClient.post('/diplomacy/treaties', { state_id: treatyForm.state_id, type: treatyForm.type, body: treatyForm.body.trim() })
+      await apiClient.post('/diplomacy/treaties', { state_id: treatyForm.state_id, type: treatyForm.type, body: treatyForm.body.trim(), ...(treatyForm.signed_at ? { signed_at: treatyForm.signed_at } : {}) })
       setShowTreatyModal(false)
       fetchData()
     } catch (err: unknown) {
@@ -179,7 +179,7 @@ export function DiplomacyPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Дипломатия</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Дипломатия</h1>
         {canManage && (
           <div style={{ display: 'flex', gap: '8px' }}>
             {tab === 'states' && (
@@ -208,13 +208,13 @@ export function DiplomacyPage() {
         loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
         ) : states.length === 0 ? (
-          <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
             <EmptyState title="Государства не найдены" description="Добавьте первое государство" action={canManage ? <Button variant="primary" size="sm" onClick={() => { setStateForm(emptyStateForm()); setShowStateModal(true) }}><IconPlus size={14} />Добавить</Button> : undefined} />
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
             {states.map((s) => (
-              <div key={s.id} style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px', padding: '16px 20px', fontFamily: 'Inter, sans-serif' }}>
+              <div key={s.id} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 20px', fontFamily: 'Inter, sans-serif' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <div style={{ fontSize: '15px', fontWeight: 600, color: '#0A1628' }}>{s.name}</div>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '3px', fontSize: '12px', fontWeight: 500, background: (RELATION_COLOR[s.relation_status] ?? '#6B7280') + '1A', color: RELATION_COLOR[s.relation_status] ?? '#6B7280', border: `1px solid ${(RELATION_COLOR[s.relation_status] ?? '#6B7280')}33` }}>
@@ -240,7 +240,7 @@ export function DiplomacyPage() {
 
       {tab === 'treaties' && (
         treaties.length === 0 && !loading ? (
-          <div style={{ background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
             <EmptyState title="Договоры не найдены" description="Создайте первый договор" action={canManage ? <Button variant="primary" size="sm" onClick={() => { setTreatyForm(emptyTreatyForm(states)); setShowTreatyModal(true) }}><IconPlus size={14} />Создать</Button> : undefined} />
           </div>
         ) : (
@@ -268,6 +268,7 @@ export function DiplomacyPage() {
             </select>
           </div>
           <Select label="Тип *" options={TREATY_TYPE_OPTIONS} value={treatyForm.type} onChange={(e) => setTreatyForm({ ...treatyForm, type: e.target.value })} />
+          <Input label="Дата подписания" type="date" value={treatyForm.signed_at} onChange={(e) => setTreatyForm({ ...treatyForm, signed_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Текст договора *</label>
             <textarea value={treatyForm.body} onChange={(e) => setTreatyForm({ ...treatyForm, body: e.target.value })} rows={8} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />

@@ -100,21 +100,29 @@ export function ChangePasswordPage() {
       <div
         style={{
           background: '#FFFFFF',
-          border: '0.5px solid #D0D7E3',
-          borderRadius: '4px',
+          border: '1px solid #E2E8F0',
+          borderRadius: '16px',
           padding: '40px',
           width: '100%',
           maxWidth: '380px',
+          boxShadow: '0 12px 40px -12px rgba(10,22,40,0.18)',
+          animation: 'fadeInUp 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         <div style={{ marginBottom: '24px' }}>
           <div
             style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontWeight: 700,
-              fontSize: '20px',
-              color: '#0A1628',
-              marginBottom: '4px',
+              fontFamily: "'Unbounded', sans-serif",
+              fontWeight: 800,
+              fontSize: '22px',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              background: 'linear-gradient(95deg, #3B82F6, #2563EB)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '8px',
+              display: 'inline-block',
             }}
           >
             СОНАР

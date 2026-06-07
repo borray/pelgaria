@@ -251,6 +251,7 @@ model Building {
   materials      String?
   screenshot_url String?
   tax_rate       Float          @default(0)
+  built_at       DateTime?
   created_at     DateTime       @default(now())
   tax_charges    TaxCharge[]
 }

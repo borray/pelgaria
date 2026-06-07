@@ -28,8 +28,10 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
     <div
       style={{
         overflowX: 'auto',
-        border: '0.5px solid #D0D7E3',
-        borderRadius: '4px',
+        border: '1px solid #E2E8F0',
+        borderRadius: '12px',
+        background: '#FFFFFF',
+        boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
       }}
     >
       <table
@@ -41,16 +43,18 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
         }}
       >
         <thead>
-          <tr style={{ background: '#F8F9FB', borderBottom: '1px solid #D0D7E3' }}>
+          <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
             {columns.map((col) => (
               <th
                 key={col.key}
                 style={{
-                  padding: '10px 16px',
+                  padding: '12px 16px',
                   textAlign: 'left',
                   fontWeight: 600,
-                  color: '#374151',
-                  fontSize: '13px',
+                  color: '#475569',
+                  fontSize: '11px',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
                   width: col.width,
                   whiteSpace: 'nowrap',
                 }}
@@ -66,14 +70,14 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
               key={keyExtractor(row)}
               onClick={() => onRowClick?.(row)}
               style={{
-                borderBottom: '0.5px solid #D0D7E3',
+                borderBottom: '1px solid #F1F5F9',
                 cursor: onRowClick ? 'pointer' : 'default',
                 background: '#FFFFFF',
-                transition: 'background 0.1s',
+                transition: 'background 0.12s ease',
               }}
               onMouseEnter={(e) => {
                 if (onRowClick) {
-                  ;(e.currentTarget as HTMLTableRowElement).style.background = '#F8F9FB'
+                  ;(e.currentTarget as HTMLTableRowElement).style.background = '#F5F9FF'
                 }
               }}
               onMouseLeave={(e) => {

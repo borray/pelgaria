@@ -12,8 +12,20 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string
 }
 
-export function Select({ label, error, options, placeholder, style, id, ...props }: SelectProps) {
+export function Select({ label, error, options, placeholder, style, id, onFocus, onBlur, ...props }: SelectProps) {
   const selectId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined)
+
+  const handleFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = '#3B82F6'
+    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'
+    onFocus?.(e)
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = error ? '#EF4444' : '#D0D7E3'
+    e.currentTarget.style.boxShadow = 'none'
+    onBlur?.(e)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -32,17 +44,20 @@ export function Select({ label, error, options, placeholder, style, id, ...props
       )}
       <select
         id={selectId}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         style={{
           height: '36px',
           padding: '0 10px',
-          border: error ? '1px solid #DC2626' : '1px solid #D0D7E3',
-          borderRadius: '4px',
+          border: error ? '1px solid #EF4444' : '1px solid #D0D7E3',
+          borderRadius: '8px',
           fontSize: '14px',
           fontFamily: 'Inter, sans-serif',
           color: '#1F2937',
           background: '#FFFFFF',
           outline: 'none',
           cursor: 'pointer',
+          transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           ...style,
         }}
         {...props}

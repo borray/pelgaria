@@ -3,7 +3,16 @@ import { PrismaClient, RelationStatus, TreatyType, TreatyStatus } from '@prisma/
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
-import { guillochePattern } from '../services/templates'
+import {
+  guillocheRosette,
+  guillocheField,
+  sealBlock,
+  pageShell,
+  parseOptionalDate,
+  A4_W,
+  ACCENT,
+  INK,
+} from '../services/templates'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -29,126 +38,83 @@ async function renderTreatyPdf(treaty: {
     OTHER: 'Договор',
   }
   const typeLabel = typeLabels[treaty.type] ?? 'Договор'
+  const seed = treaty.number
   const signedDate = treaty.signed_at.toLocaleDateString('ru-RU')
-  const guilloche = guillochePattern(treaty.number, 794, 50)
+  const partnerName = treaty.state?.name ?? 'Неизвестное государство'
   const bodyHtml = treaty.body
     .split('\n')
     .map((line) => `<p>${line || '&nbsp;'}</p>`)
     .join('')
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; font-family: 'Inter', sans-serif; }
+  const seal = sealBlock({ number: treaty.number, signer: 'Глава государства', role: 'Пельагрия', date: signedDate, size: 122 })
+  const fieldFill = guillocheField(seed + ':fill', A4_W - 130, 64, 0.12)
 
-  .header {
-    background: #0A1628;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    padding: 0 40px;
-  }
-  .header-left { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 3px; width: 180px; flex-shrink: 0; line-height: 1.6; }
-  .header-center { flex: 1; text-align: center; }
-  .header-doctype { color: #FFFFFF; font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .header-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 5px; }
-  .header-right { width: 180px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.5); }
-
-  .guilloche-bar { overflow: hidden; height: 50px; background: #F8F9FB; border-bottom: 1px solid #E5E7EB; }
-
-  .parties-banner {
-    background: #F0F4FA;
-    border-bottom: 1px solid #D0D7E3;
-    padding: 16px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #0A1628;
-  }
-  .party-arrow { color: #4A90D9; font-size: 18px; }
-
-  .content { padding: 32px 40px 28px; }
-  .doc-number { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4A90D9; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .doc-type-title { font-size: 18px; font-weight: 700; color: #0A1628; margin-bottom: 24px; }
-  .doc-body p { font-size: 14px; color: #374151; line-height: 1.8; margin-bottom: 8px; }
-
-  .footer {
-    border-top: 1px solid #E5E7EB;
-    background: #F8F9FB;
-    padding: 20px 40px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-  .sig-block { }
-  .sig-line { border-bottom: 1px solid #6B7280; height: 28px; margin-bottom: 6px; }
-  .sig-label { font-size: 11px; color: #6B7280; font-style: italic; }
-  .sig-party { font-size: 12px; color: #374151; font-weight: 500; margin-bottom: 4px; }
-  .date-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-  .date-value { font-size: 13px; color: #374151; font-weight: 500; }
-  .doc-footer-strip {
-    padding: 10px 40px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: #C4C9D4;
-    border-top: 1px solid #F0F2F5;
-  }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
-    <div class="header-center">
-      <div class="header-doctype">Дипломатический договор</div>
-      <div class="header-sub">№${treaty.number}</div>
+  const header = `<div class="dp-header">
+    <div class="dp-emblems">
+      <div class="dp-emblem">${guillocheRosette(seed + ':a', 78)}</div>
+      <div class="dp-link">⟺</div>
+      <div class="dp-emblem">${guillocheRosette(seed + ':b', 78)}</div>
     </div>
-    <div class="header-right">${signedDate}</div>
-  </div>
-  <div class="guilloche-bar">${guilloche}</div>
+    <div class="dp-doctype">МЕЖДУНАРОДНЫЙ ДОГОВОР</div>
+    <div class="dp-parties"><span>ГОСУДАРСТВО ПЕЛЬАГРИЯ</span><span class="dp-amp">—</span><span>${partnerName.toUpperCase()}</span></div>
+  </div>`
 
-  <div class="parties-banner">
-    <span>Государство Пельагрия</span>
-    <span class="party-arrow">⟺</span>
-    <span>${treaty.state?.name ?? 'Неизвестное государство'}</span>
-  </div>
+  const body = `
+    <div class="dp-titleblock">
+      <div class="dp-number">Договор №${treaty.number}</div>
+      <div class="dp-type">${typeLabel}</div>
+    </div>
+    <div class="dp-body">${bodyHtml}</div>
+    <div class="dp-fill">${fieldFill}</div>
+  `
 
-  <div class="content">
-    <div class="doc-number">Договор №${treaty.number}</div>
-    <div class="doc-type-title">${typeLabel}</div>
-    <div class="doc-body">${bodyHtml}</div>
-  </div>
-
-  <div class="footer">
-    <div class="sig-block">
-      <div class="sig-party">Государство Пельагрия</div>
-      <div class="sig-line"></div>
-      <div class="sig-label">Глава государства</div>
-      <div style="margin-top:12px;">
-        <div class="date-label">Дата подписания</div>
-        <div class="date-value">${signedDate}</div>
+  const footer = `
+    <div class="dp-seal-row">${seal}</div>
+    <div class="dp-signatures">
+      <div class="dp-sig">
+        <div class="dp-sig-party">Государство Пельагрия</div>
+        <div class="dp-sig-line"></div>
+        <div class="dp-sig-label">Глава государства</div>
+        <div class="dp-sig-date"><span class="dp-date-label">Дата подписания</span> ${signedDate}</div>
+      </div>
+      <div class="dp-sig">
+        <div class="dp-sig-party">${partnerName}</div>
+        <div class="dp-sig-line"></div>
+        <div class="dp-sig-label">Уполномоченный представитель</div>
+        <div class="dp-sig-date"><span class="dp-date-label">Дата подписания</span> ${signedDate}</div>
       </div>
     </div>
-    <div class="sig-block">
-      <div class="sig-party">${treaty.state?.name ?? '—'}</div>
-      <div class="sig-line"></div>
-      <div class="sig-label">Уполномоченный представитель</div>
-    </div>
-  </div>
-  <div class="doc-footer-strip">
-    <span>Государственная информационная система СОНАР</span>
-    <span>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</span>
-  </div>
-</body>
-</html>`
+    <div class="dp-foot-strip">Государственная информационная система СОНАР · Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
+  `
 
+  const styles = `
+    .dp-header { text-align:center; padding:6px 0 16px; border-bottom:3px double ${INK}; }
+    .dp-emblems { display:flex; align-items:center; justify-content:center; gap:24px; }
+    .dp-emblem { width:60px; height:60px; }
+    .dp-emblem svg { width:60px; height:60px; }
+    .dp-link { font-size:26px; color:${ACCENT}; }
+    .dp-doctype { font-family:'PT Serif',serif; font-size:28px; font-weight:700; letter-spacing:0.16em; color:${INK}; margin-top:12px; }
+    .dp-parties { display:flex; justify-content:center; gap:14px; margin-top:10px; font-size:13px; font-weight:600; letter-spacing:0.08em; color:${ACCENT}; }
+    .dp-amp { color:#9CA3AF; }
+    .dp-titleblock { text-align:center; margin:22px 0 22px; }
+    .dp-number { font-family:'JetBrains Mono',monospace; font-size:12px; color:${ACCENT}; letter-spacing:0.08em; }
+    .dp-type { font-family:'PT Serif',serif; font-size:20px; font-weight:700; color:${INK}; margin-top:8px; }
+    .dp-body { font-family:'PT Serif',serif; }
+    .dp-body p { font-size:14px; color:#1F2937; line-height:1.9; margin-bottom:6px; text-align:justify; }
+    .dp-fill { margin-top:16px; }
+    .dp-seal-row { display:flex; justify-content:center; margin-bottom:8px; }
+    .dp-signatures { display:grid; grid-template-columns:1fr 1fr; gap:40px; border-top:2px solid ${INK}; padding-top:20px; }
+    .dp-sig { text-align:center; }
+    .dp-sig-party { font-size:13px; font-weight:600; color:${INK}; margin-bottom:30px; }
+    .dp-sig-line { border-bottom:1px solid #6B7280; height:6px; }
+    .dp-sig-label { font-size:11px; color:#6B7280; font-style:italic; margin-top:6px; }
+    .dp-sig-date { font-size:12px; color:#374151; margin-top:12px; }
+    .dp-date-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.08em; }
+    .dp-foot-strip { text-align:center; font-size:9px; color:#9CA3AF; margin-top:14px; }
+  `
+
+  const watermark = `<div style="width:540px;height:540px;">${guillocheRosette(seed + ':wm', 540)}</div>`
+  const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'treaty' })
   return htmlToPdf(html)
 }
 
@@ -245,6 +211,14 @@ router.post('/treaties', requireAuth, requirePermission('diplomacy.manage'), asy
       return
     }
 
+    let signed_at: Date
+    try {
+      signed_at = parseOptionalDate(req.body.signed_at) ?? new Date()
+    } catch {
+      res.status(400).json({ error: 'Некорректная дата' })
+      return
+    }
+
     const number = await generateTreatyNumber()
 
     const treaty = await prisma.diplomaticTreaty.create({
@@ -253,7 +227,7 @@ router.post('/treaties', requireAuth, requirePermission('diplomacy.manage'), asy
         state_id,
         type: type as TreatyType,
         body,
-        signed_at: new Date(),
+        signed_at,
         status: 'ACTIVE',
       },
       include: {

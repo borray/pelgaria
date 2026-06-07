@@ -163,7 +163,7 @@ export function ChatPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '0.5px solid #D0D7E3', borderRadius: '4px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
       {/* Left panel */}
       <div style={{ width: '260px', borderRight: '0.5px solid #D0D7E3', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #D0D7E3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
