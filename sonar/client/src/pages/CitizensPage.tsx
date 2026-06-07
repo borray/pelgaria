@@ -11,6 +11,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
+import { useToast } from '../components/ui/Toast'
 import { formatDate } from '../utils/formatters'
 
 const STATUS_OPTIONS = [
@@ -33,6 +34,7 @@ interface CreateCitizenForm {
 export function CitizensPage() {
   const navigate = useNavigate()
   const canCreate = usePermission('citizens.create')
+  const toast = useToast()
 
   const [citizens, setCitizens] = useState<Citizen[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,12 +90,14 @@ export function CitizensPage() {
       })
       setShowCreateModal(false)
       setForm({ nickname: '', discord_username: '', role_title: 'Гражданин', status: 'ACTIVE', note: '' })
+      toast.success('Гражданин добавлен')
       fetchCitizens()
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
         'Ошибка создания'
       setCreateError(msg)
+      toast.error(msg)
     } finally {
       setCreateLoading(false)
     }
