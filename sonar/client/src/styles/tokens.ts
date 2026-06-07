@@ -1,0 +1,16 @@
+export const colors = {
+  headerBg: '#0A1628',
+  sidebarBg: '#0D1E35',
+  accentPrimary: '#3B82F6',
+  accentHover: '#2563EB',
+  accentLight: '#EFF6FF',
+  activeBg: 'rgba(59,130,246,0.18)',
+  textPrimary: '#0F172A',
+  textSecondary: '#64748B',
+  border: '#E2E8F0',
+  cardBg: '#FFFFFF',
+  pageBg: '#F1F5F9',
+  success: '#10B981',
+  danger: '#EF4444',
+  warning: '#F59E0B',
+}

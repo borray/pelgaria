@@ -22,6 +22,7 @@ import { ChatPage } from './pages/ChatPage'
 import { AccountsPage } from './pages/AccountsPage'
 import { RolesPage } from './pages/RolesPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -39,6 +40,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route path="/discord-callback" element={<DiscordCallbackPage />} />
       <Route
         path="/"
         element={

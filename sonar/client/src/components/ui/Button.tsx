@@ -11,9 +11,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
-    background: '#4A90D9',
+    background: '#3B82F6',
     color: '#FFFFFF',
-    border: '1px solid #4A90D9',
+    border: '1px solid #3B82F6',
+    boxShadow: '0 1px 3px rgba(59,130,246,0.3)',
   },
   secondary: {
     background: '#FFFFFF',
@@ -21,8 +22,23 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
     border: '1px solid #D0D7E3',
   },
   danger: {
-    background: '#DC2626',
+    background: '#EF4444',
     color: '#FFFFFF',
+    border: '1px solid #EF4444',
+  },
+}
+
+const variantHoverStyles: Record<ButtonVariant, React.CSSProperties> = {
+  primary: {
+    background: '#2563EB',
+    border: '1px solid #2563EB',
+  },
+  secondary: {
+    background: '#F8FAFC',
+    border: '1px solid #CBD5E1',
+  },
+  danger: {
+    background: '#DC2626',
     border: '1px solid #DC2626',
   },
 }
@@ -39,8 +55,48 @@ export function Button({
   children,
   disabled,
   style,
+  onMouseEnter,
+  onMouseLeave,
+  onMouseDown,
+  onMouseUp,
   ...props
 }: ButtonProps) {
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !loading) {
+      const btn = e.currentTarget
+      Object.assign(btn.style, {
+        ...variantHoverStyles[variant],
+        transform: 'translateY(-1px)',
+      })
+    }
+    onMouseEnter?.(e)
+  }
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !loading) {
+      const btn = e.currentTarget
+      const base = variantStyles[variant]
+      btn.style.background = base.background as string
+      btn.style.border = base.border as string
+      btn.style.transform = 'translateY(0)'
+    }
+    onMouseLeave?.(e)
+  }
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !loading) {
+      e.currentTarget.style.transform = 'translateY(0)'
+    }
+    onMouseDown?.(e)
+  }
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !loading) {
+      e.currentTarget.style.transform = 'translateY(-1px)'
+    }
+    onMouseUp?.(e)
+  }
+
   return (
     <button
       disabled={disabled || loading}
@@ -50,15 +106,20 @@ export function Button({
         gap: '6px',
         fontFamily: 'Inter, sans-serif',
         fontWeight: 500,
-        borderRadius: '4px',
+        borderRadius: '8px',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.6 : 1,
-        transition: 'opacity 0.15s',
+        transition: 'all 0.15s ease',
         whiteSpace: 'nowrap',
+        transform: 'translateY(0)',
         ...variantStyles[variant],
         ...sizeStyles[size],
         ...style,
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       {...props}
     >
       {loading ? 'Загрузка...' : children}

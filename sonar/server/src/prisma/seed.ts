@@ -101,7 +101,7 @@ async function main() {
     update: {},
     create: {
       name: 'Министр',
-      color: '#4A90D9',
+      color: '#10B981',
       is_system: false,
       permissions: MINISTER_PERMISSIONS,
     },
@@ -112,7 +112,7 @@ async function main() {
     update: {},
     create: {
       name: 'Гражданин',
-      color: '#6B7280',
+      color: '#64748B',
       is_system: false,
       permissions: CITIZEN_PERMISSIONS,
     },

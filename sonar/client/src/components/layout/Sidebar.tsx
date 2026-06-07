@@ -158,7 +158,7 @@ export function Sidebar() {
     <nav
       style={{
         width: '240px',
-        background: '#0A1628',
+        background: '#0D1E35',
         flexShrink: 0,
         overflowY: 'auto',
         display: 'flex',
@@ -195,34 +195,53 @@ export function Sidebar() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '8px 16px',
+                  padding: '8px 12px 8px 13px',
                   textDecoration: 'none',
                   fontSize: '13px',
                   fontFamily: 'Inter, sans-serif',
                   fontWeight: isActive ? 500 : 400,
                   color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
-                  background: isActive ? '#4A90D9' : 'transparent',
-                  borderRadius: '3px',
-                  margin: '0 8px',
-                  transition: 'background 0.1s, color 0.1s',
+                  background: isActive ? 'rgba(59,130,246,0.18)' : 'transparent',
+                  borderLeft: isActive ? '3px solid #3B82F6' : '3px solid transparent',
+                  margin: '0 8px 0 0',
+                  borderRadius: '0 4px 4px 0',
+                  transition: 'background 0.15s ease, color 0.15s ease',
                 })}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  if (!el.getAttribute('aria-current')) {
+                    el.style.background = 'rgba(255,255,255,0.07)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  if (!el.getAttribute('aria-current')) {
+                    el.style.background = 'transparent'
+                  }
+                }}
               >
-                {item.icon}
-                <span>{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    style={{
-                      marginLeft: 'auto',
-                      background: '#DC2626',
-                      color: '#FFFFFF',
-                      borderRadius: '10px',
-                      padding: '1px 6px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {item.badge}
-                  </span>
+                {({ isActive }) => (
+                  <>
+                    <span style={{ color: isActive ? '#3B82F6' : 'rgba(255,255,255,0.5)' }}>
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span
+                        style={{
+                          marginLeft: 'auto',
+                          background: '#DC2626',
+                          color: '#FFFFFF',
+                          borderRadius: '10px',
+                          padding: '1px 6px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </NavLink>
             ))}
