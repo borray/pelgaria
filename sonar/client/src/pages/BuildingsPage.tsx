@@ -265,13 +265,15 @@ export function BuildingsPage() {
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <Input label="Название *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Select label="Тип *" options={TYPE_OPTIONS.slice(1)} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Владелец *</label>
-            <select value={form.owner_id} onChange={(e) => setForm({ ...form, owner_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите гражданина —</option>
-              {citizens.map((c) => <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>)}
-            </select>
-          </div>
+          <Select
+            label="Владелец *"
+            placeholder="— Выберите гражданина —"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            value={form.owner_id}
+            onChange={(e) => setForm({ ...form, owner_id: e.target.value })}
+            searchable
+            searchPlaceholder="Поиск гражданина..."
+          />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
             <Input label="X" type="number" value={form.coord_x} onChange={(e) => setForm({ ...form, coord_x: e.target.value })} />
             <Input label="Y" type="number" value={form.coord_y} onChange={(e) => setForm({ ...form, coord_y: e.target.value })} />

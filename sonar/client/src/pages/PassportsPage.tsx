@@ -236,33 +236,14 @@ export function PassportsPage() {
         }
       >
         <form onSubmit={handleIssue} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-              Гражданин *
-            </label>
-            <select
-              value={selectedCitizenId}
-              onChange={(e) => setSelectedCitizenId(e.target.value)}
-              style={{
-                height: '36px',
-                padding: '0 10px',
-                border: '1px solid #D0D7E3',
-                borderRadius: '4px',
-                fontSize: '14px',
-                fontFamily: 'Inter, sans-serif',
-                color: '#1F2937',
-                background: '#FFFFFF',
-                outline: 'none',
-              }}
-            >
-              <option value="">— Выберите гражданина —</option>
-              {citizens.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nickname} ({c.reg_number})
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Гражданин *"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Выберите гражданина —"
+            value={selectedCitizenId}
+            onChange={(e) => setSelectedCitizenId(e.target.value)}
+            searchable
+          />
           <Input
             label="Дата выдачи"
             type="date"

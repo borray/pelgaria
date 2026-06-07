@@ -260,13 +260,13 @@ export function DiplomacyPage() {
         footer={<><Button variant="secondary" onClick={() => setShowTreatyModal(false)}>Отмена</Button><Button variant="primary" loading={treatyLoading} onClick={handleCreateTreaty}>Создать</Button></>}
       >
         <form onSubmit={handleCreateTreaty} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Государство *</label>
-            <select value={treatyForm.state_id} onChange={(e) => setTreatyForm({ ...treatyForm, state_id: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}>
-              <option value="">— Выберите —</option>
-              {states.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
+          <Select
+            label="Государство *"
+            options={states.map((s) => ({ value: s.id, label: s.name }))}
+            placeholder="— Выберите —"
+            value={treatyForm.state_id}
+            onChange={(e) => setTreatyForm({ ...treatyForm, state_id: e.target.value })}
+          />
           <Select label="Тип *" options={TREATY_TYPE_OPTIONS} value={treatyForm.type} onChange={(e) => setTreatyForm({ ...treatyForm, type: e.target.value })} />
           <Input label="Дата подписания" type="date" value={treatyForm.signed_at} onChange={(e) => setTreatyForm({ ...treatyForm, signed_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

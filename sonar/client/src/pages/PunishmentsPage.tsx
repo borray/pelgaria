@@ -244,31 +244,20 @@ export function PunishmentsPage() {
         }
       >
         <form onSubmit={handleIssue} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Гражданин *</label>
-            <select
-              value={form.citizen_id}
-              onChange={(e) => setForm({ ...form, citizen_id: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              <option value="">— Выберите гражданина —</option>
-              {citizens.map((c) => (
-                <option key={c.id} value={c.id}>{c.nickname} ({c.reg_number})</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Тип *</label>
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
-            >
-              {TYPE_OPTIONS.slice(1).map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Гражданин *"
+            options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
+            placeholder="— Выберите гражданина —"
+            value={form.citizen_id}
+            onChange={(e) => setForm({ ...form, citizen_id: e.target.value })}
+            searchable
+          />
+          <Select
+            label="Тип *"
+            options={TYPE_OPTIONS.slice(1)}
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Причина *</label>
             <textarea
