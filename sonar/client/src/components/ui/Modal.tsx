@@ -8,9 +8,10 @@ interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   width?: number
+  description?: string
 }
 
-export function Modal({ open, onClose, title, children, footer, width = 480 }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, footer, width = 520 }: ModalProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -29,6 +30,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
 
   return (
     <div
+      className="modal-backdrop"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -45,6 +47,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
       }}
     >
       <div
+        className="modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#FFFFFF',
@@ -62,15 +65,9 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
           animation: 'modalIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        {/* Accent top strip */}
+        <div className="modal-accent" />
         <div
-          style={{
-            height: '3px',
-            background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
-            flexShrink: 0,
-          }}
-        />
-        <div
+          className="modal-header"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -81,17 +78,11 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
             flexShrink: 0,
           }}
         >
-          <h2
-            style={{
-              margin: 0,
-              fontSize: '17px',
-              fontWeight: 700,
-              color: '#0A1628',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {title}
-          </h2>
+          <div className="modal-heading">
+            <span>СОНАР · Операция</span>
+            <h2>{title}</h2>
+            {description && <p>{description}</p>}
+          </div>
           <button
             onClick={onClose}
             aria-label="Закрыть"
@@ -120,6 +111,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
         </div>
 
         <div
+          className="modal-content"
           style={{
             padding: '22px',
             overflowY: 'auto',
@@ -131,6 +123,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: M
 
         {footer && (
           <div
+            className="modal-footer"
             style={{
               padding: '14px 22px',
               borderTop: '1px solid #EEF2F7',

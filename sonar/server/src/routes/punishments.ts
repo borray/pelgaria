@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, PunishmentType, PunishmentStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
+import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
 import { htmlToPdf } from '../services/pdf'
 import {
   guillocheRosette,
@@ -18,11 +19,20 @@ const prisma = new PrismaClient()
 // GET /api/punishments
 router.get('/', requireAuth, requirePermission('punishments.view'), async (req: Request, res: Response) => {
   try {
-    const { citizen_id, status, type } = req.query as Record<string, string>
+    const { citizen_id, status, type, search } = req.query as Record<string, string>
     const where: Prisma.PunishmentWhereInput = {}
     if (citizen_id) where.citizen_id = citizen_id
     if (status) where.status = status as PunishmentStatus
     if (type) where.type = type as PunishmentType
+    if (search) {
+      where.OR = [
+        { number: { contains: search, mode: 'insensitive' } },
+        { registry_code: { contains: search, mode: 'insensitive' } },
+        { reason: { contains: search, mode: 'insensitive' } },
+        { citizen: { nickname: { contains: search, mode: 'insensitive' } } },
+        { citizen: { reg_number: { contains: search, mode: 'insensitive' } } },
+      ]
+    }
 
     const punishments = await prisma.punishment.findMany({
       where,
@@ -34,7 +44,24 @@ router.get('/', requireAuth, requirePermission('punishments.view'), async (req: 
         case: { select: { id: true, number: true } },
       },
     })
-    res.json(punishments)
+    const hydrated = await Promise.all(punishments.map(async (punishment) => {
+      if (punishment.number && punishment.registry_code) return punishment
+      const number = punishment.number ?? `ПСТ-${punishment.issued_at.getFullYear()}-${punishment.id.slice(0, 6).toUpperCase()}`
+      return prisma.punishment.update({
+        where: { id: punishment.id },
+        data: {
+          number,
+          registry_code: punishment.registry_code ?? registryCode('ПСТ', number),
+        },
+        include: {
+          citizen: { select: { id: true, reg_number: true, nickname: true } },
+          issued_by: { select: { id: true, login: true } },
+          revoked_by: { select: { id: true, login: true } },
+          case: { select: { id: true, number: true } },
+        },
+      })
+    }))
+    res.json(hydrated)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
@@ -66,21 +93,26 @@ router.post('/', requireAuth, requirePermission('punishments.issue'), async (req
       return
     }
 
-    const punishment = await prisma.punishment.create({
-      data: {
-        citizen_id,
-        type: type as PunishmentType,
-        reason,
-        case_id: case_id || null,
-        issued_by_id: req.user!.id,
-        issued_at,
-        expires_at,
-        status: 'ACTIVE',
-      },
-      include: {
-        citizen: { select: { id: true, reg_number: true, nickname: true } },
-        issued_by: { select: { id: true, login: true } },
-      },
+    const punishment = await prisma.$transaction(async (tx) => {
+      const number = await nextDocumentNumber(tx, 'punishment', 'ПСТ', issued_at)
+      return tx.punishment.create({
+        data: {
+          number,
+          registry_code: registryCode('ПСТ', number),
+          citizen_id,
+          type: type as PunishmentType,
+          reason,
+          case_id: case_id || null,
+          issued_by_id: req.user!.id,
+          issued_at,
+          expires_at,
+          status: 'ACTIVE',
+        },
+        include: {
+          citizen: { select: { id: true, reg_number: true, nickname: true } },
+          issued_by: { select: { id: true, login: true } },
+        },
+      })
     })
 
     if (type === 'BAN') {

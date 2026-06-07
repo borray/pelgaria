@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import { PrismaClient, RelationStatus, TreatyType, TreatyStatus } from '@prisma/client'
+import { PrismaClient, RelationStatus, TreatyType, TreatyStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf } from '../services/pdf'
@@ -13,19 +13,14 @@ import {
   ACCENT,
   INK,
 } from '../services/templates'
+import { nextDocumentNumber, normalizeManualNumber, registryCode } from '../services/documentRegistry'
 
 const router = Router()
 const prisma = new PrismaClient()
 
-async function generateTreatyNumber(): Promise<string> {
-  const count = await prisma.diplomaticTreaty.count()
-  const seq = count + 1
-  return `ДПЛ-${String(seq).padStart(3, '0')}`
-}
-
-
 async function renderTreatyPdf(treaty: {
   number: string
+  registry_code?: string | null
   type: TreatyType
   body: string
   signed_at: Date
@@ -61,7 +56,7 @@ async function renderTreatyPdf(treaty: {
 
   const body = `
     <div class="dp-titleblock">
-      <div class="dp-number">Договор №${treaty.number}</div>
+    <div class="dp-number">Договор №${treaty.number}${treaty.registry_code ? ` · ${treaty.registry_code}` : ''}</div>
       <div class="dp-type">${typeLabel}</div>
     </div>
     <div class="dp-body">${bodyHtml}</div>
@@ -186,16 +181,59 @@ router.put('/states/:id', requireAuth, requirePermission('diplomacy.manage'), as
   }
 })
 
-// GET /api/diplomacy/treaties
-router.get('/treaties', requireAuth, requirePermission('diplomacy.view'), async (_req: Request, res: Response) => {
+// DELETE /api/diplomacy/states/:id
+router.delete('/states/:id', requireAuth, requirePermission('diplomacy.manage'), async (req: Request, res: Response) => {
   try {
+    const id = req.params.id as string
+    const existing = await prisma.diplomaticState.findUnique({
+      where: { id },
+      include: { _count: { select: { treaties: true } } },
+    })
+    if (!existing) {
+      res.status(404).json({ error: 'Государство не найдено' })
+      return
+    }
+    if (existing._count.treaties > 0) {
+      res.status(409).json({
+        error: `Нельзя удалить государство: связано договоров — ${existing._count.treaties}`,
+      })
+      return
+    }
+    await prisma.diplomaticState.delete({ where: { id } })
+    res.status(204).send()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
+// GET /api/diplomacy/treaties
+router.get('/treaties', requireAuth, requirePermission('diplomacy.view'), async (req: Request, res: Response) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
     const treaties = await prisma.diplomaticTreaty.findMany({
+      where: search ? {
+        OR: [
+          { number: { contains: search, mode: 'insensitive' } },
+          { registry_code: { contains: search, mode: 'insensitive' } },
+          { body: { contains: search, mode: 'insensitive' } },
+          { state: { name: { contains: search, mode: 'insensitive' } } },
+        ],
+      } : undefined,
       orderBy: { signed_at: 'desc' },
       include: {
         state: { select: { id: true, name: true } },
       },
     })
-    res.json(treaties)
+    const normalized = await Promise.all(treaties.map(async (treaty) => {
+      if (treaty.registry_code) return treaty
+      return prisma.diplomaticTreaty.update({
+        where: { id: treaty.id },
+        data: { registry_code: registryCode('ДПЛ', treaty.number) },
+        include: { state: { select: { id: true, name: true } } },
+      })
+    }))
+    res.json(normalized)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
@@ -205,7 +243,7 @@ router.get('/treaties', requireAuth, requirePermission('diplomacy.view'), async 
 // POST /api/diplomacy/treaties
 router.post('/treaties', requireAuth, requirePermission('diplomacy.manage'), async (req: Request, res: Response) => {
   try {
-    const { state_id, type, body } = req.body
+    const { state_id, type, body, auto_number = true } = req.body
     if (!state_id || !type || !body) {
       res.status(400).json({ error: 'state_id, type и body обязательны' })
       return
@@ -219,25 +257,43 @@ router.post('/treaties', requireAuth, requirePermission('diplomacy.manage'), asy
       return
     }
 
-    const number = await generateTreatyNumber()
+    let manualNumber: string | null
+    try {
+      manualNumber = auto_number === false ? normalizeManualNumber(req.body.number) : null
+      if (auto_number === false && !manualNumber) {
+        res.status(400).json({ error: 'Укажите номер или включите автоматическую нумерацию' })
+        return
+      }
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Некорректный номер' })
+      return
+    }
 
-    const treaty = await prisma.diplomaticTreaty.create({
-      data: {
-        number,
-        state_id,
-        type: type as TreatyType,
-        body,
-        signed_at,
-        status: 'ACTIVE',
-      },
-      include: {
-        state: { select: { id: true, name: true } },
-      },
+    const treaty = await prisma.$transaction(async (tx) => {
+      const number = manualNumber ?? await nextDocumentNumber(tx, 'TREATY', 'ДПЛ', signed_at)
+      return tx.diplomaticTreaty.create({
+        data: {
+          number,
+          registry_code: registryCode('ДПЛ', number),
+          state_id,
+          type: type as TreatyType,
+          body: body.trim(),
+          signed_at,
+          status: 'ACTIVE',
+        },
+        include: {
+          state: { select: { id: true, name: true } },
+        },
+      })
     })
 
     res.status(201).json(treaty)
   } catch (err) {
     console.error(err)
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      res.status(409).json({ error: 'Договор с таким номером уже существует' })
+      return
+    }
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
   }
 })
@@ -272,11 +328,28 @@ router.put('/treaties/:id', requireAuth, requirePermission('diplomacy.manage'), 
   }
 })
 
+// DELETE /api/diplomacy/treaties/:id
+router.delete('/treaties/:id', requireAuth, requirePermission('diplomacy.manage'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.diplomaticTreaty.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Договор не найден' })
+      return
+    }
+    await prisma.diplomaticTreaty.delete({ where: { id } })
+    res.status(204).send()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 // POST /api/diplomacy/treaties/:id/pdf
 router.post('/treaties/:id/pdf', requireAuth, requirePermission('diplomacy.view'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const treaty = await prisma.diplomaticTreaty.findUnique({
+    let treaty = await prisma.diplomaticTreaty.findUnique({
       where: { id },
       include: { state: { select: { id: true, name: true } } },
     })
@@ -285,6 +358,13 @@ router.post('/treaties/:id/pdf', requireAuth, requirePermission('diplomacy.view'
       return
     }
 
+    if (!treaty.registry_code) {
+      treaty = await prisma.diplomaticTreaty.update({
+        where: { id: treaty.id },
+        data: { registry_code: registryCode('ДПЛ', treaty.number) },
+        include: { state: { select: { id: true, name: true } } },
+      })
+    }
     const pdfBuffer = await renderTreatyPdf(treaty)
 
     res.set({

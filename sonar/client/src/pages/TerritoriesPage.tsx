@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Territory, User } from '../types'
@@ -41,6 +41,9 @@ export function TerritoriesPage() {
   const [form, setForm] = useState<TerritoryForm>(emptyForm())
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Territory | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const fetchTerritories = useCallback(async () => {
     setLoading(true)
@@ -56,8 +59,10 @@ export function TerritoriesPage() {
 
   useEffect(() => {
     fetchTerritories()
-    apiClient.get<User[]>('/accounts').then((r) => setUsers(r.data)).catch(() => {})
-  }, [fetchTerritories])
+    if (canManage) {
+      apiClient.get<User[]>('/territories/managers').then((r) => setUsers(r.data)).catch(() => {})
+    }
+  }, [fetchTerritories, canManage])
 
   const openCreateModal = () => {
     setForm(emptyForm())
@@ -124,6 +129,21 @@ export function TerritoriesPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/territories/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      fetchTerritories()
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   const columns: TableColumn<Territory>[] = [
     {
       key: 'name',
@@ -149,12 +169,15 @@ export function TerritoriesPage() {
     {
       key: 'actions',
       header: '',
-      width: '90px',
+      width: '180px',
       render: (row) => (
         canManage ? (
-          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); openEditModal(row) }}>
-            Изменить
-          </Button>
+          <div style={{ display: 'flex', gap: 7 }}>
+            <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); openEditModal(row) }}>Изменить</Button>
+            <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}>
+              <IconTrash size={14} />Удалить
+            </Button>
+          </div>
         ) : null
       ),
     },
@@ -204,7 +227,7 @@ export function TerritoriesPage() {
         {!loading && `Всего: ${territories.length}`}
       </div>
 
-      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Добавить территорию"
+      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Добавить территорию" description="Создание новой позиции в территориальном реестре"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>
@@ -215,7 +238,7 @@ export function TerritoriesPage() {
         {TerritoryFormContent}
       </Modal>
 
-      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать территорию"
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать территорию" description="Изменение статуса, координат и ответственного лица"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button>
@@ -224,6 +247,13 @@ export function TerritoriesPage() {
         }
       >
         {TerritoryFormContent}
+      </Modal>
+
+      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Удалить территорию" description="Проверьте выбранную позицию перед удалением"
+        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить территорию</Button></>}
+      >
+        <div className="danger-confirm">Территория <strong>{deleteTarget?.name}</strong> будет удалена из реестра. Это действие нельзя отменить.</div>
+        {deleteError && <div className="form-error">{deleteError}</div>}
       </Modal>
     </div>
   )

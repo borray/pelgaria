@@ -31,6 +31,7 @@ export function CasesPage() {
 
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -44,6 +45,7 @@ export function CasesPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
       const res = await apiClient.get<Case[]>(`/cases?${params.toString()}`)
       setCases(res.data)
     } catch {
@@ -51,7 +53,7 @@ export function CasesPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, search])
 
   useEffect(() => {
     fetchCases()
@@ -124,6 +126,12 @@ export function CasesPage() {
       ),
     },
     {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '150px',
+      render: (row) => <span className="registry-code">{row.registry_code ?? 'Формируется'}</span>,
+    },
+    {
       key: 'judge',
       header: 'Судья',
       render: (row) => <span style={{ fontSize: '13px', color: '#6B7280' }}>{row.judge?.login ?? '—'}</span>,
@@ -157,6 +165,7 @@ export function CasesPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Дело, обвиняемый, номер или ШК..." />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '200px' }} />
       </div>
 
@@ -185,8 +194,9 @@ export function CasesPage() {
       <Modal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        description="Номер дела и ШК будут созданы автоматически и останутся постоянными."
         title="Возбудить дело"
-        width={520}
+        width={620}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>

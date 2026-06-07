@@ -82,6 +82,7 @@ enum CitizenStatus {
 model Passport {
   id               String         @id @default(cuid())
   number           String         @unique
+  registry_code    String?        @unique
   citizen_id       String
   citizen          Citizen        @relation(fields: [citizen_id], references: [id])
   issued_at        DateTime       @default(now())
@@ -101,6 +102,7 @@ enum PassportStatus {
 model Law {
   id          String    @id @default(cuid())
   number      String    @unique
+  registry_code String? @unique
   type        LawType
   title       String
   body        String
@@ -124,6 +126,7 @@ enum LawStatus {
 model Case {
   id             String       @id @default(cuid())
   number         String       @unique
+  registry_code  String?      @unique
   accused_id     String
   accused        Citizen      @relation("Accused", fields: [accused_id], references: [id])
   law_id         String?
@@ -161,6 +164,8 @@ enum VerdictType {
 
 model Punishment {
   id             String           @id @default(cuid())
+  number         String?          @unique
+  registry_code  String?          @unique
   citizen_id     String
   citizen        Citizen          @relation(fields: [citizen_id], references: [id])
   type           PunishmentType
@@ -307,12 +312,19 @@ enum RelationStatus {
 model DiplomaticTreaty {
   id        String          @id @default(cuid())
   number    String          @unique
+  registry_code String?     @unique
   state_id  String
   state     DiplomaticState @relation(fields: [state_id], references: [id])
   type      TreatyType
   body      String
   signed_at DateTime        @default(now())
   status    TreatyStatus    @default(ACTIVE)
+}
+
+model DocumentSequence {
+  key        String   @id
+  value      Int      @default(0)
+  updated_at DateTime @updatedAt
 }
 
 enum TreatyType {
