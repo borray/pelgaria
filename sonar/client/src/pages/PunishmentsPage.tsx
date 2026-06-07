@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Punishment, Citizen } from '../types'
@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { downloadPdfPost } from '../utils/pdf'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -47,6 +48,18 @@ export function PunishmentsPage() {
   const [issueLoading, setIssueLoading] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   const [revokeLoadingId, setRevokeLoadingId] = useState<string | null>(null)
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+
+  const handleDownloadPdf = async (p: Punishment) => {
+    setPdfLoadingId(p.id)
+    try {
+      await downloadPdfPost(`/api/punishments/${p.id}/pdf`, `punishment-${p.id.slice(0, 8)}.pdf`)
+    } catch {
+      alert('Ошибка генерации PDF')
+    } finally {
+      setPdfLoadingId(null)
+    }
+  }
 
   const fetchPunishments = useCallback(async () => {
     setLoading(true)
@@ -154,18 +167,29 @@ export function PunishmentsPage() {
     {
       key: 'actions',
       header: '',
-      width: '100px',
+      width: '160px',
       render: (row) => (
-        row.status === 'ACTIVE' && canRevoke ? (
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <Button
             variant="secondary"
             size="sm"
-            loading={revokeLoadingId === row.id}
-            onClick={(e) => { e.stopPropagation(); handleRevoke(row) }}
+            loading={pdfLoadingId === row.id}
+            onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
+            title="Скачать постановление PDF"
           >
-            Отозвать
+            <IconFileTypePdf size={14} />
           </Button>
-        ) : null
+          {row.status === 'ACTIVE' && canRevoke && (
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={revokeLoadingId === row.id}
+              onClick={(e) => { e.stopPropagation(); handleRevoke(row) }}
+            >
+              Отозвать
+            </Button>
+          )}
+        </div>
       ),
     },
   ]

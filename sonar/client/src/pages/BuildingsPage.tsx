@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconPlus, IconSearch, IconFileTypePdf } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Building, Citizen } from '../types'
@@ -11,6 +11,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
+import { downloadPdf } from '../utils/pdf'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -64,6 +65,19 @@ export function BuildingsPage() {
   })
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  const handleDownloadRegistryPdf = async () => {
+    setPdfLoading(true)
+    try {
+      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
+      await downloadPdf('/api/buildings/registry/pdf', `buildings-registry-${today}.pdf`)
+    } catch {
+      alert('Ошибка генерации PDF')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   const fetchBuildings = useCallback(async () => {
     setLoading(true)
@@ -187,12 +201,18 @@ export function BuildingsPage() {
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
           РЕЛИКТ — Реестр объектов
         </h1>
-        {canCreate && (
-          <Button variant="primary" onClick={openCreateModal}>
-            <IconPlus size={16} />
-            Зарегистрировать объект
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button variant="secondary" loading={pdfLoading} onClick={handleDownloadRegistryPdf}>
+            <IconFileTypePdf size={16} />
+            Реестр (PDF)
           </Button>
-        )}
+          {canCreate && (
+            <Button variant="primary" onClick={openCreateModal}>
+              <IconPlus size={16} />
+              Зарегистрировать объект
+            </Button>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>

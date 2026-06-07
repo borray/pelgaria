@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft } from '@tabler/icons-react'
+import { IconArrowLeft, IconFileTypePdf } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Case, User } from '../types'
@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { formatDate } from '../utils/formatters'
+import { downloadPdfPost } from '../utils/pdf'
 
 const VERDICT_TYPE_OPTIONS = [
   { value: 'WARNING', label: 'Предупреждение' },
@@ -26,6 +27,20 @@ export function CaseDetailPage() {
   const [caseData, setCaseData] = useState<Case | null>(null)
   const [loading, setLoading] = useState(true)
   const [judges, setJudges] = useState<User[]>([])
+
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  const handleDownloadPdf = async () => {
+    if (!id) return
+    setPdfLoading(true)
+    try {
+      await downloadPdfPost(`/api/cases/${id}/pdf`, `verdict-${caseData?.number ?? id}.pdf`)
+    } catch {
+      alert('Ошибка генерации PDF')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   const [showJudgeModal, setShowJudgeModal] = useState(false)
   const [selectedJudgeId, setSelectedJudgeId] = useState('')
@@ -145,6 +160,12 @@ export function CaseDetailPage() {
           {canManage && (
             <Button variant="secondary" size="sm" onClick={() => setShowJudgeModal(true)}>
               Назначить судью
+            </Button>
+          )}
+          {caseData.status === 'CLOSED' && (
+            <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
+              <IconFileTypePdf size={16} />
+              Приговор (PDF)
             </Button>
           )}
           {canClose && caseData.status !== 'CLOSED' && (

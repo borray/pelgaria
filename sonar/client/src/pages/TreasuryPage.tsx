@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconMinus } from '@tabler/icons-react'
+import { IconPlus, IconMinus, IconFileTypePdf } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Treasury, TreasuryTransaction } from '../types'
@@ -8,6 +8,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDateTime } from '../utils/formatters'
+import { downloadPdf } from '../utils/pdf'
 
 export function TreasuryPage() {
   const canEdit = usePermission('treasury.edit')
@@ -26,6 +27,27 @@ export function TreasuryPage() {
   const [description, setDescription] = useState('')
   const [opLoading, setOpLoading] = useState(false)
   const [opError, setOpError] = useState<string | null>(null)
+  const [showPdfModal, setShowPdfModal] = useState(false)
+  const [pdfFrom, setPdfFrom] = useState('')
+  const [pdfTo, setPdfTo] = useState('')
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  const handleDownloadReportPdf = async () => {
+    setPdfLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (pdfFrom) params.set('from', pdfFrom)
+      if (pdfTo) params.set('to', pdfTo)
+      const query = params.toString()
+      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
+      await downloadPdf(`/api/treasury/report/pdf${query ? `?${query}` : ''}`, `treasury-report-${today}.pdf`)
+      setShowPdfModal(false)
+    } catch {
+      alert('Ошибка генерации PDF')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   const fetchTreasury = useCallback(async () => {
     try {
@@ -137,18 +159,24 @@ export function TreasuryPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
-        {canEdit && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Button variant="secondary" onClick={() => openModal('subtract')}>
-              <IconMinus size={16} />
-              Списать
-            </Button>
-            <Button variant="primary" onClick={() => openModal('add')}>
-              <IconPlus size={16} />
-              Пополнить
-            </Button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
+            <IconFileTypePdf size={16} />
+            Отчёт (PDF)
+          </Button>
+          {canEdit && (
+            <>
+              <Button variant="secondary" onClick={() => openModal('subtract')}>
+                <IconMinus size={16} />
+                Списать
+              </Button>
+              <Button variant="primary" onClick={() => openModal('add')}>
+                <IconPlus size={16} />
+                Пополнить
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div style={{ background: '#0A1628', borderRadius: '8px', padding: '32px 36px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -225,6 +253,44 @@ export function TreasuryPage() {
           />
           {opError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{opError}</div>}
         </form>
+      </Modal>
+
+      <Modal
+        open={showPdfModal}
+        onClose={() => setShowPdfModal(false)}
+        title="Финансовый отчёт (PDF)"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowPdfModal(false)}>Отмена</Button>
+            <Button variant="primary" loading={pdfLoading} onClick={handleDownloadReportPdf}>
+              Скачать PDF
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: '14px', color: '#374151', fontFamily: 'Inter, sans-serif', margin: 0 }}>
+            Выберите период для отчёта. Оставьте поля пустыми, чтобы включить все транзакции.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>С даты</label>
+            <input
+              type="date"
+              value={pdfFrom}
+              onChange={(e) => setPdfFrom(e.target.value)}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>По дату</label>
+            <input
+              type="date"
+              value={pdfTo}
+              onChange={(e) => setPdfTo(e.target.value)}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   )
