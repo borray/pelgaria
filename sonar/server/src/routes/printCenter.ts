@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
+import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
 import {
