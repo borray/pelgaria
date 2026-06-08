@@ -86,13 +86,6 @@ const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string 
     ],
   },
   {
-    group: 'Дипломатия',
-    items: [
-      { key: 'diplomacy.view', label: 'Просматривать' },
-      { key: 'diplomacy.manage', label: 'Управлять' },
-    ],
-  },
-  {
     group: 'Система',
     items: [
       { key: 'accounts.manage', label: 'Управлять аккаунтами' },

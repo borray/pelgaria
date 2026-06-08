@@ -260,7 +260,7 @@ router.get('/test-sheets', requireAuth, async (_req: Request, res: Response) => 
 })
 
 // POST /api/print-center/test-sheets — зарегистрировать пробный лист
-router.post('/test-sheets', requireAuth, async (req: Request, res: Response) => {
+router.post('/test-sheets', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
     const number = randomDocumentCode()
     const sheet = await prisma.printerTestSheet.create({
@@ -295,7 +295,7 @@ router.get('/test-sheets/:id/pdf', requireAuth, async (req: Request, res: Respon
 })
 
 // DELETE /api/print-center/test-sheets/:id — уничтожение пробного листа
-router.delete('/test-sheets/:id', requireAuth, async (req: Request, res: Response) => {
+router.delete('/test-sheets/:id', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
     const existing = await prisma.printerTestSheet.findUnique({ where: { id } })

@@ -217,32 +217,6 @@ export interface Territory {
   created_at: string
 }
 
-export type RelationStatus = 'ALLIANCE' | 'NEUTRAL' | 'TENSION' | 'WAR'
-
-export interface DiplomaticState {
-  id: string
-  name: string
-  relation_status: RelationStatus
-  description?: string | null
-  treaties?: DiplomaticTreaty[]
-  created_at: string
-}
-
-export type TreatyType = 'NON_AGGRESSION' | 'ALLIANCE' | 'TRADE' | 'OTHER'
-export type TreatyStatus = 'ACTIVE' | 'TERMINATED'
-
-export interface DiplomaticTreaty {
-  id: string
-  number: string
-  registry_code?: string | null
-  state_id: string
-  state?: Pick<DiplomaticState, 'id' | 'name'>
-  type: TreatyType
-  body: string
-  signed_at: string
-  status: TreatyStatus
-}
-
 export type ConversationType = 'DIRECT' | 'GENERAL'
 
 export interface ChatConversation {
@@ -335,8 +309,6 @@ export type Permission =
   | 'relict.delete'
   | 'territories.view'
   | 'territories.manage'
-  | 'diplomacy.view'
-  | 'diplomacy.manage'
   | 'accounts.manage'
   | 'roles.manage'
   | 'chat.send'

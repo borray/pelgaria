@@ -26,7 +26,7 @@ export function randomDocumentCode(groups = 3, size = 4): string {
  * Возвращает уникальный случайный номер документа.
  * Номера больше НЕ выдаются по порядку — каждый получает непредсказуемый код.
  * Сигнатура сохранена ради совместимости со всеми вызовами (passports, cases,
- * punishments, laws, treaties, generated documents).
+ * punishments, laws and generated documents).
  */
 export async function nextDocumentNumber(
   _db: DbClient,

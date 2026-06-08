@@ -5,7 +5,7 @@ import { IconChevronRight } from '@tabler/icons-react'
 const PATH_LABELS: Record<string, string> = {
   citizens: 'Граждане', passports: 'Паспорта', laws: 'Законодательство', cases: 'Дела',
   punishments: 'Наказания', taxes: 'Налоги', treasury: 'Казна', buildings: 'РЕЛИКТ',
-  territories: 'Территории', diplomacy: 'Дипломатия', chat: 'Чат', accounts: 'Аккаунты',
+  territories: 'Территории', chat: 'Чат', accounts: 'Аккаунты',
   roles: 'Роли', profile: 'Профиль', 'print-center': 'Центр документов',
 }
 

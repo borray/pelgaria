@@ -21,7 +21,6 @@ import taxesRouter from './routes/taxes'
 import treasuryRouter from './routes/treasury'
 import buildingsRouter from './routes/buildings'
 import territoriesRouter from './routes/territories'
-import diplomacyRouter from './routes/diplomacy'
 import chatRouter from './routes/chat'
 import discordRouter from './routes/discord'
 import dashboardRouter from './routes/dashboard'
@@ -76,7 +75,6 @@ app.use('/api/taxes', taxesRouter)
 app.use('/api/treasury', treasuryRouter)
 app.use('/api/buildings', buildingsRouter)
 app.use('/api/territories', territoriesRouter)
-app.use('/api/diplomacy', diplomacyRouter)
 app.use('/api/chat', chatRouter)
 app.use('/api/auth/discord', discordRouter)
 app.use('/api/dashboard', dashboardRouter)

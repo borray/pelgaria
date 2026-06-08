@@ -18,7 +18,3 @@ export function genLawNumber(seq: number, type: 'LAW' | 'DECREE'): string {
 export function genBuildingNumber(seq: number): string {
   return `РЛК-${String(seq).padStart(4, '0')}`
 }
-
-export function genTreatyNumber(seq: number): string {
-  return `ДПЛ-${String(seq).padStart(3, '0')}`
-}

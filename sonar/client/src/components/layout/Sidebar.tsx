@@ -10,7 +10,6 @@ import {
   IconBuildingBank,
   IconBuilding,
   IconMap,
-  IconGlobe,
   IconMessageCircle,
   IconUserCog,
   IconShield,
@@ -133,17 +132,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           label: 'Территории',
           icon: <IconMap size={16} />,
           permission: 'territories.view',
-        },
-      ],
-    },
-    {
-      title: 'Дипломатия',
-      items: [
-        {
-          to: '/diplomacy',
-          label: 'Дипломатия',
-          icon: <IconGlobe size={16} />,
-          permission: 'diplomacy.view',
         },
       ],
     },

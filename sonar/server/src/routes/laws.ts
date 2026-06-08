@@ -406,14 +406,19 @@ router.get('/:id/attachments', requireAuth, requirePermission('laws.view'), asyn
 
 // POST /api/laws/:id/attachments — загрузка сканов и документов
 router.post('/:id/attachments', requireAuth, requirePermission('laws.edit'), lawUpload.array('files', 12), async (req: Request, res: Response) => {
+  const files = (req.files as Express.Multer.File[]) ?? []
+  const removeUploadedFiles = () => Promise.all(
+    files.map((file) => fs.promises.unlink(file.path).catch(() => undefined))
+  )
+
   try {
     const law_id = req.params.id as string
     const law = await prisma.law.findUnique({ where: { id: law_id } })
     if (!law) {
+      await removeUploadedFiles()
       res.status(404).json({ error: 'Закон не найден' })
       return
     }
-    const files = (req.files as Express.Multer.File[]) ?? []
     if (files.length === 0) {
       res.status(400).json({ error: 'Файлы не загружены или формат не поддерживается' })
       return
@@ -437,6 +442,7 @@ router.post('/:id/attachments', requireAuth, requirePermission('laws.edit'), law
     )
     res.status(201).json(created)
   } catch (err) {
+    await removeUploadedFiles()
     console.error(err)
     res.status(500).json({ error: 'Не удалось загрузить вложения' })
   }
@@ -446,7 +452,10 @@ router.post('/:id/attachments', requireAuth, requirePermission('laws.edit'), law
 router.delete('/:id/attachments/:attachmentId', requireAuth, requirePermission('laws.edit'), async (req: Request, res: Response) => {
   try {
     const attachmentId = req.params.attachmentId as string
-    const attachment = await prisma.lawAttachment.findUnique({ where: { id: attachmentId } })
+    const lawId = req.params.id as string
+    const attachment = await prisma.lawAttachment.findFirst({
+      where: { id: attachmentId, law_id: lawId },
+    })
     if (!attachment) {
       res.status(404).json({ error: 'Вложение не найдено' })
       return

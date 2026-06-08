@@ -3,7 +3,6 @@ import {
   IconBuilding,
   IconBuildingBank,
   IconGavel,
-  IconGlobe,
   IconId,
   IconLayoutDashboard,
   IconMap,
@@ -25,7 +24,6 @@ const destinations = [
   { label: 'Казна', hint: 'Финансовые операции', path: '/treasury', icon: IconBuildingBank, permission: 'treasury.view' },
   { label: 'РЕЛИКТ', hint: 'Реестр объектов', path: '/buildings', icon: IconBuilding, permission: 'relict.view' },
   { label: 'Территории', hint: 'Управление землями', path: '/territories', icon: IconMap, permission: 'territories.view' },
-  { label: 'Дипломатия', hint: 'Государства и договоры', path: '/diplomacy', icon: IconGlobe, permission: 'diplomacy.view' },
   { label: 'Чат', hint: 'Защищённая связь', path: '/chat', icon: IconMessageCircle, permission: 'chat.send' },
   { label: 'Центр печати', hint: 'Справки, заявления и выписки', path: '/print-center', icon: IconPrinter },
 ]

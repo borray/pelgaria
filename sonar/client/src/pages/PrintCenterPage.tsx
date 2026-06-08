@@ -268,9 +268,11 @@ export function PrintCenterPage() {
       <section className="service-catalog test-station">
         <div className="section-heading">
           <div><span>Контроль оборудования</span><h2>Проверка станции печати</h2></div>
-          <Button variant="primary" loading={creatingTest} onClick={runPrintTest}>
-            <IconTestPipe size={16} /> Печатать пробный лист
-          </Button>
+          {canAdmin && (
+            <Button variant="primary" loading={creatingTest} onClick={runPrintTest}>
+              <IconTestPipe size={16} /> Печатать пробный лист
+            </Button>
+          )}
         </div>
         <div className="test-station-info">
           <span className="test-station-icon"><IconScan size={20} /></span>
@@ -296,9 +298,11 @@ export function PrintCenterPage() {
                 <span className="test-sheet-when">{formatDateTime(sheet.created_at)} · {sheet.created_by_login}</span>
                 <div className="test-sheet-actions">
                   <Button variant="secondary" size="sm" title="Печать пробного листа" onClick={() => printPdf(`/api/print-center/test-sheets/${sheet.id}/pdf`)}><IconPrinter size={14} /></Button>
-                  <ActionMenu items={[
-                    { label: 'Уничтожить лист', icon: <IconFlame size={15} />, danger: true, onClick: () => { setDestroyError(null); setDestroyTarget(sheet) } },
-                  ]} />
+                  {canAdmin && (
+                    <ActionMenu items={[
+                      { label: 'Уничтожить лист', icon: <IconFlame size={15} />, danger: true, onClick: () => { setDestroyError(null); setDestroyTarget(sheet) } },
+                    ]} />
+                  )}
                 </div>
               </div>
             ))

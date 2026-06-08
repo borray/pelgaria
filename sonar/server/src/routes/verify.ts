@@ -25,7 +25,6 @@ const PASSPORT_STATUS: Record<string, string> = { VALID: 'Действителе
 const CASE_STATUS: Record<string, string> = { OPENED: 'Открыто', IN_PROGRESS: 'В производстве', CLOSED: 'Закрыто' }
 const LAW_STATUS: Record<string, string> = { ACTIVE: 'Действует', REPEALED: 'Отменён', SUSPENDED: 'Приостановлен' }
 const PUNISH_STATUS: Record<string, string> = { ACTIVE: 'Активно', REVOKED: 'Снято', EXPIRED: 'Истекло' }
-const TREATY_STATUS: Record<string, string> = { ACTIVE: 'Действует', TERMINATED: 'Расторгнут' }
 
 // GET /api/verify/:code — проверка подлинности документа по номеру или ШК.
 // Доступно только авторизованным сотрудникам СОНАР.
@@ -146,29 +145,6 @@ router.get('/:code', requireAuth, async (req: Request, res: Response) => {
         issued_at: punishment.issued_at.toISOString(),
         link: '/punishments',
         fields: [{ label: 'Гражданин', value: punishment.citizen?.nickname ?? '—' }],
-      })
-      return
-    }
-
-    // Treaty
-    const treaty = await prisma.diplomaticTreaty.findFirst({
-      where: match,
-      include: { state: { select: { name: true } } },
-    })
-    if (treaty) {
-      res.json(<VerifyResult>{
-        found: true,
-        kind: 'TREATY',
-        kind_label: 'Дипломатический договор',
-        number: treaty.number,
-        registry_code: treaty.registry_code,
-        title: 'Договор',
-        subject: treaty.state?.name ?? null,
-        status: treaty.status,
-        status_label: TREATY_STATUS[treaty.status] ?? treaty.status,
-        issued_at: treaty.signed_at.toISOString(),
-        link: '/diplomacy',
-        fields: [{ label: 'Сторона', value: treaty.state?.name ?? '—' }],
       })
       return
     }

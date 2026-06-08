@@ -88,7 +88,7 @@ jobs:
 
             # Generate Prisma client and push schema changes
             npx prisma generate
-            npx prisma db push --skip-generate --accept-data-loss
+            npx prisma db push --skip-generate
 
             # Seed only on first deploy (if Treasury table is empty)
             node -e "
