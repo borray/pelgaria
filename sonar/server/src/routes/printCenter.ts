@@ -78,6 +78,58 @@ router.get('/templates', requireAuth, (_req: Request, res: Response) => {
   res.json(FORM_TEMPLATES)
 })
 
+// GET /api/print-center/templates/:id/blank-pdf — blank form without saving to DB
+router.get('/templates/:id/blank-pdf', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const template = FORM_TEMPLATES.find((t) => t.id === req.params.id as string)
+    if (!template) {
+      res.status(404).json({ error: 'Шаблон не найден' })
+      return
+    }
+
+    const createdDate = new Date().toLocaleDateString('ru-RU')
+    const blankLabel = '___________________________'
+    const barcode = barcodeStripes(`BLANK:${template.id}:${Date.now()}`, 320, 42)
+    const fields = template.fields
+      .map((key) => `<div class="form-row"><div class="form-key">${escapeHtml((FIELD_LABELS as Record<string, string>)[key] ?? key.replace(/_/g, ' '))}</div><div class="form-value">${blankLabel}</div></div>`)
+      .join('')
+    const subject = `<div class="subject"><strong>${blankLabel}</strong><span>${blankLabel}</span></div>`
+    const seal = `<div style="width:118px;height:118px;border:2px dashed #aaa;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#aaa;text-align:center;">МЕСТО<br>ЭЦП</div>`
+    const header = `<div class="form-header">
+      <div class="form-rosette">${guillocheRosette(`BLANK:${template.id}`, 88)}</div>
+      <div><div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div><div class="title">${escapeHtml(template.title)}</div><div class="number">№ ________________ · ________________</div></div>
+    </div>`
+    const body = `${subject}<div class="form-fields">${fields || '<div class="blank-lines">________________________________________________________________<br><br>________________________________________________________________<br><br>________________________________________________________________</div>'}</div>
+      <div class="declaration">Настоящий документ подлежит заполнению вручную и последующей заверке уполномоченным лицом СОНАР.</div>`
+    const footer = `<div class="form-footer"><div>${barcode}<div class="barcode-label">БЛАНК · ${escapeHtml(template.prefix)} · ${createdDate}</div></div>${seal}</div>`
+    const styles = `
+      .form-header{display:flex;align-items:center;gap:18px;border:2px solid #111;padding:14px 18px}
+      .form-rosette{width:72px;height:72px;filter:grayscale(1) contrast(1.6)} .form-rosette svg{width:72px;height:72px}
+      .state{font-size:10px;letter-spacing:3px;font-weight:700}.title{font-family:'PT Serif',serif;font-size:22px;font-weight:700;text-transform:uppercase;margin-top:5px}
+      .number{font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:5px}.subject{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding:18px 6px 10px;font-size:15px}
+      .subject span{font-family:'JetBrains Mono',monospace}.form-fields{margin-top:22px}.form-row{display:grid;grid-template-columns:210px 1fr;border-bottom:1px solid #777;padding:10px 5px}
+      .form-key{text-transform:uppercase;font-size:10px;letter-spacing:.06em;color:#444}.form-value{font-size:14px;white-space:pre-wrap}
+      .declaration{margin-top:28px;border:1px dashed #555;padding:14px;font-size:11px;line-height:1.6;color:#666}.blank-lines{font-size:14px;line-height:2}
+      .form-footer{display:flex;align-items:flex-end;justify-content:space-between;border-top:2px solid #111;padding-top:16px}.barcode-label{font-family:'JetBrains Mono',monospace;font-size:9px;margin-top:4px}
+    `
+    const html = pageShell({
+      seed: `BLANK:${template.id}`,
+      kind: 'generated-form',
+      accent: INK,
+      header,
+      body,
+      footer,
+      styles,
+      watermark: `<div style="width:500px;height:500px;opacity:0.5">${guillocheRosette(`${template.id}:blank:wm`, 500)}</div>`,
+    })
+    const pdf = await htmlToPdf(html)
+    res.set(pdfHeaders(pdf, `blank-${template.prefix}.pdf`))
+    res.send(pdf)
+  } catch (error) {
+    res.status(500).json(pdfError(error, 'blank form'))
+  }
+})
+
 router.get('/documents', requireAuth, async (req: Request, res: Response) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
@@ -177,7 +229,7 @@ router.patch('/documents/:id/attach', requireAuth, async (req: Request, res: Res
   }
 })
 
-router.delete('/documents/:id', requireAuth, async (req: Request, res: Response) => {
+router.delete('/documents/:id', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
     const existing = await prisma.generatedDocument.findUnique({ where: { id } })

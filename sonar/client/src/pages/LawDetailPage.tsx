@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
+import { Spinner } from '../components/ui/Spinner'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
 
@@ -91,9 +92,7 @@ export function LawDetailPage() {
     }
   }
 
-  if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
-  }
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Spinner /></div>
 
   if (!law) {
     return (

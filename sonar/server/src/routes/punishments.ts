@@ -182,6 +182,23 @@ router.post('/:id/revoke', requireAuth, requirePermission('punishments.revoke'),
   }
 })
 
+// DELETE /api/punishments/:id — permanent erasure
+router.delete('/:id', requireAuth, requirePermission('punishments.issue'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.punishment.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Наказание не найдено' })
+      return
+    }
+    await prisma.punishment.delete({ where: { id } })
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 // POST /api/punishments/:id/pdf
 router.post('/:id/pdf', requireAuth, requirePermission('punishments.view'), async (req: Request, res: Response) => {
   try {

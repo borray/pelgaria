@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
+import { useTypeConfirm } from '../hooks/useTypeConfirm'
 import type { User, Role, Citizen } from '../types'
 import { Button } from '../components/ui/Button'
 import { Table, type TableColumn } from '../components/ui/Table'
@@ -49,6 +51,26 @@ export function AccountsPage() {
   const [resetError, setResetError] = useState<string | null>(null)
 
   const [blockLoadingId, setBlockLoadingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget), 7)
+  const deleteConfirm = useTypeConfirm(deleteTarget?.login ?? '', Boolean(deleteTarget))
+
+  const handleDeleteAccount = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/accounts/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      fetchUsers()
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -217,6 +239,14 @@ export function AccountsPage() {
             >
               {row.is_active ? 'Блок' : 'Разблок'}
             </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              title="Удалить аккаунт навсегда"
+              onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}
+            >
+              <IconTrash size={14} />
+            </Button>
           </div>
         ) : null
       ),
@@ -300,6 +330,38 @@ export function AccountsPage() {
           <Input label="Новый пароль (мин. 6 символов) *" type="password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} autoFocus />
           {resetError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{resetError}</div>}
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить аккаунт"
+        description="Аккаунт и все сессии будут уничтожены. Гражданин и реестровые данные не затрагиваются."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>
+            <Button
+              variant="danger"
+              disabled={!deleteUnlocked || !deleteConfirm.confirmed}
+              loading={deleteLoading}
+              onClick={handleDeleteAccount}
+            >
+              {!deleteUnlocked ? `Подождите ${deleteCountdown}с` : 'Удалить аккаунт'}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm" style={{ marginBottom: '14px' }}>
+          Аккаунт <strong>{deleteTarget?.login}</strong> будет удалён навсегда. Это действие нельзя отменить.
+        </div>
+        <Input
+          label={`Введите логин «${deleteTarget?.login ?? ''}» для подтверждения`}
+          value={deleteConfirm.value}
+          onChange={deleteConfirm.onChange}
+          placeholder={deleteTarget?.login ?? ''}
+          autoFocus
+        />
+        {deleteError && <div className="form-error" style={{ marginTop: '10px' }}>{deleteError}</div>}
       </Modal>
     </div>
   )

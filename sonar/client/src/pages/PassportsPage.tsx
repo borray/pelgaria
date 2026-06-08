@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconPrinter, IconBan } from '@tabler/icons-react'
+import { IconPlus, IconPrinter, IconBan, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -41,7 +41,11 @@ export function PassportsPage() {
   const [revokeTarget, setRevokeTarget] = useState<Passport | null>(null)
   const [revokeLoading, setRevokeLoading] = useState(false)
   const [revokeError, setRevokeError] = useState<string | null>(null)
-  const { unlocked: revokeUnlocked, secondsLeft: revokeCountdown } = useTimedUnlock(Boolean(revokeTarget))
+  const { unlocked: revokeUnlocked, secondsLeft: revokeCountdown } = useTimedUnlock(Boolean(revokeTarget), 5)
+  const [eraseTarget, setEraseTarget] = useState<Passport | null>(null)
+  const [eraseLoading, setEraseLoading] = useState(false)
+  const [eraseError, setEraseError] = useState<string | null>(null)
+  const { unlocked: eraseUnlocked, secondsLeft: eraseCountdown } = useTimedUnlock(Boolean(eraseTarget), 6)
 
   const fetchPassports = useCallback(async () => {
     setLoading(true)
@@ -113,6 +117,21 @@ export function PassportsPage() {
       alert('Ошибка генерации PDF')
     } finally {
       setPdfLoadingId(null)
+    }
+  }
+
+  const handleErase = async () => {
+    if (!eraseTarget) return
+    setEraseLoading(true)
+    setEraseError(null)
+    try {
+      await apiClient.delete(`/passports/${eraseTarget.id}`)
+      setEraseTarget(null)
+      fetchPassports()
+    } catch (err: unknown) {
+      setEraseError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setEraseLoading(false)
     }
   }
 
@@ -223,6 +242,16 @@ export function PassportsPage() {
               title="Отозвать паспорт"
             >
               <IconBan size={14} />
+            </Button>
+          )}
+          {canIssue && row.status !== 'VALID' && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setEraseError(null); setEraseTarget(row) }}
+              title="Удалить запись навсегда"
+            >
+              <IconTrash size={14} />
             </Button>
           )}
         </div>
@@ -342,6 +371,31 @@ export function PassportsPage() {
           Паспорт <strong>{revokeTarget?.number}</strong> гражданина <strong>{revokeTarget?.citizen?.nickname}</strong> будет аннулирован. Гражданин потеряет действующий документ.
         </div>
         {revokeError && <div className="form-error">{revokeError}</div>}
+      </Modal>
+
+      <Modal
+        open={Boolean(eraseTarget)}
+        onClose={() => setEraseTarget(null)}
+        title="Удалить запись о паспорте"
+        description="Архивная запись паспорта будет стёрта из реестра навсегда."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEraseTarget(null)}>Отмена</Button>
+            <Button
+              variant="danger"
+              disabled={!eraseUnlocked}
+              loading={eraseLoading}
+              onClick={handleErase}
+            >
+              {eraseUnlocked ? 'Стереть запись' : `Подождите ${eraseCountdown}с`}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm">
+          Паспорт <strong>{eraseTarget?.number}</strong> ({eraseTarget?.status}) гражданина <strong>{eraseTarget?.citizen?.nickname}</strong> будет удалён из реестра навсегда.
+        </div>
+        {eraseError && <div className="form-error" style={{ marginTop: '10px' }}>{eraseError}</div>}
       </Modal>
     </div>
   )

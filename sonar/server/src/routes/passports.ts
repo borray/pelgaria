@@ -364,6 +364,27 @@ router.patch('/:id', requireAuth, requirePermission('passports.issue'), async (r
   }
 })
 
+// DELETE /api/passports/:id — permanent erasure (only REVOKED/EXPIRED)
+router.delete('/:id', requireAuth, requirePermission('passports.issue'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.passport.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Паспорт не найден' })
+      return
+    }
+    if (existing.status === 'VALID') {
+      res.status(400).json({ error: 'Нельзя удалить действующий паспорт. Сначала отзовите его.' })
+      return
+    }
+    await prisma.passport.delete({ where: { id } })
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 // GET /api/passports/:id/pdf
 router.get('/:id/pdf', requireAuth, requirePermission('passports.view'), async (req: Request, res: Response) => {
   try {
