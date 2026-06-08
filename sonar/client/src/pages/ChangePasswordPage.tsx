@@ -10,7 +10,7 @@ import apiClient from '../api/client'
 
 export function ChangePasswordPage() {
   const navigate = useNavigate()
-  const { user, refresh } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -28,7 +28,7 @@ export function ChangePasswordPage() {
     setLoading(true)
     try {
       await apiClient.post('/auth/change-password', { currentPassword, newPassword })
-      await refresh()
+      if (user) setUser({ ...user, must_change_password: false })
       setDone(true)
     } catch (requestError: unknown) {
       setError((requestError as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось сменить пароль')

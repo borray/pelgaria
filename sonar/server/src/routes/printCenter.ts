@@ -177,6 +177,22 @@ router.patch('/documents/:id/attach', requireAuth, async (req: Request, res: Res
   }
 })
 
+router.delete('/documents/:id', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.generatedDocument.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Документ не найден' })
+      return
+    }
+    await prisma.generatedDocument.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Не удалось удалить документ' })
+  }
+})
+
 router.get('/documents/:id/pdf', requireAuth, async (req: Request, res: Response) => {
   try {
     const document = await prisma.generatedDocument.findUnique({

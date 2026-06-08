@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { IconArrowLeft, IconEdit, IconTrash, IconUpload } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { Building, Citizen } from '../types'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
+import { Spinner } from '../components/ui/Spinner'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { formatDate, formatAmount } from '../utils/formatters'
@@ -47,6 +49,7 @@ export function BuildingDetailPage() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(showDeleteModal)
 
   const [uploadLoading, setUploadLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -136,7 +139,7 @@ export function BuildingDetailPage() {
     }
   }
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Spinner /></div>
   if (!building) return (
     <div style={{ padding: '40px', textAlign: 'center' }}>
       <p style={{ color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Объект не найден</p>
@@ -306,7 +309,9 @@ export function BuildingDetailPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отмена</Button>
-            <Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить</Button>
+            <Button variant="danger" disabled={!deleteUnlocked} loading={deleteLoading} onClick={handleDelete}>
+              {deleteUnlocked ? 'Удалить' : `Подождите ${deleteCountdown}с`}
+            </Button>
           </>
         }
       >
