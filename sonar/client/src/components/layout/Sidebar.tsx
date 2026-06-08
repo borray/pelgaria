@@ -16,6 +16,7 @@ import {
   IconLayoutDashboard,
   IconPrinter,
   IconShieldCheck,
+  IconInbox,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 
@@ -43,6 +44,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           to: '/',
           label: 'Главная',
           icon: <IconLayoutDashboard size={16} />,
+        },
+        {
+          to: '/office',
+          label: 'Приёмная',
+          icon: <IconInbox size={16} />,
+          permission: 'office.view',
         },
         {
           to: '/print-center',

@@ -12,6 +12,14 @@ import { EmptyState } from '../components/ui/EmptyState'
 
 const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string }[] }[] = [
   {
+    group: 'Приёмная',
+    items: [
+      { key: 'office.view', label: 'Просматривать обращения' },
+      { key: 'office.create', label: 'Регистрировать обращения' },
+      { key: 'office.manage', label: 'Исполнять и назначать' },
+    ],
+  },
+  {
     group: 'Граждане',
     items: [
       { key: 'citizens.view', label: 'Просматривать' },

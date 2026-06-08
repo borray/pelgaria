@@ -27,7 +27,7 @@ const STATUS_OPTIONS = [
   { value: 'BANNED', label: 'Забанен' },
 ]
 
-type TabKey = 'passport' | 'documents' | 'cases' | 'punishments' | 'taxes' | 'buildings'
+type TabKey = 'passport' | 'documents' | 'requests' | 'cases' | 'punishments' | 'taxes' | 'buildings'
 
 export function CitizenDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -150,6 +150,7 @@ export function CitizenDetailPage() {
   const tabs: { key: TabKey; label: string; count?: number }[] = [
     { key: 'passport', label: 'Паспорт', count: citizen.passports?.length },
     { key: 'documents', label: 'Формы и справки', count: generatedDocuments.length },
+    { key: 'requests', label: 'Обращения', count: citizen.service_requests?.length },
     { key: 'cases', label: 'Дела', count: citizen.cases?.length },
     { key: 'punishments', label: 'Наказания', count: citizen.punishments?.length },
     { key: 'taxes', label: 'Налоги', count: citizen.tax_charges?.length },
@@ -275,6 +276,21 @@ export function CitizenDetailPage() {
                   { key: 'print', header: '', width: '130px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
                 ]}
                 data={generatedDocuments}
+                keyExtractor={(row) => row.id}
+              />
+        )}
+        {activeTab === 'requests' && (
+          (citizen.service_requests?.length ?? 0) === 0
+            ? <EmptyState title="Обращений нет" description="Связанные заявления и поручения появятся здесь после регистрации в Приёмной." />
+            : <Table
+                columns={[
+                  { key: 'number', header: 'Обращение', render: (row) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
+                  { key: 'status', header: 'Статус', width: '150px', render: (row) => <Badge status={row.status} /> },
+                  { key: 'assignee', header: 'Ответственный', width: '150px', render: (row) => row.assignee?.login ?? 'Не назначен' },
+                  { key: 'created_at', header: 'Зарегистрировано', width: '140px', render: (row) => formatDate(row.created_at) },
+                  { key: 'print', header: '', width: '130px', render: (row) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/office/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
+                ]}
+                data={citizen.service_requests ?? []}
                 keyExtractor={(row) => row.id}
               />
         )}

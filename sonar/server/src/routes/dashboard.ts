@@ -21,6 +21,9 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
       recentCases,
       recentTransactions,
       recentCitizens,
+      officeActive,
+      officeOverdue,
+      recentRequests,
     ] = await Promise.all([
       can(req, 'citizens.view') ? prisma.citizen.count() : null,
       can(req, 'cases.view')
@@ -74,6 +77,33 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
             },
           })
         : [],
+      can(req, 'office.view')
+        ? prisma.serviceRequest.count({
+            where: { status: { in: ['RECEIVED', 'REVIEW', 'IN_PROGRESS', 'WAITING'] } },
+          })
+        : null,
+      can(req, 'office.view')
+        ? prisma.serviceRequest.count({
+            where: {
+              status: { in: ['RECEIVED', 'REVIEW', 'IN_PROGRESS', 'WAITING'] },
+              due_at: { lt: new Date() },
+            },
+          })
+        : null,
+      can(req, 'office.view')
+        ? prisma.serviceRequest.findMany({
+            orderBy: { created_at: 'desc' },
+            take: 4,
+            select: {
+              id: true,
+              number: true,
+              title: true,
+              status: true,
+              priority: true,
+              created_at: true,
+            },
+          })
+        : [],
     ])
 
     res.json({
@@ -85,11 +115,14 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
         treasury_balance: treasury?.balance ?? null,
         active_laws: activeLaws,
         active_buildings: buildings,
+        office_active: officeActive,
+        office_overdue: officeOverdue,
       },
       recent: {
         cases: recentCases,
         transactions: recentTransactions,
         citizens: recentCitizens,
+        requests: recentRequests,
       },
     })
   } catch (err) {

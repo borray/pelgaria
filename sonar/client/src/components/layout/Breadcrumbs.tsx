@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { IconChevronRight } from '@tabler/icons-react'
 
 const PATH_LABELS: Record<string, string> = {
+  office: 'Приёмная',
   citizens: 'Граждане', passports: 'Паспорта', laws: 'Законодательство', cases: 'Дела',
   punishments: 'Наказания', taxes: 'Налоги', treasury: 'Казна', buildings: 'РЕЛИКТ',
   territories: 'Территории', chat: 'Чат', accounts: 'Аккаунты',

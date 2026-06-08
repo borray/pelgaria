@@ -43,6 +43,7 @@ export interface Citizen {
   punishments?: Punishment[]
   tax_charges?: TaxCharge[]
   buildings?: Building[]
+  service_requests?: ServiceRequest[]
   _count?: { passports: number; cases: number; punishments: number }
 }
 
@@ -279,6 +280,53 @@ export interface PrinterTestSheet {
   created_at: string
 }
 
+export type ServiceRequestType = 'APPLICATION' | 'COMPLAINT' | 'PETITION' | 'SERVICE' | 'INTERNAL'
+export type ServiceRequestPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+export type ServiceRequestStatus =
+  | 'RECEIVED'
+  | 'REVIEW'
+  | 'IN_PROGRESS'
+  | 'WAITING'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'CANCELLED'
+
+export interface ServiceRequestEvent {
+  id: string
+  request_id: string
+  type: string
+  message: string
+  from_status?: string | null
+  to_status?: string | null
+  created_by: Pick<User, 'id' | 'login'>
+  created_at: string
+}
+
+export interface ServiceRequest {
+  id: string
+  number: string
+  registry_code: string
+  type: ServiceRequestType
+  title: string
+  description: string
+  contact?: string | null
+  priority: ServiceRequestPriority
+  status: ServiceRequestStatus
+  citizen_id?: string | null
+  citizen?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'> | null
+  assignee_id?: string | null
+  assignee?: Pick<User, 'id' | 'login'> | null
+  created_by: Pick<User, 'id' | 'login'>
+  linked_entity_type?: string | null
+  linked_entity_id?: string | null
+  due_at?: string | null
+  resolution?: string | null
+  resolved_at?: string | null
+  events: ServiceRequestEvent[]
+  created_at: string
+  updated_at: string
+}
+
 export type Permission =
   | 'citizens.view'
   | 'citizens.create'
@@ -312,3 +360,6 @@ export type Permission =
   | 'accounts.manage'
   | 'roles.manage'
   | 'chat.send'
+  | 'office.view'
+  | 'office.create'
+  | 'office.manage'

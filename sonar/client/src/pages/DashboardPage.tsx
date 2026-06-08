@@ -8,6 +8,7 @@ import {
   IconFileText,
   IconGavel,
   IconId,
+  IconInbox,
   IconScale,
   IconUsers,
 } from '@tabler/icons-react'
@@ -24,11 +25,14 @@ interface DashboardData {
     treasury_balance: number | null
     active_laws: number | null
     active_buildings: number | null
+    office_active: number | null
+    office_overdue: number | null
   }
   recent: {
     cases: Array<{ id: string; number: string; status: string; opened_at: string; accused: { nickname: string } }>
     transactions: Array<{ id: string; amount: number; description: string; created_at: string; performed_by: { login: string } }>
     citizens: Array<{ id: string; nickname: string; reg_number: string; created_at: string }>
+    requests: Array<{ id: string; number: string; title: string; status: string; priority: string; created_at: string }>
   }
 }
 
@@ -66,6 +70,7 @@ export function DashboardPage() {
 
   const quickLinks = [
     { to: '/citizens', label: 'Реестр граждан', description: 'Карточки и учётные сведения', icon: IconUsers, permission: 'citizens.view' },
+    { to: '/office', label: 'Приёмная', description: 'Обращения, заявления и поручения', icon: IconInbox, permission: 'office.view' },
     { to: '/passports', label: 'Паспорта', description: 'Выдача и проверка документов', icon: IconId, permission: 'passports.view' },
     { to: '/laws', label: 'Законодательство', description: 'Законы, указы и архив', icon: IconScale, permission: 'laws.view' },
     { to: '/print-center', label: 'Центр документов', description: 'Формы, справки и выписки', icon: IconFileText },
@@ -92,6 +97,13 @@ export function DashboardPage() {
       title: `В реестр внесён ${item.nickname}`,
       meta: `${item.reg_number} · ${formatDateTime(item.created_at)}`,
       icon: IconUsers,
+    })) ?? []),
+    ...(data?.recent.requests.map((item) => ({
+      key: `request-${item.id}`,
+      to: '/office',
+      title: `Обращение ${item.number}: ${item.title}`,
+      meta: `${item.status} · ${formatDateTime(item.created_at)}`,
+      icon: IconInbox,
     })) ?? []),
   ].slice(0, 7)
 
@@ -168,6 +180,18 @@ export function DashboardPage() {
                 <span>Контроль начислений</span>
                 <strong>{hasDebt ? `${formatNumber(metrics?.unpaid_taxes_count ?? 0)} требуют оплаты` : 'Просроченных начислений нет'}</strong>
                 <small>{hasDebt ? `Общая сумма: ${formatNumber(metrics?.unpaid_taxes_amount ?? 0)} у.е.` : 'Проверка выполнена автоматически'}</small>
+              </div>
+              <IconArrowRight size={16} />
+            </Link>
+          )}
+
+          {hasPermission('office.view') && (
+            <Link to="/office" className={`attention-card${(metrics?.office_overdue ?? 0) > 0 ? ' has-alert' : ''}`}>
+              <IconInbox size={20} />
+              <div>
+                <span>Контроль обращений</span>
+                <strong>{(metrics?.office_overdue ?? 0) > 0 ? `${formatNumber(metrics?.office_overdue ?? 0)} просрочено` : 'Просроченных обращений нет'}</strong>
+                <small>{formatNumber(metrics?.office_active ?? 0)} сейчас в работе</small>
               </div>
               <IconArrowRight size={16} />
             </Link>

@@ -160,7 +160,21 @@ router.post('/refresh', async (req: Request, res: Response) => {
       },
     })
 
-    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user.id,
+        login: user.login,
+        role: tokenPayload.role,
+        permissions,
+        must_change_password: user.must_change_password,
+        discord_username: user.discord_username,
+        discord_avatar: user.discord_avatar,
+        citizen_id: user.citizen_id,
+        last_login_at: user.last_login_at,
+      },
+    })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })

@@ -146,6 +146,17 @@ router.get('/:id', requireAuth, requirePermission('citizens.view'), async (req: 
         buildings: {
           orderBy: { created_at: 'desc' },
         },
+        service_requests: {
+          orderBy: { created_at: 'desc' },
+          include: {
+            assignee: { select: { id: true, login: true } },
+            created_by: { select: { id: true, login: true } },
+            events: {
+              orderBy: { created_at: 'desc' },
+              include: { created_by: { select: { id: true, login: true } } },
+            },
+          },
+        },
       },
     })
 

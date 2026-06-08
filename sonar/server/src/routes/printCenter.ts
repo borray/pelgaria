@@ -23,6 +23,34 @@ const prisma = new PrismaClient()
 
 const FORM_TEMPLATES = [
   {
+    id: 'GENERAL_APPLICATION',
+    title: 'Универсальное заявление',
+    description: 'Заявление в государственный орган с предметом обращения, просьбой и перечнем приложений.',
+    prefix: 'ЗАЯ',
+    fields: ['recipient', 'applicant_name', 'request_subject', 'request_text', 'attachments_list', 'contact'],
+  },
+  {
+    id: 'COMPLAINT_FORM',
+    title: 'Жалоба',
+    description: 'Печатная форма жалобы на решение, действие или бездействие с требованием заявителя.',
+    prefix: 'ЖЛБ',
+    fields: ['recipient', 'applicant_name', 'complaint_subject', 'circumstances', 'request_text', 'attachments_list', 'contact'],
+  },
+  {
+    id: 'INTERNAL_MEMO',
+    title: 'Служебная записка',
+    description: 'Внутренний документ для поручений, согласований и передачи сведений между сотрудниками.',
+    prefix: 'СЗП',
+    fields: ['recipient', 'request_subject', 'request_text', 'deadline', 'attachments_list'],
+  },
+  {
+    id: 'BUILDING_PERMIT',
+    title: 'Разрешение на строительство',
+    description: 'Разрешительный документ для объекта РЕЛИКТ с владельцем, координатами и условиями работ.',
+    prefix: 'РСТ',
+    fields: ['applicant_name', 'building_name', 'building_number', 'coordinates', 'work_scope', 'deadline', 'conditions'],
+  },
+  {
     id: 'CITIZENSHIP_APPLICATION',
     title: 'Заявление о принятии в гражданство',
     description: 'Печатное заявление кандидата с основанием и обязательством соблюдать законы.',
@@ -60,6 +88,16 @@ const FORM_TEMPLATES = [
 ] as const
 
 const FIELD_LABELS: Record<string, string> = {
+  request_subject: 'Предмет обращения',
+  request_text: 'Просьба / содержание',
+  attachments_list: 'Перечень приложений',
+  contact: 'Контакт для ответа',
+  complaint_subject: 'Обжалуемое решение или действие',
+  circumstances: 'Обстоятельства',
+  deadline: 'Срок исполнения',
+  coordinates: 'Координаты объекта',
+  work_scope: 'Состав работ',
+  conditions: 'Особые условия',
   applicant_name: 'Имя заявителя',
   discord_username: 'Discord',
   basis: 'Основание обращения',

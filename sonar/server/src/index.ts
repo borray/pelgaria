@@ -26,6 +26,7 @@ import discordRouter from './routes/discord'
 import dashboardRouter from './routes/dashboard'
 import printCenterRouter from './routes/printCenter'
 import verifyRouter from './routes/verify'
+import officeRouter from './routes/office'
 
 const app = express()
 const httpServer = createServer(app)
@@ -80,6 +81,7 @@ app.use('/api/auth/discord', discordRouter)
 app.use('/api/dashboard', dashboardRouter)
 app.use('/api/print-center', printCenterRouter)
 app.use('/api/verify', verifyRouter)
+app.use('/api/office', officeRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
@@ -198,9 +200,47 @@ io.on('connection', (socket) => {
 
 const PORT = parseInt(process.env.PORT || '3001', 10)
 
-httpServer.listen(PORT, () => {
-  console.log(`SONAR server running on port ${PORT}`)
-})
+async function ensurePermissionDefaults() {
+  const roles = await prisma.role.findMany({ select: { id: true, permissions: true } })
+  for (const role of roles) {
+    const permissions = (role.permissions ?? {}) as Record<string, boolean>
+    const canManageOffice =
+      permissions['accounts.manage'] === true ||
+      permissions['roles.manage'] === true ||
+      permissions['cases.manage'] === true
+    const canRegisterOffice = canManageOffice || permissions['citizens.create'] === true
+    const defaultsPresent =
+      permissions['office.view'] === true &&
+      permissions['office.create'] === true &&
+      (!canManageOffice || permissions['office.manage'] === true)
+    if (!canRegisterOffice || defaultsPresent) continue
+
+    await prisma.role.update({
+      where: { id: role.id },
+      data: {
+        permissions: {
+          ...permissions,
+          'office.view': true,
+          'office.create': true,
+          ...(canManageOffice ? { 'office.manage': true } : {}),
+        },
+      },
+    })
+  }
+}
+
+async function start() {
+  try {
+    await ensurePermissionDefaults()
+  } catch (error) {
+    console.error('Permission defaults update failed:', error)
+  }
+  httpServer.listen(PORT, () => {
+    console.log(`SONAR server running on port ${PORT}`)
+  })
+}
+
+void start()
 
 async function shutdown() {
   await closePdfBrowser()

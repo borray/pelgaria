@@ -37,6 +37,16 @@ interface FormTemplate {
 }
 
 const FIELD_LABELS: Record<string, string> = {
+  request_subject: 'Предмет обращения',
+  request_text: 'Просьба / содержание',
+  attachments_list: 'Перечень приложений',
+  contact: 'Контакт для ответа',
+  complaint_subject: 'Обжалуемое решение или действие',
+  circumstances: 'Обстоятельства',
+  deadline: 'Срок исполнения',
+  coordinates: 'Координаты объекта',
+  work_scope: 'Состав работ',
+  conditions: 'Особые условия',
   applicant_name: 'Имя заявителя',
   discord_username: 'Discord',
   basis: 'Основание',
@@ -48,6 +58,16 @@ const FIELD_LABELS: Record<string, string> = {
   building_name: 'Наименование объекта',
   building_number: 'Номер РЕЛИКТ',
 }
+
+const LONG_FIELDS = new Set([
+  'basis',
+  'comment',
+  'request_text',
+  'attachments_list',
+  'circumstances',
+  'work_scope',
+  'conditions',
+])
 
 export function PrintCenterPage() {
   const canAdmin = usePermission('accounts.manage')
@@ -349,7 +369,12 @@ export function PrintCenterPage() {
             <section className="form-section">
               <div className="form-section-heading"><span>02</span><div><strong>Сведения формы</strong><small>Заполните только применимые поля</small></div></div>
               <div className="form-grid">
-                {selectedTemplate.fields.map((field) => (
+                {selectedTemplate.fields.map((field) => LONG_FIELDS.has(field) ? (
+                  <div className="span-2" key={field}>
+                    <label className="office-textarea-label">{FIELD_LABELS[field] ?? field}</label>
+                    <textarea className="document-textarea" rows={4} value={payload[field] ?? ''} onChange={(e) => setPayload({ ...payload, [field]: e.target.value })} />
+                  </div>
+                ) : (
                   <Input key={field} label={FIELD_LABELS[field] ?? field} value={payload[field] ?? ''} onChange={(e) => setPayload({ ...payload, [field]: e.target.value })} />
                 ))}
               </div>

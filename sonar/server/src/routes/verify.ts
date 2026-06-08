@@ -149,6 +149,43 @@ router.get('/:code', requireAuth, async (req: Request, res: Response) => {
       return
     }
 
+    const serviceRequest = await prisma.serviceRequest.findFirst({
+      where: match,
+      include: {
+        citizen: { select: { nickname: true } },
+        assignee: { select: { login: true } },
+      },
+    })
+    if (serviceRequest) {
+      const requestStatuses: Record<string, string> = {
+        RECEIVED: 'Принято',
+        REVIEW: 'На рассмотрении',
+        IN_PROGRESS: 'В работе',
+        WAITING: 'Ожидает сведений',
+        COMPLETED: 'Исполнено',
+        REJECTED: 'Отказано',
+        CANCELLED: 'Отменено',
+      }
+      res.json(<VerifyResult>{
+        found: true,
+        kind: 'SERVICE_REQUEST',
+        kind_label: 'Обращение в Приёмную СОНАР',
+        number: serviceRequest.number,
+        registry_code: serviceRequest.registry_code,
+        title: serviceRequest.title,
+        subject: serviceRequest.citizen?.nickname ?? null,
+        status: serviceRequest.status,
+        status_label: requestStatuses[serviceRequest.status] ?? serviceRequest.status,
+        issued_at: serviceRequest.created_at.toISOString(),
+        link: '/office',
+        fields: [
+          { label: 'Заявитель', value: serviceRequest.citizen?.nickname ?? serviceRequest.contact ?? 'Не указан' },
+          { label: 'Ответственный', value: serviceRequest.assignee?.login ?? 'Не назначен' },
+        ],
+      })
+      return
+    }
+
     // Generated document (print center)
     const doc = await prisma.generatedDocument.findFirst({
       where: match,

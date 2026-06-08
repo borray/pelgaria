@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth'
 import { Layout } from './components/layout/Layout'
@@ -25,6 +25,8 @@ import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { PrintCenterPage } from './pages/PrintCenterPage'
 import { VerificationPage } from './pages/VerificationPage'
+import { OfficePage } from './pages/OfficePage'
+import apiClient from './api/client'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -38,6 +40,16 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const user = useAuthStore((state) => state.user)
+  const setUser = useAuthStore((state) => state.setUser)
+
+  useEffect(() => {
+    if (!user) return
+    apiClient.get('/auth/me')
+      .then((response) => setUser(response.data))
+      .catch(() => undefined)
+  }, [setUser, user?.id])
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
@@ -71,6 +83,7 @@ export default function App() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="print-center" element={<PrintCenterPage />} />
         <Route path="verify" element={<VerificationPage />} />
+        <Route path="office" element={<OfficePage />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>
     </Routes>

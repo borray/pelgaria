@@ -18,31 +18,34 @@ model Role {
 }
 
 model User {
-  id                    String                @id @default(cuid())
-  login                 String                @unique
-  password_hash         String
-  role_id               String
-  role                  Role                  @relation(fields: [role_id], references: [id])
-  citizen_id            String?               @unique
-  citizen               Citizen?              @relation(fields: [citizen_id], references: [id])
-  discord_id            String?
-  discord_username      String?
-  discord_avatar        String?
-  is_active             Boolean               @default(true)
-  must_change_password  Boolean               @default(true)
-  created_at            DateTime              @default(now())
-  last_login_at         DateTime?
-  refresh_tokens        RefreshToken[]
-  issued_passports      Passport[]            @relation("IssuedBy")
-  judged_cases          Case[]                @relation("Judge")
-  issued_punishments    Punishment[]          @relation("IssuedBy")
-  revoked_punishments   Punishment[]          @relation("RevokedBy")
-  tax_markings          TaxCharge[]           @relation("MarkedBy")
-  treasury_transactions TreasuryTransaction[]
-  managed_territories   Territory[]
-  sent_messages         ChatMessage[]
-  chat_participants     ChatParticipant[]
-  generated_documents   GeneratedDocument[]
+  id                        String                @id @default(cuid())
+  login                     String                @unique
+  password_hash             String
+  role_id                   String
+  role                      Role                  @relation(fields: [role_id], references: [id])
+  citizen_id                String?               @unique
+  citizen                   Citizen?              @relation(fields: [citizen_id], references: [id])
+  discord_id                String?
+  discord_username          String?
+  discord_avatar            String?
+  is_active                 Boolean               @default(true)
+  must_change_password      Boolean               @default(true)
+  created_at                DateTime              @default(now())
+  last_login_at             DateTime?
+  refresh_tokens            RefreshToken[]
+  issued_passports          Passport[]            @relation("IssuedBy")
+  judged_cases              Case[]                @relation("Judge")
+  issued_punishments        Punishment[]          @relation("IssuedBy")
+  revoked_punishments       Punishment[]          @relation("RevokedBy")
+  tax_markings              TaxCharge[]           @relation("MarkedBy")
+  treasury_transactions     TreasuryTransaction[]
+  managed_territories       Territory[]
+  sent_messages             ChatMessage[]
+  chat_participants         ChatParticipant[]
+  generated_documents       GeneratedDocument[]
+  created_service_requests  ServiceRequest[]      @relation("RequestCreatedBy")
+  assigned_service_requests ServiceRequest[]      @relation("RequestAssignee")
+  service_request_events    ServiceRequestEvent[]
 }
 
 model RefreshToken {
@@ -70,6 +73,7 @@ model Citizen {
   tax_charges         TaxCharge[]
   buildings           Building[]
   generated_documents GeneratedDocument[]
+  service_requests    ServiceRequest[]
   created_at          DateTime            @default(now())
 }
 
@@ -117,7 +121,7 @@ model Law {
   cases         Case[]
   attachments   LawAttachment[]
   created_at    DateTime        @default(now())
-  updated_at    DateTime        @updatedAt @default(now())
+  updated_at    DateTime        @default(now()) @updatedAt
 }
 
 model LawAttachment {
@@ -375,6 +379,76 @@ model GeneratedDocument {
   created_by_id      String
   created_by         User     @relation(fields: [created_by_id], references: [id])
   created_at         DateTime @default(now())
+}
+
+model ServiceRequest {
+  id                 String                 @id @default(cuid())
+  number             String                 @unique
+  registry_code      String                 @unique
+  type               ServiceRequestType
+  title              String
+  description        String
+  contact            String?
+  priority           ServiceRequestPriority @default(NORMAL)
+  status             ServiceRequestStatus   @default(RECEIVED)
+  citizen_id         String?
+  citizen            Citizen?               @relation(fields: [citizen_id], references: [id], onDelete: SetNull)
+  assignee_id        String?
+  assignee           User?                  @relation("RequestAssignee", fields: [assignee_id], references: [id], onDelete: SetNull)
+  created_by_id      String
+  created_by         User                   @relation("RequestCreatedBy", fields: [created_by_id], references: [id])
+  linked_entity_type String?
+  linked_entity_id   String?
+  due_at             DateTime?
+  resolution         String?
+  resolved_at        DateTime?
+  events             ServiceRequestEvent[]
+  created_at         DateTime               @default(now())
+  updated_at         DateTime               @updatedAt
+
+  @@index([status, due_at])
+  @@index([citizen_id])
+  @@index([assignee_id])
+}
+
+model ServiceRequestEvent {
+  id            String         @id @default(cuid())
+  request_id    String
+  request       ServiceRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  type          String
+  message       String
+  from_status   String?
+  to_status     String?
+  created_by_id String
+  created_by    User           @relation(fields: [created_by_id], references: [id])
+  created_at    DateTime       @default(now())
+
+  @@index([request_id, created_at])
+}
+
+enum ServiceRequestType {
+  APPLICATION
+  COMPLAINT
+  PETITION
+  SERVICE
+  INTERNAL
+}
+
+enum ServiceRequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ServiceRequestStatus {
+  RECEIVED
+  REVIEW
+  IN_PROGRESS
+  WAITING
+  COMPLETED
+  REJECTED
+  CANCELLED
 }
 
 enum TreatyType {

@@ -216,8 +216,8 @@ export function Select({
               </div>
             )}
             <div style={{ maxHeight: '240px', overflowY: 'auto', padding: '4px' }}>
-              {placeholder && !hasValue && !query && (
-                <button data-opt="" type="button" onClick={() => pick('')} style={optStyle(false, true)}>
+              {placeholder && !query && (
+                <button data-opt="" type="button" onClick={() => pick('')} style={optStyle(!hasValue, true)}>
                   {placeholder}
                 </button>
               )}

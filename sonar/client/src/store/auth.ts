@@ -73,7 +73,11 @@ export const useAuthStore = create<AuthState>()(
         }
 
         const data = await response.json()
-        set({ accessToken: data.accessToken, refreshToken: data.refreshToken })
+        set({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          ...(data.user ? { user: data.user } : {}),
+        })
       },
 
       setTokens: (accessToken: string, refreshToken: string, user: User) => {

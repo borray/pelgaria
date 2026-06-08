@@ -36,6 +36,9 @@ const ALL_PERMISSIONS: Record<string, boolean> = {
   'accounts.manage': true,
   'roles.manage': true,
   'chat.send': true,
+  'office.view': true,
+  'office.create': true,
+  'office.manage': true,
 }
 
 const MINISTER_PERMISSIONS: Record<string, boolean> = {
@@ -63,6 +66,9 @@ const MINISTER_PERMISSIONS: Record<string, boolean> = {
   'territories.view': true,
   'territories.manage': true,
   'chat.send': true,
+  'office.view': true,
+  'office.create': true,
+  'office.manage': true,
 }
 
 const CITIZEN_PERMISSIONS: Record<string, boolean> = {

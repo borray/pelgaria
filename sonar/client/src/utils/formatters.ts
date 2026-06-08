@@ -62,6 +62,11 @@ const STATUS_LABELS: Record<string, string> = {
   TERMINATED: 'Расторгнут',
   DIRECT: 'Личный',
   GENERAL: 'Общий',
+  RECEIVED: 'Принято',
+  REVIEW: 'На рассмотрении',
+  WAITING: 'Ожидает сведений',
+  COMPLETED: 'Исполнено',
+  REJECTED: 'Отказано',
 }
 
 export function getStatusLabel(status: string): string {
@@ -106,6 +111,11 @@ const STATUS_COLORS: Record<string, string> = {
   CONSTITUTION: '#7C3AED',
   REGULATION: '#0E7490',
   ORDER: '#B45309',
+  RECEIVED: '#2563EB',
+  REVIEW: '#7C3AED',
+  WAITING: '#64748B',
+  COMPLETED: '#16805C',
+  REJECTED: '#B42318',
 }
 
 export function getStatusColor(status: string): string {
