@@ -101,20 +101,28 @@ function renderTestSheet(sheet: { number: string; registry_code: string; created
   const square = (cls: string) => `<div class="reg-square ${cls}"></div>`
   const crosshair = (cls: string) => `<div class="reg-cross ${cls}"><span></span><span></span></div>`
 
-  // Шкала серого 0→100 %
+  // Шкала серого 0→100 % (запрошенная плотность — мишень для растрирования лазера)
   const greySteps = Array.from({ length: 11 }, (_, i) => {
     const v = Math.round((i / 10) * 255)
     const pct = i * 10
     return `<div class="ramp-cell" style="background:rgb(${v},${v},${v});color:${i > 5 ? '#000' : '#fff'};">${pct}</div>`
   }).join('')
 
-  // Цветовые плашки CMYK + RGB для проверки цветопередачи
-  const colorBars = [
-    ['Cyan', '#00AEEF'], ['Magenta', '#EC008C'], ['Yellow', '#FFF200'], ['Key', '#231F20'],
-    ['Red', '#ED1C24'], ['Green', '#00A651'], ['Blue', '#2E3192'],
-  ].map(([label, color]) => `<div class="color-cell" style="background:${color};"><span>${label}</span></div>`).join('')
+  // Векторный полутоновый растр (точечный экран) — ключевой тест для ЧБ-лазера.
+  // Для каждой плотности радиус точки задаёт долю запечатки в ячейке 8×8.
+  const sid = sheet.number.replace(/[^A-Za-z0-9]/g, '')
+  const halftoneCell = (pct: number): string => {
+    if (pct >= 100) {
+      return `<div class="ht-cell"><div class="ht-fill" style="background:#000;"></div><small>100%</small></div>`
+    }
+    const cell = 8
+    const r = Math.min(cell / 2 - 0.2, cell * Math.sqrt(pct / 100 / Math.PI))
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="62" height="40" viewBox="0 0 62 40"><defs><pattern id="ht${pct}_${sid}" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse"><circle cx="${cell / 2}" cy="${cell / 2}" r="${r.toFixed(2)}" fill="#000"/></pattern></defs><rect width="62" height="40" fill="url(#ht${pct}_${sid})"/></svg>`
+    return `<div class="ht-cell"><div class="ht-fill">${svg}</div><small>${pct}%</small></div>`
+  }
+  const halftones = [10, 25, 40, 55, 70, 85, 100].map(halftoneCell).join('')
 
-  // Калибр толщины линий (разрешение)
+  // Калибр толщины линий (тонкие линии при 600/1200 dpi)
   const lineGauge = [0.25, 0.5, 0.75, 1, 1.5, 2, 3].map((w) =>
     `<div class="gauge-col"><div class="gauge-bars">${Array.from({ length: 6 }, () => `<i style="height:${w}px;"></i>`).join('')}</div><small>${w}px</small></div>`
   ).join('')
@@ -139,20 +147,29 @@ function renderTestSheet(sheet: { number: string; registry_code: string; created
     .inner { position:relative; z-index:3; padding:70px 60px 60px; }
     .head { display:flex; align-items:center; gap:18px; border-bottom:2px solid #111; padding-bottom:16px; }
     .head .emblem { width:74px; height:74px; flex-shrink:0; } .head .emblem svg { width:74px; height:74px; }
-    .head .state { font-size:10px; letter-spacing:3px; font-weight:700; color:${ACCENT}; }
+    .head .state { font-size:10px; letter-spacing:3px; font-weight:700; color:#111; }
     .head h1 { font-family:'PT Serif',serif; font-size:26px; font-weight:700; text-transform:uppercase; color:${INK}; margin-top:5px; letter-spacing:.04em; }
-    .head .sub { font-size:11px; color:#555; margin-top:4px; letter-spacing:.04em; }
+    .head .sub { font-size:11px; color:#444; margin-top:4px; letter-spacing:.04em; }
+    .head .headnote { display:inline-block; margin-top:6px; padding:2px 8px; border:1px solid #111; border-radius:3px; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#111; }
     .head .meta { margin-left:auto; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; color:#222; line-height:1.7; }
-    .head .meta b { color:${ACCENT}; }
+    .head .meta b { color:#111; }
+    /* всё печатается ЧБ на лазере — переводим цветные элементы в чёткий монохром */
+    .ink svg { filter:grayscale(1) contrast(1.45); }
+    .bc svg { filter:grayscale(1) contrast(1.8); shape-rendering:crispEdges; }
     .section-title { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#444; margin:22px 0 8px; }
     .rosette-wrap { position:absolute; top:330px; left:50%; transform:translateX(-50%); width:230px; height:230px; opacity:.5; z-index:2; pointer-events:none; }
     .barcode-row { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-top:14px; }
     .barcode-row .code { font-family:'JetBrains Mono',monospace; font-size:10px; color:#222; margin-top:4px; letter-spacing:.05em; }
     .ramp { display:grid; grid-template-columns:repeat(11,1fr); border:1px solid #111; }
     .ramp-cell { height:34px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:3px; font-family:'JetBrains Mono',monospace; font-size:9px; }
-    .colors { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-    .color-cell { height:46px; border:0.5px solid #1115; display:flex; align-items:flex-end; padding:4px; }
-    .color-cell span { font-size:8px; font-weight:700; color:#fff; mix-blend-mode:difference; }
+    .halftones { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+    .ht-cell { text-align:center; } .ht-fill { height:40px; border:1px solid #111; overflow:hidden; }
+    .ht-fill svg { display:block; width:100%; height:100%; } .ht-cell small { font-family:'JetBrains Mono',monospace; font-size:8px; color:#333; }
+    .mono-row { display:flex; gap:12px; align-items:stretch; }
+    .grad-bar { flex:1; height:42px; border:1px solid #111; background:linear-gradient(90deg,#000 0%,#fff 100%); }
+    .grad-bar-label { font-family:'JetBrains Mono',monospace; font-size:8px; color:#333; margin-top:3px; }
+    .rev-patch { width:210px; flex:0 0 auto; background:#000; display:flex; align-items:center; justify-content:center; padding:8px; }
+    .rev-patch span { color:#fff; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.04em; text-align:center; line-height:1.5; }
     .gauge { display:flex; gap:18px; align-items:flex-end; }
     .gauge-col { text-align:center; } .gauge-bars { display:flex; flex-direction:column; gap:3px; width:60px; }
     .gauge-bars i { display:block; width:100%; background:#000; } .gauge-col small { font-family:'JetBrains Mono',monospace; font-size:8px; color:#444; }
@@ -163,47 +180,61 @@ function renderTestSheet(sheet: { number: string; registry_code: string; created
     .footer .note { font-size:10px; color:#555; max-width:430px; line-height:1.55; }
     .footer .note b { color:#111; }
     .seal-wrap { width:150px; height:150px; flex-shrink:0; }
-    .destroy-mark { margin-top:14px; text-align:center; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#8d302b; border:1px dashed #c2483f; border-radius:6px; padding:9px; }
+    .destroy-mark { margin-top:14px; text-align:center; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#000; border:1px dashed #000; border-radius:6px; padding:9px; }
+    @media print {
+      html, body, .sheet { background:#fff !important; }
+      * { color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .ink svg { filter:grayscale(1) contrast(1.6) !important; }
+      .bc svg { filter:grayscale(1) contrast(2) !important; shape-rendering:crispEdges; }
+      .reg-square, .reg-cross span, .rev-patch { background:#000 !important; }
+    }
   </style></head><body>
     <div class="sheet">
       ${square('tl')}${square('tr')}${square('bl')}${square('br')}${square('tm')}${square('bm')}${square('lm')}${square('rm')}
       ${crosshair('c1')}${crosshair('c2')}${crosshair('c3')}${crosshair('c4')}
       <div class="frame"></div><div class="frame2"></div>
-      <div class="rosette-wrap">${rosette}</div>
+      <div class="rosette-wrap ink">${rosette}</div>
       <div class="inner">
         <div class="head">
-          <div class="emblem">${rosetteSmall}</div>
+          <div class="emblem ink">${rosetteSmall}</div>
           <div>
             <div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div>
             <h1>Пробный лист</h1>
             <div class="sub">Проверка печатной станции и защитных элементов</div>
+            <div class="headnote">ЧБ · лазер · оптимизировано для PANTUM M6500W</div>
           </div>
           <div class="meta">№ <b>${escapeHtml(sheet.number)}</b><br>${escapeHtml(sheet.registry_code)}<br>${escapeHtml(date)}<br>Оператор: ${escapeHtml(sheet.created_by_login)}</div>
         </div>
 
         <div class="section-title">Контрольные штрих-коды</div>
         <div class="barcode-row">
-          <div>${barcode}<div class="code">ОСНОВНОЙ ШК · ${escapeHtml(sheet.registry_code)}</div></div>
-          <div>${barcode2}<div class="code">КОНТРОЛЬ · ${escapeHtml(sheet.number)}</div></div>
+          <div class="bc">${barcode}<div class="code">ОСНОВНОЙ ШК · ${escapeHtml(sheet.registry_code)}</div></div>
+          <div class="bc">${barcode2}<div class="code">КОНТРОЛЬ · ${escapeHtml(sheet.number)}</div></div>
         </div>
 
         <div class="section-title">Шкала плотности (0–100 %)</div>
         <div class="ramp">${greySteps}</div>
 
-        <div class="section-title">Цветовые плашки (CMYK / RGB)</div>
-        <div class="colors">${colorBars}</div>
+        <div class="section-title">Полутоновый растр (точечный экран)</div>
+        <div class="halftones">${halftones}</div>
+
+        <div class="section-title">Градиент и реверс (баннинг · заливка тонера)</div>
+        <div class="mono-row">
+          <div style="flex:1;"><div class="grad-bar"></div><div class="grad-bar-label">ПЛАВНЫЙ ПЕРЕХОД 0→100 % · контроль полос (banding)</div></div>
+          <div class="rev-patch"><span>PANTUM M6500W<br>СОНАР · ${escapeHtml(sheet.number)}</span></div>
+        </div>
 
         <div class="section-title">Калибр толщины линий</div>
         <div class="gauge">${lineGauge}</div>
 
         <div class="section-title">Гильоширный растр и микротекст</div>
-        <div class="band">${band}</div>
-        <div class="micro">${micro}</div>
-        <div class="field">${field}</div>
+        <div class="band ink">${band}</div>
+        <div class="micro ink">${micro}</div>
+        <div class="field ink">${field}</div>
 
         <div class="footer">
           <div class="note"><b>Назначение:</b> технологический образец для калибровки печати, совмещения красок и контроля защитных элементов. Юридической силы не имеет. Лист подлежит обязательному уничтожению — запись стирается из мини-базы СОНАР после подтверждения уничтожения.</div>
-          <div class="seal-wrap">${seal}</div>
+          <div class="seal-wrap ink">${seal}</div>
         </div>
         <div class="destroy-mark">Образец · уничтожить после проверки · ${escapeHtml(sheet.registry_code)}</div>
       </div>
