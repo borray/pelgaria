@@ -18,6 +18,7 @@ export interface VerifyResult {
   issued_at?: string | null
   link?: string | null
   fields?: { label: string; value: string }[]
+  destroy_warning?: boolean
 }
 
 const PASSPORT_STATUS: Record<string, string> = { VALID: 'Действителен', REVOKED: 'Аннулирован', EXPIRED: 'Просрочен' }
@@ -37,6 +38,26 @@ router.get('/:code', requireAuth, async (req: Request, res: Response) => {
     }
     const q = { equals: raw, mode: 'insensitive' as const }
     const match = { OR: [{ number: q }, { registry_code: q }] }
+
+    // Printer test sheet — образец, который ОБЯЗАТЕЛЬНО надо уничтожить, если найден
+    const testSheet = await prisma.printerTestSheet.findFirst({ where: match })
+    if (testSheet) {
+      res.json(<VerifyResult>{
+        found: true,
+        kind: 'TEST',
+        kind_label: 'Пробный лист печатной станции',
+        number: testSheet.number,
+        registry_code: testSheet.registry_code,
+        title: 'ОБРАЗЕЦ · ПОДЛЕЖИТ УНИЧТОЖЕНИЮ',
+        status: 'SAMPLE',
+        status_label: 'Не уничтожен',
+        issued_at: testSheet.created_at.toISOString(),
+        link: '/print-center',
+        destroy_warning: true,
+        fields: [{ label: 'Оператор', value: testSheet.created_by_login }],
+      })
+      return
+    }
 
     // Passport
     const passport = await prisma.passport.findFirst({

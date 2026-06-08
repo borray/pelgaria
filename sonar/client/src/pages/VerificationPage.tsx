@@ -6,6 +6,8 @@ import {
   IconSearch,
   IconCertificate,
   IconExternalLink,
+  IconFlame,
+  IconAlertTriangle,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { Button } from '../components/ui/Button'
@@ -25,6 +27,7 @@ interface VerifyResult {
   issued_at?: string | null
   link?: string | null
   fields?: { label: string; value: string }[]
+  destroy_warning?: boolean
 }
 
 export function VerificationPage() {
@@ -92,7 +95,33 @@ export function VerificationPage() {
         </div>
       )}
 
-      {!loading && result && result.found && (
+      {!loading && result && result.found && result.destroy_warning && (
+        <div className="verify-result is-destroy">
+          <span className="verify-badge"><IconAlertTriangle size={16} />Пробный лист · не уничтожен</span>
+          <div className="destroy-alert">
+            <IconFlame size={26} />
+            <div>
+              <strong>ВАЖНО: эту бумагу необходимо уничтожить</strong>
+              <p>Это технологический образец проверки печатной станции — юридической силы не имеет. Он ещё числится в мини-базе. Уничтожьте бумажный лист и сотрите запись в разделе «Документы».</p>
+            </div>
+          </div>
+          <div className="verify-fields">
+            <div className="verify-field"><span>Номер</span><strong style={{ fontFamily: 'JetBrains Mono, monospace' }}>{result.number}</strong></div>
+            {result.registry_code && <div className="verify-field"><span>Контрольный ШК</span><strong style={{ fontFamily: 'JetBrains Mono, monospace' }}>{result.registry_code}</strong></div>}
+            {result.issued_at && <div className="verify-field"><span>Создан</span><strong>{formatDate(result.issued_at)}</strong></div>}
+            {result.fields?.map((f) => (
+              <div className="verify-field" key={f.label}><span>{f.label}</span><strong>{f.value}</strong></div>
+            ))}
+          </div>
+          {result.link && (
+            <Link to={result.link} style={{ textDecoration: 'none', display: 'inline-block', marginTop: '16px' }}>
+              <Button variant="danger" size="sm"><IconFlame size={14} />Перейти к уничтожению</Button>
+            </Link>
+          )}
+        </div>
+      )}
+
+      {!loading && result && result.found && !result.destroy_warning && (
         <div className="verify-result is-valid">
           <span className="verify-badge"><IconShieldCheck size={16} />Подлинный документ</span>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginTop: '18px' }}>
