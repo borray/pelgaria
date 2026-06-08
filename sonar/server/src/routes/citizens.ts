@@ -2,9 +2,10 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, Prisma, CitizenStatus } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   barcodeStripes,
+  escapeHtml,
   guillocheRosette,
   pageShell,
   ACCENT,
@@ -277,8 +278,8 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const punishmentsHtml = citizen.punishments.length > 0
       ? citizen.punishments.map((p) => `
         <tr>
-          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${p.type}</td>
-          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${p.reason}</td>
+          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${escapeHtml(p.type)}</td>
+          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${escapeHtml(p.reason)}</td>
           <td style="padding:6px 8px;font-size:12px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${new Date(p.issued_at).toLocaleDateString('ru-RU')}</td>
         </tr>`).join('')
       : `<tr><td colspan="3" style="padding:10px 8px;font-size:13px;color:#9CA3AF;text-align:center;">Нет активных наказаний</td></tr>`
@@ -286,14 +287,14 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const buildingsHtml = citizen.buildings.length > 0
       ? citizen.buildings.map((b) => `
         <tr>
-          <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#1B3A6B;border-bottom:1px solid #F3F4F6;">${b.reg_number}</td>
-          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${b.name}</td>
+          <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#1B3A6B;border-bottom:1px solid #F3F4F6;">${escapeHtml(b.reg_number)}</td>
+          <td style="padding:6px 8px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6;">${escapeHtml(b.name)}</td>
           <td style="padding:6px 8px;font-size:12px;color:#6B7280;border-bottom:1px solid #F3F4F6;">${b.coord_x}, ${b.coord_y}, ${b.coord_z}</td>
         </tr>`).join('')
       : `<tr><td colspan="3" style="padding:10px 8px;font-size:13px;color:#9CA3AF;text-align:center;">Нет объектов</td></tr>`
 
     const fld = (label: string, value: string, mono = false) =>
-      `<div class="cz-field"><div class="cz-label">${label}</div><div class="cz-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${value}</div></div>`
+      `<div class="cz-field"><div class="cz-label">${escapeHtml(label)}</div><div class="cz-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${escapeHtml(value)}</div></div>`
 
     const header = `<div class="cz-header">
       <div class="cz-emblem">${guillocheRosette(seed, 70)}</div>
@@ -309,7 +310,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
       <div class="cz-regbar">
         <div>
           <div class="cz-label">Регистрационный номер</div>
-          <div class="cz-reg">${citizen.reg_number}</div>
+          <div class="cz-reg">${escapeHtml(citizen.reg_number)}</div>
         </div>
         <div class="cz-status" style="color:${statusColors[citizen.status]};border-color:${statusColors[citizen.status]}66;background:${statusColors[citizen.status]}0D;">${statusLabels[citizen.status]}</div>
       </div>
@@ -321,7 +322,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
         ${fld('Роль', citizen.role_title)}
         ${fld('Дата вступления', joinedDate)}
       </div>
-      ${citizen.note ? `<div class="cz-note">${citizen.note}</div>` : ''}
+      ${citizen.note ? `<div class="cz-note">${escapeHtml(citizen.note)}</div>` : ''}
 
       <div class="cz-section-title">Паспорт</div>
       ${latestPassport ? `<div class="cz-grid">
@@ -344,7 +345,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const footer = `
       <div class="cz-footer">
         <div style="font-size:12px;color:#6B7280;">Дата составления: ${printDate}</div>
-        <div class="cz-barcode">${barcode}<div class="cz-barcode-text">${citizen.reg_number}</div></div>
+        <div class="cz-barcode">${barcode}<div class="cz-barcode-text">${escapeHtml(citizen.reg_number)}</div></div>
       </div>
       <div class="cz-foot-strip">Конфиденциально — только для служебного пользования · СОНАР</div>
     `
@@ -379,15 +380,10 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const watermark = `<div style="width:520px;height:520px;">${guillocheRosette(seed + ':wm', 520)}</div>`
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'citizen' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="citizen-${citizen.reg_number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `citizen-${citizen.reg_number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'citizen dossier'))
   }
 })
 

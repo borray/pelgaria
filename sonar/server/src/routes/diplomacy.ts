@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, RelationStatus, TreatyType, TreatyStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   guillocheField,
+  escapeHtml,
   sealBlock,
   pageShell,
   parseOptionalDate,
@@ -38,7 +39,7 @@ async function renderTreatyPdf(treaty: {
   const partnerName = treaty.state?.name ?? 'Неизвестное государство'
   const bodyHtml = treaty.body
     .split('\n')
-    .map((line) => `<p>${line || '&nbsp;'}</p>`)
+    .map((line) => `<p>${line ? escapeHtml(line) : '&nbsp;'}</p>`)
     .join('')
 
   const seal = sealBlock({ number: treaty.number, signer: 'Глава государства', role: 'Пельагрия', date: signedDate, size: 122 })
@@ -51,12 +52,12 @@ async function renderTreatyPdf(treaty: {
       <div class="dp-emblem">${guillocheRosette(seed + ':b', 78)}</div>
     </div>
     <div class="dp-doctype">МЕЖДУНАРОДНЫЙ ДОГОВОР</div>
-    <div class="dp-parties"><span>ГОСУДАРСТВО ПЕЛЬАГРИЯ</span><span class="dp-amp">—</span><span>${partnerName.toUpperCase()}</span></div>
+    <div class="dp-parties"><span>ГОСУДАРСТВО ПЕЛЬАГРИЯ</span><span class="dp-amp">—</span><span>${escapeHtml(partnerName.toUpperCase())}</span></div>
   </div>`
 
   const body = `
     <div class="dp-titleblock">
-    <div class="dp-number">Договор №${treaty.number}${treaty.registry_code ? ` · ${treaty.registry_code}` : ''}</div>
+    <div class="dp-number">Договор №${escapeHtml(treaty.number)}${treaty.registry_code ? ` · ${escapeHtml(treaty.registry_code)}` : ''}</div>
       <div class="dp-type">${typeLabel}</div>
     </div>
     <div class="dp-body">${bodyHtml}</div>
@@ -73,7 +74,7 @@ async function renderTreatyPdf(treaty: {
         <div class="dp-sig-date"><span class="dp-date-label">Дата подписания</span> ${signedDate}</div>
       </div>
       <div class="dp-sig">
-        <div class="dp-sig-party">${partnerName}</div>
+        <div class="dp-sig-party">${escapeHtml(partnerName)}</div>
         <div class="dp-sig-line"></div>
         <div class="dp-sig-label">Уполномоченный представитель</div>
         <div class="dp-sig-date"><span class="dp-date-label">Дата подписания</span> ${signedDate}</div>
@@ -367,15 +368,10 @@ router.post('/treaties/:id/pdf', requireAuth, requirePermission('diplomacy.view'
     }
     const pdfBuffer = await renderTreatyPdf(treaty)
 
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="treaty-${treaty.number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `treaty-${treaty.number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'diplomatic treaty'))
   }
 })
 

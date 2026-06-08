@@ -13,23 +13,44 @@ interface ModalProps {
 
 export function Modal({ open, onClose, title, description, children, footer, width = 520 }: ModalProps) {
   const titleId = useId()
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLElement>(null)
+  const onCloseRef = useRef(onClose)
   const destructive = /удал|отоз|списат|закрыть дело/i.test(title)
 
   useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
     if (!open) return
+    const previousActiveElement = document.activeElement as HTMLElement | null
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    closeButtonRef.current?.focus()
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      const dialog = dialogRef.current
+      if (!dialog || dialog.contains(document.activeElement)) return
+
+      const target =
+        dialog.querySelector<HTMLElement>('[autofocus]') ??
+        dialog.querySelector<HTMLElement>(
+          'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])',
+        ) ??
+        dialog
+      target.focus()
+    })
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => {
+      window.cancelAnimationFrame(focusFrame)
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', onKeyDown)
+      previousActiveElement?.focus()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
@@ -38,11 +59,13 @@ export function Modal({ open, onClose, title, description, children, footer, wid
       if (event.target === event.currentTarget) onClose()
     }}>
       <section
+        ref={dialogRef}
         className={`modal-dialog${destructive ? ' is-destructive' : ''}`}
         style={{ maxWidth: width }}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
       >
         <header className="modal-header">
           <div className="modal-heading">
@@ -50,7 +73,7 @@ export function Modal({ open, onClose, title, description, children, footer, wid
             <h2 id={titleId}>{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          <button ref={closeButtonRef} className="modal-close" onClick={onClose} aria-label="Закрыть">
+          <button className="modal-close" onClick={onClose} aria-label="Закрыть">
             <IconX size={19} />
           </button>
         </header>

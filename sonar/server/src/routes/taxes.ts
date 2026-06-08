@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, TaxChargeStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   sealBlock,
@@ -323,15 +323,10 @@ router.get('/periods/:id/pdf', requireAuth, requirePermission('taxes.view'), asy
 
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'taxes' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="taxes-${period.name.replace(/\s+/g, '-')}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `taxes-${period.name.replace(/\s+/g, '-')}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'tax statement'))
   }
 })
 
