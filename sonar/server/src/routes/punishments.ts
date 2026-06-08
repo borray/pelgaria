@@ -3,7 +3,7 @@ import { PrismaClient, PunishmentType, PunishmentStatus, Prisma } from '@prisma/
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   sealBlock,
@@ -299,15 +299,10 @@ router.post('/:id/pdf', requireAuth, requirePermission('punishments.view'), asyn
     const watermark = `<div style="width:500px;height:500px;">${guillocheRosette(seed + ':wm', 500)}</div>`
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'punishment' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="punishment-${punishment.id.slice(0, 8)}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `punishment-${punishment.id.slice(0, 8)}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'punishment order'))
   }
 })
 

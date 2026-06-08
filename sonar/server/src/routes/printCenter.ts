@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
 import {
   barcodeStripes,
@@ -230,15 +230,10 @@ router.get('/documents/:id/pdf', requireAuth, async (req: Request, res: Response
       watermark: `<div style="width:500px;height:500px">${guillocheRosette(`${document.registry_code}:wm`, 500)}</div>`,
     })
     const pdf = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${document.number}.pdf"`,
-      'Content-Length': pdf.length,
-    })
+    res.set(pdfHeaders(pdf, `${document.number}.pdf`))
     res.send(pdf)
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Не удалось подготовить PDF' })
+    res.status(500).json(pdfError(error, 'print center document'))
   }
 })
 

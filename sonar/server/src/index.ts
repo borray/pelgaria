@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
 import type { AuthUser } from './middleware/auth'
+import { closePdfBrowser } from './services/pdf'
 
 import authRouter from './routes/auth'
 import citizensRouter from './routes/citizens'
@@ -200,5 +201,14 @@ const PORT = parseInt(process.env.PORT || '3001', 10)
 httpServer.listen(PORT, () => {
   console.log(`SONAR server running on port ${PORT}`)
 })
+
+async function shutdown() {
+  await closePdfBrowser()
+  await prisma.$disconnect()
+  httpServer.close(() => process.exit(0))
+}
+
+process.once('SIGTERM', shutdown)
+process.once('SIGINT', shutdown)
 
 export { io }

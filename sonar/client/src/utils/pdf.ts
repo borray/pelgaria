@@ -68,6 +68,24 @@ async function readError(response: Response): Promise<string> {
   }
 }
 
+async function authenticatedFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const request = (token: string | null) => {
+    const headers = new Headers(init.headers)
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    return fetch(url, { ...init, headers })
+  }
+
+  let response = await request(useAuthStore.getState().accessToken)
+  if (response.status !== 401 || !useAuthStore.getState().refreshToken) return response
+
+  await useAuthStore.getState().refresh()
+  const refreshedToken = useAuthStore.getState().accessToken
+  if (!refreshedToken) return response
+
+  response = await request(refreshedToken)
+  return response
+}
+
 async function openPdf(responsePromise: Promise<Response>): Promise<void> {
   const documentWindow = window.open('', 'sonar-document')
   if (!documentWindow) {
@@ -112,20 +130,15 @@ async function openPdf(responsePromise: Promise<Response>): Promise<void> {
 
 export async function printPdf(url: string, confirmed = false): Promise<void> {
   if (!confirmed && !await confirmDocumentFormation()) return
-  const accessToken = useAuthStore.getState().accessToken
-  await openPdf(fetch(url, {
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-  }))
+  await openPdf(authenticatedFetch(url))
 }
 
 export async function printPdfPost(url: string, confirmed = false): Promise<void> {
   if (!confirmed && !await confirmDocumentFormation()) return
-  const accessToken = useAuthStore.getState().accessToken
-  await openPdf(fetch(url, {
+  await openPdf(authenticatedFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
   }))
 }

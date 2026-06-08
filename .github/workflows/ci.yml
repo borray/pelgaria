@@ -34,14 +34,35 @@ jobs:
           SONAR_BUNDLED_CHROMIUM: '1'
         run: |
           node - <<'NODE'
-          const { htmlToPdf } = require('./dist/services/pdf')
-          htmlToPdf('<!doctype html><html><meta charset="utf-8"><body><h1>SONAR PDF check</h1></body></html>')
-            .then((pdf) => {
-              if (pdf.subarray(0, 4).toString() !== '%PDF') process.exit(1)
-              console.log(`PDF generated: ${pdf.length} bytes`)
+          const { htmlToPdf, closePdfBrowser } = require('./dist/services/pdf')
+          const { pageShell, guillocheRosette, escapeHtml } = require('./dist/services/templates')
+          const rows = Array.from({ length: 45 }, (_, index) =>
+            `<tr><td>${index + 1}</td><td>${escapeHtml(`Record <${index}> & stress check`)}</td></tr>`
+          ).join('')
+          const makeDocument = (index) => pageShell({
+            seed: `ci-${index}`,
+            kind: 'ci-stress',
+            header: `<h1>SONAR PDF check ${index}</h1>`,
+            body: `<table>${rows}</table>`,
+            footer: `<div>Control document ${index}</div>`,
+            watermark: `<div>${guillocheRosette(`ci-${index}`, 500)}</div>`,
+            styles: 'td{border-bottom:1px solid #ccc;padding:5px;font-size:11px}',
+          })
+
+          Promise.all([1, 2, 3].map(async (index) => {
+            const pdf = await htmlToPdf(makeDocument(index))
+            if (pdf.subarray(0, 4).toString() !== '%PDF' || pdf.length < 5000) {
+              throw new Error(`Invalid PDF ${index}`)
+            }
+            return pdf.length
+          }))
+            .then(async (sizes) => {
+              console.log(`PDF stress check passed: ${sizes.join(', ')} bytes`)
+              await closePdfBrowser()
             })
-            .catch((error) => {
+            .catch(async (error) => {
               console.error(error)
+              await closePdfBrowser()
               process.exit(1)
             })
           NODE

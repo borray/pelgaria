@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   guillocheField,
+  escapeHtml,
   sealBlock,
   pageShell,
   parseOptionalDate,
@@ -37,7 +38,7 @@ async function renderLawPdf(law: {
 
   const bodyHtml = law.body
     .split('\n')
-    .map((line) => `<p>${line || '&nbsp;'}</p>`)
+    .map((line) => `<p>${line ? escapeHtml(line) : '&nbsp;'}</p>`)
     .join('')
 
   const seal = sealBlock({ number: law.number, signer: 'Глава государства', role: 'Глава государства', date: adoptedDate, size: 138 })
@@ -48,14 +49,14 @@ async function renderLawPdf(law: {
     <div class="law-emblem">${rosette}</div>
     <div class="law-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
     <div class="law-acttype">${typeLabel}</div>
-    <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${law.number}${law.registry_code ? ` · ${law.registry_code}` : ''}</div>
+    <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${escapeHtml(law.number)}${law.registry_code ? ` · ${escapeHtml(law.registry_code)}` : ''}</div>
     <div class="law-rule"></div>
   </div>`
 
   const body = `
     <div class="law-titleblock">
-      <div class="law-doc-number">${typeLabel} №${law.number}</div>
-      <div class="law-title">${law.title}</div>
+      <div class="law-doc-number">${typeLabel} №${escapeHtml(law.number)}</div>
+      <div class="law-title">${escapeHtml(law.title)}</div>
       <div class="law-status">${statusLabel}</div>
     </div>
     <div class="law-body">${bodyHtml}</div>
@@ -297,15 +298,10 @@ router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req:
     }
     const pdfBuffer = await renderLawPdf(law)
 
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="law-${law.number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `law-${law.number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'law document'))
   }
 })
 

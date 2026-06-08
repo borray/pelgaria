@@ -4,9 +4,10 @@ import crypto from 'crypto'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   barcodeStripes,
+  escapeHtml,
   guillocheRosette,
   mrzLines,
   sealBlock,
@@ -69,7 +70,7 @@ async function renderPassportPdf(passport: {
   const seal = sealBlock({ number: passport.number, signer, role: 'Глава государства', date: issuedDate, size: 130 })
 
   const field = (label: string, value: string, mono = false) =>
-    `<div class="pp-field"><div class="pp-label">${label}</div><div class="pp-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${value}</div></div>`
+    `<div class="pp-field"><div class="pp-label">${escapeHtml(label)}</div><div class="pp-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${escapeHtml(value)}</div></div>`
 
   const header = `<div class="pp-header">
     <div class="pp-rosette">${rosette}</div>
@@ -83,7 +84,7 @@ async function renderPassportPdf(passport: {
 
   const body = `
     <div class="pp-numberbar">
-      <div><div class="pp-label">НОМЕР ПАСПОРТА / PASSPORT №</div><div class="pp-number">${passport.number}</div><div class="pp-registry">${passport.registry_code ?? ''}</div></div>
+      <div><div class="pp-label">НОМЕР ПАСПОРТА / PASSPORT №</div><div class="pp-number">${escapeHtml(passport.number)}</div><div class="pp-registry">${escapeHtml(passport.registry_code)}</div></div>
       <div class="pp-emblem">⬢</div>
     </div>
     <div class="pp-grid">
@@ -100,7 +101,7 @@ async function renderPassportPdf(passport: {
   const footer = `
     <div class="pp-mrz">${mrz.split('\n').map((l) => `<div>${l}</div>`).join('')}</div>
     <div class="pp-foot">
-      <div class="pp-barcode">${barcode}<div class="pp-barcode-text">${passport.number}</div></div>
+      <div class="pp-barcode">${barcode}<div class="pp-barcode-text">${escapeHtml(passport.number)}</div></div>
       <div class="pp-foot-strip">Документ действителен при наличии электронной подписи СОНАР · Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
   `
@@ -383,15 +384,10 @@ router.get('/:id/pdf', requireAuth, requirePermission('passports.view'), async (
 
     const pdfBuffer = await renderPassportPdf(passport as unknown as Parameters<typeof renderPassportPdf>[0])
 
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="passport-${passport.number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `passport-${passport.number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'passport'))
   }
 })
 
