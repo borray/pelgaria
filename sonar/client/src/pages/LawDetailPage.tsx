@@ -122,12 +122,12 @@ export function LawDetailPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#1B3A6B' }}>{law.number}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#26342E' }}>{law.number}</span>
             {law.registry_code && <span className="registry-code">{law.registry_code}</span>}
             <Badge status={law.type} />
             <Badge status={law.status} />
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
             {law.title}
           </h1>
         </div>
@@ -183,9 +183,9 @@ export function LawDetailPage() {
                 <Link
                   key={c.id}
                   to={`/cases/${c.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', textDecoration: 'none', border: '0.5px solid #D0D7E3' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', textDecoration: 'none', border: '0.5px solid #CDD5D1' }}
                 >
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>{c.number}</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>{c.number}</span>
                   <span style={{ fontSize: '13px', color: '#374151', flex: 1 }}>{c.accused?.nickname ?? '—'}</span>
                   <Badge status={c.status} />
                 </Link>
@@ -215,7 +215,7 @@ export function LawDetailPage() {
               value={editForm.body}
               onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
               rows={12}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+              style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
           {editError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{editError}</div>}

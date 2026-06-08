@@ -1,8 +1,10 @@
 import puppeteer from 'puppeteer-core'
+import chromium from '@sparticuz/chromium'
 import { accessSync, constants } from 'fs'
 import path from 'path'
 
 let cachedBrowserPath: string | null = null
+let packagedBrowser = false
 
 function isExecutable(candidate: string): boolean {
   try {
@@ -13,7 +15,7 @@ function isExecutable(candidate: string): boolean {
   }
 }
 
-function findChromium(): string {
+async function findChromium(): Promise<string> {
   if (cachedBrowserPath) return cachedBrowserPath
 
   const envCandidates = [
@@ -39,27 +41,40 @@ function findChromium(): string {
     path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
   ]
 
-  const executable = candidates.find(isExecutable)
-  if (!executable) {
-    throw new Error(
-      'Не найден браузер для формирования PDF. Укажите CHROMIUM_PATH или установите Chrome, Edge либо Chromium.'
-    )
+  const systemExecutable = process.env.SONAR_BUNDLED_CHROMIUM === '1'
+    ? undefined
+    : candidates.find(isExecutable)
+  if (systemExecutable) {
+    cachedBrowserPath = systemExecutable
+    return systemExecutable
   }
-  cachedBrowserPath = executable
-  return executable
+
+  try {
+    const bundledExecutable = await chromium.executablePath()
+    if (isExecutable(bundledExecutable)) {
+      packagedBrowser = true
+      cachedBrowserPath = bundledExecutable
+      return bundledExecutable
+    }
+  } catch (error) {
+    console.error('Bundled Chromium initialization failed', error)
+  }
+
+  throw new Error('Модуль формирования PDF не смог запустить встроенный браузер.')
 }
 
 export async function htmlToPdf(html: string): Promise<Buffer> {
+  const executablePath = await findChromium()
   const browser = await puppeteer.launch({
-    executablePath: findChromium(),
-    args: [
+    executablePath,
+    args: [...(packagedBrowser ? chromium.args : []),
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--font-render-hinting=medium',
     ],
-    headless: true,
+    headless: packagedBrowser ? chromium.headless : true,
   })
 
   try {

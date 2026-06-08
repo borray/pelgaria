@@ -179,9 +179,9 @@ export function DiplomacyPage() {
   }
 
   const treatyColumns: TableColumn<DiplomaticTreaty>[] = [
-    { key: 'number', header: 'Номер', width: '110px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>{row.number}</span> },
+    { key: 'number', header: 'Номер', width: '110px', render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>{row.number}</span> },
     { key: 'registry_code', header: 'ШК', width: '210px', render: (row) => <RegistryMark code={row.registry_code} compact /> },
-    { key: 'state', header: 'Государство', render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.state?.name ?? '—'}</span> },
+    { key: 'state', header: 'Государство', render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.state?.name ?? '—'}</span> },
     { key: 'type', header: 'Тип', width: '180px', render: (row) => <Badge status={row.type} /> },
     { key: 'signed_at', header: 'Подписан', width: '120px', render: (row) => <span style={{ fontSize: '13px', color: '#6B7280' }}>{formatDate(row.signed_at)}</span> },
     { key: 'status', header: 'Статус', width: '110px', render: (row) => <Badge status={row.status} /> },
@@ -210,7 +210,7 @@ export function DiplomacyPage() {
       <Select label="Отношения" options={RELATION_OPTIONS} value={stateForm.relation_status} onChange={(e) => setStateForm({ ...stateForm, relation_status: e.target.value })} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
-        <textarea value={stateForm.description} onChange={(e) => setStateForm({ ...stateForm, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
+        <textarea value={stateForm.description} onChange={(e) => setStateForm({ ...stateForm, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
       </div>
       {stateError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{stateError}</div>}
     </form>
@@ -219,7 +219,7 @@ export function DiplomacyPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Дипломатия</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Дипломатия</h1>
         {canManage && (
           <div style={{ display: 'flex', gap: '8px' }}>
             {tab === 'states' && (
@@ -236,9 +236,9 @@ export function DiplomacyPage() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '2px solid #E5E7EB' }}>
+      <div className="page-tabs" role="tablist">
         {(['states', 'treaties'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} style={{ padding: '8px 20px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontFamily: 'Inter, sans-serif', fontWeight: tab === t ? 600 : 400, color: tab === t ? '#4A90D9' : '#6B7280', borderBottom: tab === t ? '2px solid #4A90D9' : '2px solid transparent', marginBottom: '-2px' }}>
+          <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? 'is-active' : ''} onClick={() => setTab(t)}>
             {t === 'states' ? 'Государства' : 'Договоры'}
           </button>
         ))}
@@ -255,15 +255,15 @@ export function DiplomacyPage() {
         loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
         ) : states.length === 0 ? (
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
             <EmptyState title="Государства не найдены" description="Добавьте первое государство" action={canManage ? <Button variant="primary" size="sm" onClick={() => { setStateForm(emptyStateForm()); setShowStateModal(true) }}><IconPlus size={14} />Добавить</Button> : undefined} />
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
             {states.map((s) => (
-              <div key={s.id} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 20px', fontFamily: 'Inter, sans-serif' }}>
+              <div key={s.id} style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px', padding: '16px 20px', fontFamily: 'Inter, sans-serif' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#0A1628' }}>{s.name}</div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#18211D' }}>{s.name}</div>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '3px', fontSize: '12px', fontWeight: 500, background: (RELATION_COLOR[s.relation_status] ?? '#6B7280') + '1A', color: RELATION_COLOR[s.relation_status] ?? '#6B7280', border: `1px solid ${(RELATION_COLOR[s.relation_status] ?? '#6B7280')}33` }}>
                     {RELATION_LABEL[s.relation_status] ?? s.relation_status}
                   </span>
@@ -292,7 +292,7 @@ export function DiplomacyPage() {
 
       {tab === 'treaties' && (
         treaties.length === 0 && !loading ? (
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
             <EmptyState title="Договоры не найдены" description="Создайте первый договор" action={canManage ? <Button variant="primary" size="sm" onClick={() => { setTreatyForm(emptyTreatyForm(states)); setShowTreatyModal(true) }}><IconPlus size={14} />Создать</Button> : undefined} />
           </div>
         ) : (

@@ -4,6 +4,7 @@ import { Topbar } from './Topbar'
 import { Sidebar } from './Sidebar'
 import { Breadcrumbs } from './Breadcrumbs'
 import { CommandPalette } from './CommandPalette'
+import { ReconstructionPanel } from './ReconstructionPanel'
 
 export function Layout() {
   const location = useLocation()
@@ -17,6 +18,7 @@ export function Layout() {
     <div className="app-shell">
       <Topbar onMenuClick={() => setSidebarOpen((open) => !open)} />
       <CommandPalette />
+      <ReconstructionPanel />
       <div className="app-workspace">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main

@@ -136,7 +136,7 @@ export function PassportsPage() {
       header: 'Номер',
       width: '180px',
       render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>
           {row.number}
         </span>
       ),
@@ -145,7 +145,7 @@ export function PassportsPage() {
       key: 'citizen',
       header: 'Гражданин',
       render: (row) => (
-        <span style={{ fontWeight: 500, color: '#0A1628' }}>
+        <span style={{ fontWeight: 500, color: '#18211D' }}>
           {row.citizen?.nickname ?? '—'}
           {row.citizen && (
             <span style={{ color: '#9CA3AF', fontSize: '12px', marginLeft: '6px', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -201,7 +201,7 @@ export function PassportsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Паспорта
         </h1>
         {canIssue && (
@@ -223,7 +223,7 @@ export function PassportsPage() {
       </div>
 
       {!loading && passports.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState
             title="Паспорта не найдены"
             description={statusFilter ? 'Попробуйте изменить фильтр' : 'Выдайте первый паспорт'}

@@ -6,7 +6,6 @@ import { SonarBrand } from '../brand/SonarBrand'
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-
   const handleLogout = () => {
     logout()
     navigate('/login')
@@ -21,26 +20,24 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
           <SonarBrand size="sm" />
         </Link>
+        <span className="topbar-divider" />
         <div className="topbar-context">
-          <span>Пельагрия · Minecraft RP</span>
-          <strong>Служебный государственный сервис</strong>
+          <strong>Служебный портал</strong>
+          <span>Вымышленное государство · Minecraft RP</span>
         </div>
       </div>
-
       {user && (
         <div className="topbar-user-area">
           <Link to="/profile" className="topbar-profile">
-            <div className="topbar-avatar">
-              {user.discord_avatar
-                ? <img src={user.discord_avatar} alt="" />
-                : <IconUserCircle size={23} />}
-            </div>
-            <div className="topbar-profile-copy">
+            <span className="topbar-avatar">
+              {user.discord_avatar ? <img src={user.discord_avatar} alt="" /> : <IconUserCircle size={22} />}
+            </span>
+            <span className="topbar-profile-copy">
               <strong>{user.login}</strong>
-              <span>{user.role.name}</span>
-            </div>
+              <small>{user.role.name}</small>
+            </span>
           </Link>
-          <button className="topbar-icon-button" onClick={handleLogout} title="Выйти">
+          <button className="topbar-icon-button" onClick={handleLogout} aria-label="Выйти">
             <IconLogout size={18} />
           </button>
         </div>

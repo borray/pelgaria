@@ -153,7 +153,7 @@ export function BuildingsPage() {
     {
       key: 'name',
       header: 'Название',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.name}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.name}</span>,
     },
     {
       key: 'type',
@@ -197,7 +197,7 @@ export function BuildingsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           РЕЛИКТ — Реестр объектов
         </h1>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -221,7 +221,7 @@ export function BuildingsPage() {
             placeholder="Поиск..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '160px' }} />
@@ -229,7 +229,7 @@ export function BuildingsPage() {
       </div>
 
       {!loading && buildings.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Объекты не найдены" description={search || typeFilter || statusFilter ? 'Измените параметры' : 'Добавьте первый объект'} action={canCreate ? <Button variant="primary" size="sm" onClick={openCreateModal}><IconPlus size={14} />Добавить</Button> : undefined} />
         </div>
       ) : (
@@ -281,7 +281,7 @@ export function BuildingsPage() {
           <Input label="Дата постройки" type="date" value={form.built_at} onChange={(e) => setForm({ ...form, built_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
           </div>
           {createError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{createError}</div>}
         </form>

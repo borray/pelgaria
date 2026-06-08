@@ -178,12 +178,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         onClick={onClose}
         aria-label="Закрыть меню"
       />
-      <nav
-        className={`app-sidebar${open ? ' is-open' : ''}`}
-      >
+      <nav className={`app-sidebar${open ? ' is-open' : ''}`} aria-label="Основная навигация">
       <div className="sidebar-caption">
-        <strong>СОНАР</strong>
-        <span>Пельагрия · Minecraft RP</span>
+        <strong>Рабочие разделы</strong>
+        <span>Доступ определяется вашей ролью</span>
       </div>
       {sections.map((section) => {
         const visibleItems = section.items.filter(
@@ -226,7 +224,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         )
       })}
-      <div className="sidebar-disclaimer">Вымышленный государственный сервис для ролевой игры.</div>
+      <div className="sidebar-disclaimer">
+        <strong>Пельагрия</strong>
+        <span>Игровой служебный портал Minecraft RP</span>
+      </div>
       </nav>
     </>
   )

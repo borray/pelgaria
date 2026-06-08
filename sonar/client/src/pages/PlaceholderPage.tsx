@@ -13,7 +13,7 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
           margin: '0 0 20px 0',
           fontSize: '20px',
           fontWeight: 600,
-          color: '#0A1628',
+          color: '#18211D',
         }}
       >
         {title}

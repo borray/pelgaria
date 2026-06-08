@@ -69,17 +69,17 @@ async function readError(response: Response): Promise<string> {
 }
 
 async function openPdf(responsePromise: Promise<Response>): Promise<void> {
-  const documentWindow = window.open('', '_blank')
+  const documentWindow = window.open('', 'sonar-document')
   if (!documentWindow) {
     throw new Error('Разрешите открытие новой вкладки для сформированного документа')
   }
 
   documentWindow.document.title = 'СОНАР — формирование документа'
   documentWindow.document.body.innerHTML = `
-    <main style="font: 15px/1.5 Arial, sans-serif; max-width: 560px; margin: 15vh auto; padding: 32px; color: #17332b;">
-      <div style="color: #16745b; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;">СОНАР</div>
-      <h1 style="font-size: 24px; margin: 12px 0 8px;">Формируем документ</h1>
-      <p style="margin: 0; color: #5d6c67;">Проверяем сведения и подготавливаем PDF для просмотра и печати.</p>
+    <main style="font: 15px/1.5 'Segoe UI',Arial,sans-serif; max-width: 520px; margin: 18vh auto; padding: 36px; color: #17231f;">
+      <div style="color: #19705a; font-size: 12px; font-weight: 700;">СОНАР</div>
+      <h1 style="font-size: 25px; margin: 16px 0 8px;">Подготовка документа</h1>
+      <p style="margin: 0; color: #68756f;">Окно обновится автоматически, когда PDF будет готов.</p>
     </main>
   `
 
@@ -101,9 +101,9 @@ async function openPdf(responsePromise: Promise<Response>): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Не удалось сформировать документ'
     documentWindow.document.body.innerHTML = `
-      <main style="font: 15px/1.5 Arial, sans-serif; max-width: 560px; margin: 15vh auto; padding: 32px; color: #46231f;">
-        <div style="color: #a33a2b; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;">СОНАР</div>
-        <h1 style="font-size: 24px; margin: 12px 0 8px;">Документ не сформирован</h1>
+      <main style="font: 15px/1.5 'Segoe UI',Arial,sans-serif; max-width: 520px; margin: 18vh auto; padding: 36px; color: #46231f;">
+        <div style="color: #a33a2b; font-size: 12px; font-weight: 700;">СОНАР</div>
+        <h1 style="font-size: 25px; margin: 16px 0 8px;">Документ не сформирован</h1>
         <p style="margin: 0; color: #71534e;">${escapeHtml(message)}</p>
       </main>
     `
