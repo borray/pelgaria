@@ -146,7 +146,7 @@ export function LawDetailPage() {
           )}
           <Button variant="secondary" size="sm" onClick={handleDownloadPdf} loading={pdfLoading}>
             <IconPrinter size={14} />
-            Печать
+            Сформировать
           </Button>
         </div>
       </div>

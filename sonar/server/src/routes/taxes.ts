@@ -325,7 +325,7 @@ router.get('/periods/:id/pdf', requireAuth, requirePermission('taxes.view'), asy
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="taxes-${period.name.replace(/\s+/g, '-')}.pdf"`,
+      'Content-Disposition': `inline; filename="taxes-${period.name.replace(/\s+/g, '-')}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

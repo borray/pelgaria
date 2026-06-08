@@ -166,7 +166,7 @@ export function CaseDetailPage() {
           {caseData.status === 'CLOSED' && (
             <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
               <IconPrinter size={16} />
-              Печать приговора
+              Сформировать приговор
             </Button>
           )}
           {canClose && caseData.status !== 'CLOSED' && (

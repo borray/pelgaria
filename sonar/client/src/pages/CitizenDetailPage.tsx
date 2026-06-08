@@ -169,7 +169,7 @@ export function CitizenDetailPage() {
         )}
         <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
           <IconPrinter size={14} />
-          Печать досье
+          Сформировать досье
         </Button>
         {canDelete && (
           <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
@@ -270,7 +270,7 @@ export function CitizenDetailPage() {
                   { key: 'number', header: 'Документ', render: (row: GeneratedDocument) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
                   { key: 'registry_code', header: 'ШК', width: '210px', render: (row: GeneratedDocument) => <RegistryMark code={row.registry_code} compact /> },
                   { key: 'created_at', header: 'Создан', width: '120px', render: (row: GeneratedDocument) => formatDate(row.created_at) },
-                  { key: 'print', header: '', width: '55px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} /></Button> },
+                  { key: 'print', header: '', width: '130px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
                 ]}
                 data={generatedDocuments}
                 keyExtractor={(row) => row.id}

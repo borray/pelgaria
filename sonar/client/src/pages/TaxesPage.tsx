@@ -217,9 +217,9 @@ export function TaxesPage() {
           size="sm"
           loading={pdfLoadingId === row.id}
           onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}
-          title="Печать ведомости"
+          title="Сформировать ведомость"
         >
-          <IconPrinter size={14} />
+            <IconPrinter size={14} /> Сформировать
         </Button>
       ),
     },

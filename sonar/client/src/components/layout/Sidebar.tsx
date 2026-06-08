@@ -37,22 +37,17 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
   const sections: NavSection[] = [
     {
-      title: 'Документы',
-      items: [
-        {
-          to: '/print-center',
-          label: 'Центр печати',
-          icon: <IconPrinter size={16} />,
-        },
-      ],
-    },
-    {
-      title: 'Сводка',
+      title: 'Рабочий стол',
       items: [
         {
           to: '/',
           label: 'Главная',
           icon: <IconLayoutDashboard size={16} />,
+        },
+        {
+          to: '/print-center',
+          label: 'Документы',
+          icon: <IconPrinter size={16} />,
         },
       ],
     },
@@ -186,6 +181,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       <nav
         className={`app-sidebar${open ? ' is-open' : ''}`}
       >
+      <div className="sidebar-caption">
+        <strong>СОНАР</strong>
+        <span>Пельагрия · Minecraft RP</span>
+      </div>
       {sections.map((section) => {
         const visibleItems = section.items.filter(
           (item) => !item.permission || hasPermission(item.permission)
@@ -227,6 +226,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         )
       })}
+      <div className="sidebar-disclaimer">Вымышленный государственный сервис для ролевой игры.</div>
       </nav>
     </>
   )

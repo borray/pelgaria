@@ -191,8 +191,8 @@ export function DiplomacyPage() {
       width: '105px',
       render: (row) => (
         <div style={{ display: 'flex', gap: 6 }}>
-          <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="Печать договора">
-            <IconPrinter size={14} />
+          <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }} title="Сформировать договор">
+            <IconPrinter size={14} /> Сформировать
           </Button>
           {canManage && (
             <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget({ kind: 'treaty', id: row.id, label: row.number }) }} title="Удалить договор">

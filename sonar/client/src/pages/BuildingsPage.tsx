@@ -203,7 +203,7 @@ export function BuildingsPage() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" loading={pdfLoading} onClick={handleDownloadRegistryPdf}>
             <IconPrinter size={16} />
-            Печать реестра
+            Сформировать реестр
           </Button>
           {canCreate && (
             <Button variant="primary" onClick={openCreateModal}>

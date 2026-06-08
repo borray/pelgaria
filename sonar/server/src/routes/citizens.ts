@@ -381,7 +381,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="citizen-${citizen.reg_number}.pdf"`,
+      'Content-Disposition': `inline; filename="citizen-${citizen.reg_number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

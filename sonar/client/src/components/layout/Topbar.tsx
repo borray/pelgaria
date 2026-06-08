@@ -19,11 +19,11 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <IconMenu2 size={20} />
         </button>
         <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
-          <SonarBrand light size="sm" />
+          <SonarBrand size="sm" />
         </Link>
         <div className="topbar-context">
-          <span>Государство Пельагрия</span>
-          <strong>Единый цифровой контур</strong>
+          <span>Пельагрия · Minecraft RP</span>
+          <strong>Служебный государственный сервис</strong>
         </div>
       </div>
 

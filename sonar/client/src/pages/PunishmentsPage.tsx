@@ -192,9 +192,9 @@ export function PunishmentsPage() {
             size="sm"
             loading={pdfLoadingId === row.id}
             onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
-            title="Печать постановления"
+            title="Сформировать постановление"
           >
-            <IconPrinter size={14} />
+            <IconPrinter size={14} /> Сформировать
           </Button>
           {row.status === 'ACTIVE' && canRevoke && (
             <Button

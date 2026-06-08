@@ -17,7 +17,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { RegistryMark } from '../components/ui/RegistryMark'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
-import { printPdf } from '../utils/pdf'
+import { confirmDocumentFormation, printPdf } from '../utils/pdf'
 
 interface FormTemplate {
   id: string
@@ -93,6 +93,11 @@ export function PrintCenterPage() {
 
   const createDocument = async () => {
     if (!selectedTemplate) return
+    const confirmed = await confirmDocumentFormation(
+      selectedTemplate.title,
+      'Форма получит официальный номер и будет сохранена в архиве СОНАР.'
+    )
+    if (!confirmed) return
     setCreating(true)
     setError(null)
     try {
@@ -105,7 +110,7 @@ export function PrintCenterPage() {
       })
       setSelectedTemplate(null)
       await fetchDocuments()
-      await printPdf(`/api/print-center/documents/${res.data.id}/pdf`)
+      await printPdf(`/api/print-center/documents/${res.data.id}/pdf`, true)
     } catch (err: unknown) {
       setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось сформировать документ')
     } finally {
@@ -125,7 +130,7 @@ export function PrintCenterPage() {
     { key: 'citizen', header: 'Гражданин', render: (row) => row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки' },
     { key: 'link', header: 'Прикрепление', width: '150px', render: (row) => <span className={row.linked_entity_id ? 'link-status is-linked' : 'link-status'}><IconLink size={13} />{row.linked_entity_id ? row.linked_entity_type : 'Не прикреплен'}</span> },
     { key: 'created_at', header: 'Создан', width: '120px', render: (row) => formatDate(row.created_at) },
-    { key: 'actions', header: '', width: '58px', render: (row) => <Button variant="secondary" size="sm" title="Открыть печать" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={15} /></Button> },
+    { key: 'actions', header: '', width: '130px', render: (row) => <Button variant="secondary" size="sm" title="Сформировать документ" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={15} />Сформировать</Button> },
   ]
 
   return (
@@ -175,7 +180,7 @@ export function PrintCenterPage() {
         title={selectedTemplate?.title ?? 'Новая форма'}
         description="Документ получит официальный номер, ШК и сохранится в архиве СОНАР."
         width={720}
-        footer={<><Button variant="secondary" onClick={() => setSelectedTemplate(null)}>Отмена</Button><Button variant="primary" loading={creating} onClick={createDocument}><IconPrinter size={15} />Сформировать и печатать</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setSelectedTemplate(null)}>Отмена</Button><Button variant="primary" loading={creating} onClick={createDocument}><IconPrinter size={15} />Сформировать</Button></>}
       >
         {selectedTemplate && (
           <div className="form-section-stack">
