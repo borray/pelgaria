@@ -4,7 +4,7 @@ interface SpinnerProps {
   color?: string
 }
 
-export function Spinner({ size = 24, color = '#3B82F6' }: SpinnerProps) {
+export function Spinner({ size = 24, color = '#14715A' }: SpinnerProps) {
   return (
     <div
       style={{

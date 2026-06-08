@@ -7,20 +7,18 @@ interface SonarBrandProps {
 export function SonarBrand({ compact = false, light = false, size = 'md' }: SonarBrandProps) {
   return (
     <div className={`sonar-brand sonar-brand-${size}${light ? ' is-light' : ''}`}>
-      <svg className="sonar-brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <rect x="1" y="1" width="46" height="46" rx="14" fill="currentColor" fillOpacity="0.08" />
-        <circle cx="24" cy="24" r="15" stroke="currentColor" strokeWidth="1.5" opacity="0.34" />
-        <circle cx="24" cy="24" r="9" stroke="currentColor" strokeWidth="1.5" opacity="0.58" />
-        <path d="M24 24 35.5 13.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M24 9a15 15 0 0 1 15 15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="24" cy="24" r="3.2" fill="currentColor" />
-        <circle cx="36" cy="13" r="2.3" fill="currentColor" />
-      </svg>
+      <span className="sonar-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 36 36" fill="none">
+          <path d="M10 24.5V11.8c0-1 .8-1.8 1.8-1.8H25" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M14.2 25.8V15.2c0-.55.45-1 1-1h10.6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" opacity=".55" />
+          <circle cx="23.5" cy="23.5" r="3.5" fill="currentColor" />
+        </svg>
+      </span>
       {!compact && (
-        <div className="sonar-brand-copy">
+        <span className="sonar-brand-copy">
           <strong>СОНАР</strong>
-          <span>Государственная система</span>
-        </div>
+          <small>Пельагрия</small>
+        </span>
       )}
     </div>
   )

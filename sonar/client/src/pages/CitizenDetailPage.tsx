@@ -192,7 +192,7 @@ export function CitizenDetailPage() {
             >
               {citizen.reg_number}
             </div>
-            <div style={{ fontSize: '22px', fontWeight: 600, color: '#0A1628', marginBottom: '8px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 600, color: '#18211D', marginBottom: '8px' }}>
               {citizen.nickname}
             </div>
             <Badge status={citizen.status} />
@@ -218,7 +218,7 @@ export function CitizenDetailPage() {
         </div>
       </Card>
 
-      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #D0D7E3', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #CDD5D1', marginBottom: '16px' }}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -226,12 +226,12 @@ export function CitizenDetailPage() {
             style={{
               padding: '10px 16px',
               border: 'none',
-              borderBottom: activeTab === tab.key ? '2px solid #4A90D9' : '2px solid transparent',
+              borderBottom: activeTab === tab.key ? '2px solid #14715A' : '2px solid transparent',
               background: 'none',
               cursor: 'pointer',
               fontSize: '13px',
               fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? '#4A90D9' : '#6B7280',
+              color: activeTab === tab.key ? '#14715A' : '#6B7280',
               fontFamily: 'Inter, sans-serif',
               marginBottom: '-1px',
               display: 'flex',
@@ -243,7 +243,7 @@ export function CitizenDetailPage() {
             {tab.count !== undefined && tab.count > 0 && (
               <span
                 style={{
-                  background: activeTab === tab.key ? '#4A90D9' : '#D0D7E3',
+                  background: activeTab === tab.key ? '#14715A' : '#CDD5D1',
                   color: activeTab === tab.key ? '#FFFFFF' : '#6B7280',
                   borderRadius: '10px',
                   padding: '0 6px',
@@ -337,7 +337,7 @@ export function CitizenDetailPage() {
               rows={3}
               style={{
                 padding: '8px 10px',
-                border: '1px solid #D0D7E3',
+                border: '1px solid #CDD5D1',
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontFamily: 'Inter, sans-serif',

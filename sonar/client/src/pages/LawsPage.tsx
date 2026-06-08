@@ -115,7 +115,7 @@ export function LawsPage() {
       header: 'Номер',
       width: '130px',
       render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>
           {row.number}
         </span>
       ),
@@ -135,7 +135,7 @@ export function LawsPage() {
     {
       key: 'title',
       header: 'Название',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.title}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.title}</span>,
     },
     {
       key: 'status',
@@ -154,7 +154,7 @@ export function LawsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Законодательство
         </h1>
         {canCreate && (
@@ -172,7 +172,7 @@ export function LawsPage() {
             placeholder="Название, номер или ШК..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '140px' }} />
@@ -180,7 +180,7 @@ export function LawsPage() {
       </div>
 
       {!loading && laws.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Законы не найдены" description={search || typeFilter || statusFilter ? 'Измените параметры поиска' : 'Создайте первый закон'} action={canCreate ? <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}><IconPlus size={14} />Создать</Button> : undefined} />
         </div>
       ) : (

@@ -144,11 +144,11 @@ export function CaseDetailPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#1B3A6B' }}>{caseData.number}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#26342E' }}>{caseData.number}</span>
             <Badge status={caseData.status} />
             {caseData.outcome && <Badge status={caseData.outcome} />}
           </div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
             Дело против: {caseData.accused?.nickname ?? '—'}
           </h1>
         </div>
@@ -183,7 +183,7 @@ export function CaseDetailPage() {
             <div>
               <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Обвиняемый</div>
               {caseData.accused ? (
-                <Link to={`/citizens/${caseData.accused.id}`} style={{ fontSize: '14px', color: '#4A90D9', fontWeight: 500, textDecoration: 'none' }}>
+                <Link to={`/citizens/${caseData.accused.id}`} style={{ fontSize: '14px', color: '#14715A', fontWeight: 500, textDecoration: 'none' }}>
                   {caseData.accused.nickname}
                 </Link>
               ) : <span style={{ fontSize: '14px', color: '#374151' }}>—</span>}
@@ -241,7 +241,7 @@ export function CaseDetailPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {caseData.punishments.map((p) => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', border: '0.5px solid #D0D7E3' }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', border: '0.5px solid #CDD5D1' }}>
                   <Badge status={p.type} />
                   <span style={{ fontSize: '13px', color: '#374151', flex: 1 }}>{p.reason}</span>
                   <Badge status={p.status} />
@@ -314,7 +314,7 @@ export function CaseDetailPage() {
                     min="0"
                     value={closeForm.verdict_amount}
                     onChange={(e) => setCloseForm({ ...closeForm, verdict_amount: e.target.value })}
-                    style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
+                    style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
                   />
                 </div>
               )}
@@ -324,7 +324,7 @@ export function CaseDetailPage() {
                   value={closeForm.verdict_note}
                   onChange={(e) => setCloseForm({ ...closeForm, verdict_note: e.target.value })}
                   rows={3}
-                  style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+                  style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
                 />
               </div>
             </>

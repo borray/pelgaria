@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-const GOOGLE_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=PT+Serif:wght@400;700&display=swap');`
+const GOOGLE_FONTS = ''
 
 // A4 @ 96dpi
 export const A4_W = 794

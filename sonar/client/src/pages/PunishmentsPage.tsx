@@ -144,7 +144,7 @@ export function PunishmentsPage() {
     {
       key: 'citizen',
       header: 'Гражданин',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.citizen?.nickname ?? '—'}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen?.nickname ?? '—'}</span>,
     },
     {
       key: 'type',
@@ -214,7 +214,7 @@ export function PunishmentsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Наказания
         </h1>
         {canIssue && (
@@ -232,7 +232,7 @@ export function PunishmentsPage() {
       </div>
 
       {!loading && punishments.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Наказания не найдены" description={typeFilter || statusFilter ? 'Измените фильтры' : 'Нет наказаний'} action={canIssue ? <Button variant="primary" size="sm" onClick={openIssueModal}><IconPlus size={14} />Выдать</Button> : undefined} />
         </div>
       ) : (
@@ -282,7 +282,7 @@ export function PunishmentsPage() {
               value={form.reason}
               onChange={(e) => setForm({ ...form, reason: e.target.value })}
               rows={3}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+              style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -291,7 +291,7 @@ export function PunishmentsPage() {
               type="date"
               value={form.issued_at}
               onChange={(e) => setForm({ ...form, issued_at: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -300,7 +300,7 @@ export function PunishmentsPage() {
               type="date"
               value={form.expires_at}
               onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
             />
           </div>
           {issueError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{issueError}</div>}

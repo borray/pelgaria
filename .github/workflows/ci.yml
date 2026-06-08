@@ -1,0 +1,47 @@
+name: Verify SONAR
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build client
+        working-directory: sonar/client
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build server
+        working-directory: sonar/server
+        run: |
+          npm ci
+          npm run build
+
+      - name: Generate PDF with bundled Chromium
+        working-directory: sonar/server
+        env:
+          SONAR_BUNDLED_CHROMIUM: '1'
+        run: |
+          node - <<'NODE'
+          const { htmlToPdf } = require('./dist/services/pdf')
+          htmlToPdf('<!doctype html><html><meta charset="utf-8"><body><h1>SONAR PDF check</h1></body></html>')
+            .then((pdf) => {
+              if (pdf.subarray(0, 4).toString() !== '%PDF') process.exit(1)
+              console.log(`PDF generated: ${pdf.length} bytes`)
+            })
+            .catch((error) => {
+              console.error(error)
+              process.exit(1)
+            })
+          NODE

@@ -165,11 +165,11 @@ export function ChatPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
       {/* Left panel */}
-      <div style={{ width: '260px', borderRight: '0.5px solid #D0D7E3', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #D0D7E3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#0A1628' }}>Чат</span>
+      <div style={{ width: '260px', borderRight: '0.5px solid #CDD5D1', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #CDD5D1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#18211D' }}>Чат</span>
           <button
             onClick={() => setShowNewConvModal(true)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center', padding: '2px' }}
@@ -199,7 +199,7 @@ export function ChatPage() {
                 onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = '#F8F9FB' }}
                 onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
               >
-                <div style={{ fontSize: '13px', fontWeight: unread || isActive ? 600 : 400, color: '#0A1628', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '13px', fontWeight: unread || isActive ? 600 : 400, color: '#18211D', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {getConvName(conv)}
                 </div>
                 <div style={{ fontSize: '12px', color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -219,8 +219,8 @@ export function ChatPage() {
           </div>
         ) : (
           <>
-            <div style={{ padding: '12px 20px', borderBottom: '0.5px solid #D0D7E3', background: '#F8F9FB' }}>
-              <span style={{ fontSize: '15px', fontWeight: 600, color: '#0A1628' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '0.5px solid #CDD5D1', background: '#F8F9FB' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#18211D' }}>
                 {activeConv ? getConvName(activeConv) : ''}
               </span>
             </div>
@@ -232,22 +232,22 @@ export function ChatPage() {
                 return (
                   <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '3px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: isOwn ? '#4A90D9' : '#374151' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: isOwn ? '#14715A' : '#374151' }}>
                         {msg.sender?.login ?? '?'}
                       </span>
                       <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{formatDateTime(msg.created_at)}</span>
                     </div>
                     {msg.body && (
-                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '8px', background: isOwn ? '#4A90D9' : '#F3F4F6', color: isOwn ? '#FFFFFF' : '#1F2937', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '8px', background: isOwn ? '#14715A' : '#F3F4F6', color: isOwn ? '#FFFFFF' : '#1F2937', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                         {msg.body}
                       </div>
                     )}
                     {msg.attachments?.map((att) => (
                       <div key={att.id} style={{ marginTop: '4px' }}>
                         {att.mime_type.startsWith('image/') ? (
-                          <img src={att.url} alt={att.original_name} style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '4px', border: '0.5px solid #D0D7E3', cursor: 'pointer' }} onClick={() => window.open(att.url, '_blank')} />
+                          <img src={att.url} alt={att.original_name} style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '4px', border: '0.5px solid #CDD5D1', cursor: 'pointer' }} onClick={() => window.open(att.url, '_blank')} />
                         ) : (
-                          <a href={att.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: '#F3F4F6', borderRadius: '4px', fontSize: '13px', color: '#4A90D9', textDecoration: 'none', border: '0.5px solid #D0D7E3' }}>
+                          <a href={att.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: '#F3F4F6', borderRadius: '4px', fontSize: '13px', color: '#14715A', textDecoration: 'none', border: '0.5px solid #CDD5D1' }}>
                             📎 {att.original_name}
                           </a>
                         )}
@@ -259,10 +259,10 @@ export function ChatPage() {
               <div ref={bottomRef} />
             </div>
 
-            <div style={{ borderTop: '0.5px solid #D0D7E3', padding: '12px 16px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+            <div style={{ borderTop: '0.5px solid #CDD5D1', padding: '12px 16px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                style={{ background: 'none', border: '1px solid #D0D7E3', borderRadius: '4px', cursor: 'pointer', color: '#6B7280', padding: '6px', display: 'flex', alignItems: 'center', flexShrink: 0, height: '36px', width: '36px', justifyContent: 'center' }}
+                style={{ background: 'none', border: '1px solid #CDD5D1', borderRadius: '4px', cursor: 'pointer', color: '#6B7280', padding: '6px', display: 'flex', alignItems: 'center', flexShrink: 0, height: '36px', width: '36px', justifyContent: 'center' }}
                 title="Прикрепить файл"
               >
                 <IconPaperclip size={16} />
@@ -274,7 +274,7 @@ export function ChatPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Сообщение... (Enter — отправить, Shift+Enter — новая строка)"
                 rows={1}
-                style={{ flex: 1, resize: 'none', padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', outline: 'none', maxHeight: '120px', overflow: 'auto' }}
+                style={{ flex: 1, resize: 'none', padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', outline: 'none', maxHeight: '120px', overflow: 'auto' }}
                 onInput={(e) => {
                   const ta = e.currentTarget
                   ta.style.height = 'auto'
