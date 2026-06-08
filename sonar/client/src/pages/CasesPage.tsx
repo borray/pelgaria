@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -31,6 +32,7 @@ export function CasesPage() {
 
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -44,6 +46,7 @@ export function CasesPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
       const res = await apiClient.get<Case[]>(`/cases?${params.toString()}`)
       setCases(res.data)
     } catch {
@@ -51,7 +54,7 @@ export function CasesPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, search])
 
   useEffect(() => {
     fetchCases()
@@ -104,7 +107,7 @@ export function CasesPage() {
       header: 'Номер',
       width: '110px',
       render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>
           {row.number}
         </span>
       ),
@@ -112,7 +115,7 @@ export function CasesPage() {
     {
       key: 'accused',
       header: 'Обвиняемый',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.accused?.nickname ?? '—'}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.accused?.nickname ?? '—'}</span>,
     },
     {
       key: 'law',
@@ -122,6 +125,12 @@ export function CasesPage() {
           {row.law ? `${row.law.number}: ${row.law.title}` : '—'}
         </span>
       ),
+    },
+    {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '210px',
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'judge',
@@ -145,7 +154,7 @@ export function CasesPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Судебные дела
         </h1>
         {canCreate && (
@@ -157,11 +166,12 @@ export function CasesPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Дело, обвиняемый, номер или ШК..." />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '200px' }} />
       </div>
 
       {!loading && cases.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState
             title="Дела не найдены"
             description={statusFilter ? 'Измените фильтр' : 'Возбудите первое дело'}
@@ -185,8 +195,9 @@ export function CasesPage() {
       <Modal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        description="Номер дела и ШК будут созданы автоматически и останутся постоянными."
         title="Возбудить дело"
-        width={520}
+        width={620}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>
@@ -216,7 +227,7 @@ export function CasesPage() {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={4}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+              style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
           {createError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{createError}</div>}

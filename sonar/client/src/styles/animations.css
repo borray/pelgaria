@@ -1,78 +1,28 @@
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px) }
-  to { opacity: 1; transform: translateY(0) }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-8px) }
-  to { opacity: 1; transform: translateX(0) }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.97) }
-  to { opacity: 1; transform: translateY(0) scale(1) }
+  from { opacity: 0; transform: translateY(8px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes backdropIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-.page-enter {
-  animation: fadeInUp 0.25s ease;
-}
-
-.card-enter {
-  animation: fadeInUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Subtle staggered entrance for lists of cards/sections */
-.stagger > * {
-  animation: fadeInUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.stagger > *:nth-child(1) { animation-delay: 0.02s }
-.stagger > *:nth-child(2) { animation-delay: 0.06s }
-.stagger > *:nth-child(3) { animation-delay: 0.10s }
-.stagger > *:nth-child(4) { animation-delay: 0.14s }
-.stagger > *:nth-child(5) { animation-delay: 0.18s }
-.stagger > *:nth-child(6) { animation-delay: 0.22s }
-
-@keyframes dropdownIn {
-  from { opacity: 0; transform: translateY(-6px) scaleY(0.94) }
-  to   { opacity: 1; transform: translateY(0)    scaleY(1) }
-}
-
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(16px) }
-  to   { opacity: 1; transform: translateX(0) }
-}
-
-@keyframes toastOut {
-  from { opacity: 1; transform: translateX(0) }
-  to   { opacity: 0; transform: translateX(16px) }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -400px 0 }
-  100% { background-position: 400px 0 }
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
-.skeleton {
-  background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-  border-radius: 6px;
-}
+.page-enter { animation: pageIn .18s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-enter,
-  .card-enter,
-  .stagger > * {
-    animation: none !important;
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

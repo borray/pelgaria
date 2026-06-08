@@ -164,7 +164,7 @@ export function AccountsPage() {
     {
       key: 'login',
       header: 'Логин',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{row.login}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{row.login}</span>,
     },
     {
       key: 'role',
@@ -226,7 +226,7 @@ export function AccountsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Аккаунты</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Аккаунты</h1>
         {canManage && (
           <Button variant="primary" onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateForm({ login: '', password: '', role_id: roles[0]?.id ?? '', citizen_id: '' }) }}>
             <IconPlus size={16} />Создать аккаунт
@@ -235,7 +235,7 @@ export function AccountsPage() {
       </div>
 
       {!loading && users.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Аккаунты не найдены" description="Создайте первый аккаунт" action={canManage ? <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}><IconPlus size={14} />Создать</Button> : undefined} />
         </div>
       ) : (

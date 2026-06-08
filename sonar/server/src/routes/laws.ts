@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   guillocheField,
+  escapeHtml,
   sealBlock,
   pageShell,
   parseOptionalDate,
@@ -13,20 +14,14 @@ import {
   ACCENT,
   INK,
 } from '../services/templates'
+import { nextDocumentNumber, normalizeManualNumber, registryCode } from '../services/documentRegistry'
 
 const router = Router()
 const prisma = new PrismaClient()
 
-async function generateLawNumber(type: LawType): Promise<string> {
-  const prefix = type === 'LAW' ? 'ЗАК' : 'УКЗ'
-  const count = await prisma.law.count({ where: { type } })
-  const seq = count + 1
-  return `${prefix}-${String(seq).padStart(3, '0')}`
-}
-
-
 async function renderLawPdf(law: {
   number: string
+  registry_code?: string | null
   type: LawType
   title: string
   body: string
@@ -43,7 +38,7 @@ async function renderLawPdf(law: {
 
   const bodyHtml = law.body
     .split('\n')
-    .map((line) => `<p>${line || '&nbsp;'}</p>`)
+    .map((line) => `<p>${line ? escapeHtml(line) : '&nbsp;'}</p>`)
     .join('')
 
   const seal = sealBlock({ number: law.number, signer: 'Глава государства', role: 'Глава государства', date: adoptedDate, size: 138 })
@@ -54,14 +49,14 @@ async function renderLawPdf(law: {
     <div class="law-emblem">${rosette}</div>
     <div class="law-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
     <div class="law-acttype">${typeLabel}</div>
-    <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${law.number}</div>
+    <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${escapeHtml(law.number)}${law.registry_code ? ` · ${escapeHtml(law.registry_code)}` : ''}</div>
     <div class="law-rule"></div>
   </div>`
 
   const body = `
     <div class="law-titleblock">
-      <div class="law-doc-number">${typeLabel} №${law.number}</div>
-      <div class="law-title">${law.title}</div>
+      <div class="law-doc-number">${typeLabel} №${escapeHtml(law.number)}</div>
+      <div class="law-title">${escapeHtml(law.title)}</div>
       <div class="law-status">${statusLabel}</div>
     </div>
     <div class="law-body">${bodyHtml}</div>
@@ -126,6 +121,7 @@ router.get('/', requireAuth, requirePermission('laws.view'), async (req: Request
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { number: { contains: search, mode: 'insensitive' } },
+        { registry_code: { contains: search, mode: 'insensitive' } },
       ]
     }
 
@@ -133,7 +129,15 @@ router.get('/', requireAuth, requirePermission('laws.view'), async (req: Request
       where,
       orderBy: { adopted_at: 'desc' },
     })
-    res.json(laws)
+    const normalized = await Promise.all(laws.map(async (law) => {
+      if (law.registry_code) return law
+      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
+      return prisma.law.update({
+        where: { id: law.id },
+        data: { registry_code: registryCode(kind, law.number) },
+      })
+    }))
+    res.json(normalized)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
@@ -143,7 +147,7 @@ router.get('/', requireAuth, requirePermission('laws.view'), async (req: Request
 // POST /api/laws
 router.post('/', requireAuth, requirePermission('laws.create'), async (req: Request, res: Response) => {
   try {
-    const { type, title, body } = req.body
+    const { type, title, body, auto_number = true } = req.body
     if (!type || !title || !body) {
       res.status(400).json({ error: 'type, title и body обязательны' })
       return
@@ -157,22 +161,41 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
       return
     }
 
-    const number = await generateLawNumber(type as LawType)
+    let manualNumber: string | null
+    try {
+      manualNumber = auto_number === false ? normalizeManualNumber(req.body.number) : null
+      if (auto_number === false && !manualNumber) {
+        res.status(400).json({ error: 'Укажите номер или включите автоматическую нумерацию' })
+        return
+      }
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Некорректный номер' })
+      return
+    }
 
-    const law = await prisma.law.create({
-      data: {
-        number,
-        type: type as LawType,
-        title,
-        body,
-        status: 'ACTIVE',
-        adopted_at,
-      },
+    const law = await prisma.$transaction(async (tx) => {
+      const kind = type === 'LAW' ? 'ЗАК' : 'УКЗ'
+      const number = manualNumber ?? await nextDocumentNumber(tx, `LAW:${type}`, kind, adopted_at)
+      return tx.law.create({
+        data: {
+          number,
+          registry_code: registryCode(kind, number),
+          type: type as LawType,
+          title: title.trim(),
+          body: body.trim(),
+          status: 'ACTIVE',
+          adopted_at,
+        },
+      })
     })
 
     res.status(201).json(law)
   } catch (err) {
     console.error(err)
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      res.status(409).json({ error: 'Документ с таким номером уже существует' })
+      return
+    }
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
   }
 })
@@ -181,12 +204,19 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
 router.get('/:id', requireAuth, requirePermission('laws.view'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const law = await prisma.law.findFirst({
-      where: { OR: [{ id }, { number: id }] },
+    let law = await prisma.law.findFirst({
+      where: { OR: [{ id }, { number: id }, { registry_code: id }] },
     })
     if (!law) {
       res.status(404).json({ error: 'Закон не найден' })
       return
+    }
+    if (!law.registry_code) {
+      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
+      law = await prisma.law.update({
+        where: { id: law.id },
+        data: { registry_code: registryCode(kind, law.number) },
+      })
     }
     res.json(law)
   } catch (err) {
@@ -253,23 +283,25 @@ router.post('/:id/repeal', requireAuth, requirePermission('laws.repeal'), async 
 router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const law = await prisma.law.findUnique({ where: { id } })
+    let law = await prisma.law.findUnique({ where: { id } })
     if (!law) {
       res.status(404).json({ error: 'Закон не найден' })
       return
     }
 
+    if (!law.registry_code) {
+      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
+      law = await prisma.law.update({
+        where: { id: law.id },
+        data: { registry_code: registryCode(kind, law.number) },
+      })
+    }
     const pdfBuffer = await renderLawPdf(law)
 
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="law-${law.number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `law-${law.number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'law document'))
   }
 })
 

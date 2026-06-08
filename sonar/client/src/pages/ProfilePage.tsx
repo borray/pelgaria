@@ -9,7 +9,7 @@ import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 
 export function ProfilePage() {
-  const { user, refresh } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [discordStatus, setDiscordStatus] = useState<string | null>(null)
 
@@ -31,7 +31,8 @@ export function ProfilePage() {
   const handleUnlinkDiscord = async () => {
     try {
       await api.delete('/auth/discord')
-      await refresh()
+      const profile = await api.get('/auth/me')
+      setUser(profile.data)
       setDiscordStatus('Discord отвязан')
     } catch {
       setDiscordStatus('Ошибка при отвязке Discord')
@@ -55,8 +56,8 @@ export function ProfilePage() {
     setPwLoading(true)
     try {
       await api.post('/auth/change-password', {
-        current_password: pwForm.current,
-        new_password: pwForm.next,
+        currentPassword: pwForm.current,
+        newPassword: pwForm.next,
       })
       setPwSuccess(true)
       setPwForm({ current: '', next: '', confirm: '' })
@@ -77,7 +78,7 @@ export function ProfilePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
           <div style={{
             width: 48, height: 48, borderRadius: '50%',
-            background: '#1B3A6B', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#26342E', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             {user.discord_avatar
               ? <img src={user.discord_avatar} style={{ width: 48, height: 48, borderRadius: '50%' }} alt="" />
@@ -85,7 +86,7 @@ export function ProfilePage() {
             }
           </div>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 16, color: '#0A1628' }}>{user.login}</div>
+            <div style={{ fontWeight: 600, fontSize: 16, color: '#18211D' }}>{user.login}</div>
             <div style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>
               <Badge status={user.role.name} label={user.role.name} color={user.role.color} />
             </div>
@@ -143,7 +144,7 @@ export function ProfilePage() {
       {/* Смена пароля */}
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <IconKey size={20} color="#4A90D9" />
+          <IconKey size={20} color="#14715A" />
           <span style={{ fontWeight: 600, fontSize: 15 }}>Смена пароля</span>
         </div>
 

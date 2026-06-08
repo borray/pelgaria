@@ -157,11 +157,11 @@ export function BuildingDetailPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '15px', fontWeight: 700, color: '#1B3A6B' }}>{building.reg_number}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '15px', fontWeight: 700, color: '#26342E' }}>{building.reg_number}</span>
             <Badge status={building.type} />
             <Badge status={building.status} />
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>{building.name}</h1>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>{building.name}</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
           {canEdit && (
@@ -216,7 +216,7 @@ export function BuildingDetailPage() {
               <img
                 src={screenshotUrl}
                 alt="Скриншот"
-                style={{ width: '100%', borderRadius: '4px', border: '0.5px solid #D0D7E3', marginBottom: '12px', maxHeight: '240px', objectFit: 'cover' }}
+                style={{ width: '100%', borderRadius: '4px', border: '0.5px solid #CDD5D1', marginBottom: '12px', maxHeight: '240px', objectFit: 'cover' }}
               />
               {canEdit && (
                 <Button variant="secondary" size="sm" loading={uploadLoading} onClick={() => fileInputRef.current?.click()}>
@@ -225,7 +225,7 @@ export function BuildingDetailPage() {
               )}
             </div>
           ) : (
-            <div style={{ border: '2px dashed #D0D7E3', borderRadius: '4px', padding: '32px', textAlign: 'center' }}>
+            <div style={{ border: '2px dashed #CDD5D1', borderRadius: '4px', padding: '32px', textAlign: 'center' }}>
               <p style={{ color: '#9CA3AF', fontSize: '13px', fontFamily: 'Inter, sans-serif', margin: '0 0 12px 0' }}>Скриншот не загружен</p>
               {canEdit && (
                 <Button variant="secondary" size="sm" loading={uploadLoading} onClick={() => fileInputRef.current?.click()}>
@@ -244,7 +244,7 @@ export function BuildingDetailPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                 <thead>
-                  <tr style={{ background: '#F8F9FB', borderBottom: '1px solid #D0D7E3' }}>
+                  <tr style={{ background: '#F8F9FB', borderBottom: '1px solid #CDD5D1' }}>
                     <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: '13px' }}>Период</th>
                     <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: '13px' }}>Сумма</th>
                     <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: '13px' }}>Статус</th>
@@ -253,7 +253,7 @@ export function BuildingDetailPage() {
                 </thead>
                 <tbody>
                   {building.tax_charges.map((tc) => (
-                    <tr key={tc.id} style={{ borderBottom: '0.5px solid #D0D7E3', background: '#FFFFFF' }}>
+                    <tr key={tc.id} style={{ borderBottom: '0.5px solid #CDD5D1', background: '#FFFFFF' }}>
                       <td style={{ padding: '10px 16px', color: '#374151' }}>{tc.period?.name ?? '—'}</td>
                       <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>{formatAmount(tc.amount)}</td>
                       <td style={{ padding: '10px 16px' }}><Badge status={tc.status} /></td>
@@ -267,7 +267,7 @@ export function BuildingDetailPage() {
         </div>
       )}
 
-      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать объект" width={560}
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Редактировать объект" description="Изменение технических и регистрационных сведений РЕЛИКТ." width={680}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button>
@@ -296,13 +296,13 @@ export function BuildingDetailPage() {
           <Input label="Дата постройки" type="date" value={editForm.built_at} onChange={(e) => setEditForm({ ...editForm, built_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
-            <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
+            <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
           </div>
           {editError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{editError}</div>}
         </form>
       </Modal>
 
-      <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Удалить объект"
+      <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Удалить объект" description="Проверьте номер и наименование объекта перед необратимым удалением."
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отмена</Button>

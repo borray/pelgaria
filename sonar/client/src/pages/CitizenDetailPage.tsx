@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { IconEdit, IconTrash, IconArrowLeft, IconFileTypePdf } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconArrowLeft, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
-import type { Citizen } from '../types'
+import type { Citizen, GeneratedDocument } from '../types'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
@@ -14,7 +14,8 @@ import { Select } from '../components/ui/Select'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate, formatDateTime, formatAmount } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'Активен' },
@@ -24,7 +25,7 @@ const STATUS_OPTIONS = [
   { value: 'BANNED', label: 'Забанен' },
 ]
 
-type TabKey = 'passport' | 'cases' | 'punishments' | 'taxes' | 'buildings'
+type TabKey = 'passport' | 'documents' | 'cases' | 'punishments' | 'taxes' | 'buildings'
 
 export function CitizenDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,6 +34,7 @@ export function CitizenDetailPage() {
   const canDelete = usePermission('citizens.delete')
 
   const [citizen, setCitizen] = useState<Citizen | null>(null)
+  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabKey>('passport')
   const [showEditModal, setShowEditModal] = useState(false)
@@ -67,6 +69,10 @@ export function CitizenDetailPage() {
         setCitizen(null)
       })
       .finally(() => setLoading(false))
+    apiClient
+      .get<GeneratedDocument[]>(`/print-center/documents?citizen_id=${encodeURIComponent(id)}`)
+      .then((res) => setGeneratedDocuments(res.data))
+      .catch(() => setGeneratedDocuments([]))
   }, [id])
 
   const handleEdit = async (e: React.FormEvent) => {
@@ -99,7 +105,7 @@ export function CitizenDetailPage() {
     if (!citizen) return
     setPdfLoading(true)
     try {
-      await downloadPdf(`/api/citizens/${citizen.id}/pdf`, `citizen-${citizen.reg_number}.pdf`)
+      await printPdf(`/api/citizens/${citizen.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -140,6 +146,7 @@ export function CitizenDetailPage() {
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
     { key: 'passport', label: 'Паспорт', count: citizen.passports?.length },
+    { key: 'documents', label: 'Формы и справки', count: generatedDocuments.length },
     { key: 'cases', label: 'Дела', count: citizen.cases?.length },
     { key: 'punishments', label: 'Наказания', count: citizen.punishments?.length },
     { key: 'taxes', label: 'Налоги', count: citizen.tax_charges?.length },
@@ -161,8 +168,8 @@ export function CitizenDetailPage() {
           </Button>
         )}
         <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
-          <IconFileTypePdf size={14} />
-          Досье (PDF)
+          <IconPrinter size={14} />
+          Сформировать досье
         </Button>
         {canDelete && (
           <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
@@ -185,7 +192,7 @@ export function CitizenDetailPage() {
             >
               {citizen.reg_number}
             </div>
-            <div style={{ fontSize: '22px', fontWeight: 600, color: '#0A1628', marginBottom: '8px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 600, color: '#18211D', marginBottom: '8px' }}>
               {citizen.nickname}
             </div>
             <Badge status={citizen.status} />
@@ -211,7 +218,7 @@ export function CitizenDetailPage() {
         </div>
       </Card>
 
-      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #D0D7E3', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #CDD5D1', marginBottom: '16px' }}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -219,12 +226,12 @@ export function CitizenDetailPage() {
             style={{
               padding: '10px 16px',
               border: 'none',
-              borderBottom: activeTab === tab.key ? '2px solid #4A90D9' : '2px solid transparent',
+              borderBottom: activeTab === tab.key ? '2px solid #14715A' : '2px solid transparent',
               background: 'none',
               cursor: 'pointer',
               fontSize: '13px',
               fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? '#4A90D9' : '#6B7280',
+              color: activeTab === tab.key ? '#14715A' : '#6B7280',
               fontFamily: 'Inter, sans-serif',
               marginBottom: '-1px',
               display: 'flex',
@@ -236,7 +243,7 @@ export function CitizenDetailPage() {
             {tab.count !== undefined && tab.count > 0 && (
               <span
                 style={{
-                  background: activeTab === tab.key ? '#4A90D9' : '#D0D7E3',
+                  background: activeTab === tab.key ? '#14715A' : '#CDD5D1',
                   color: activeTab === tab.key ? '#FFFFFF' : '#6B7280',
                   borderRadius: '10px',
                   padding: '0 6px',
@@ -254,6 +261,20 @@ export function CitizenDetailPage() {
       <div>
         {activeTab === 'passport' && (
           <PassportTab passports={citizen.passports ?? []} />
+        )}
+        {activeTab === 'documents' && (
+          generatedDocuments.length === 0
+            ? <EmptyState title="Прикрепленных документов нет" description="Сформируйте заявление или справку в Центре печати." />
+            : <Table
+                columns={[
+                  { key: 'number', header: 'Документ', render: (row: GeneratedDocument) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
+                  { key: 'registry_code', header: 'ШК', width: '210px', render: (row: GeneratedDocument) => <RegistryMark code={row.registry_code} compact /> },
+                  { key: 'created_at', header: 'Создан', width: '120px', render: (row: GeneratedDocument) => formatDate(row.created_at) },
+                  { key: 'print', header: '', width: '130px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
+                ]}
+                data={generatedDocuments}
+                keyExtractor={(row) => row.id}
+              />
         )}
         {activeTab === 'cases' && (
           <CasesTab cases={citizen.cases ?? []} />
@@ -316,7 +337,7 @@ export function CitizenDetailPage() {
               rows={3}
               style={{
                 padding: '8px 10px',
-                border: '1px solid #D0D7E3',
+                border: '1px solid #CDD5D1',
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontFamily: 'Inter, sans-serif',

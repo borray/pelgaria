@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconEdit, IconTrash, IconDownload } from '@tabler/icons-react'
+import { IconArrowLeft, IconEdit, IconTrash, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Law, Case } from '../types'
@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { formatDate } from '../utils/formatters'
+import { printPdfPost } from '../utils/pdf'
 
 export function LawDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -82,13 +83,7 @@ export function LawDetailPage() {
   const handleDownloadPdf = async () => {
     setPdfLoading(true)
     try {
-      const res = await apiClient.post(`/laws/${id}/pdf`, {}, { responseType: 'blob' })
-      const url = URL.createObjectURL(res.data as Blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `law-${law?.number ?? id}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      await printPdfPost(`/api/laws/${id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -127,11 +122,12 @@ export function LawDetailPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#1B3A6B' }}>{law.number}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#26342E' }}>{law.number}</span>
+            {law.registry_code && <span className="registry-code">{law.registry_code}</span>}
             <Badge status={law.type} />
             <Badge status={law.status} />
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', fontFamily: 'Inter, sans-serif' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
             {law.title}
           </h1>
         </div>
@@ -149,8 +145,8 @@ export function LawDetailPage() {
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={handleDownloadPdf} loading={pdfLoading}>
-            <IconDownload size={14} />
-            PDF
+            <IconPrinter size={14} />
+            Сформировать
           </Button>
         </div>
       </div>
@@ -187,9 +183,9 @@ export function LawDetailPage() {
                 <Link
                   key={c.id}
                   to={`/cases/${c.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', textDecoration: 'none', border: '0.5px solid #D0D7E3' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#F8F9FB', borderRadius: '4px', textDecoration: 'none', border: '0.5px solid #CDD5D1' }}
                 >
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>{c.number}</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#26342E', fontWeight: 600 }}>{c.number}</span>
                   <span style={{ fontSize: '13px', color: '#374151', flex: 1 }}>{c.accused?.nickname ?? '—'}</span>
                   <Badge status={c.status} />
                 </Link>
@@ -219,7 +215,7 @@ export function LawDetailPage() {
               value={editForm.body}
               onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
               rows={12}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+              style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
           {editError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{editError}</div>}

@@ -2,9 +2,11 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient, CaseStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   barcodeStripes,
+  escapeHtml,
   guillocheRosette,
   sealBlock,
   pageShell,
@@ -24,10 +26,19 @@ async function generateCaseNumber(): Promise<string> {
 // GET /api/cases
 router.get('/', requireAuth, requirePermission('cases.view'), async (req: Request, res: Response) => {
   try {
-    const { status, accused_id } = req.query as Record<string, string>
+    const { status, accused_id, search } = req.query as Record<string, string>
     const where: Prisma.CaseWhereInput = {}
     if (status) where.status = status as CaseStatus
     if (accused_id) where.accused_id = accused_id
+    if (search) {
+      where.OR = [
+        { number: { contains: search, mode: 'insensitive' } },
+        { registry_code: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { accused: { nickname: { contains: search, mode: 'insensitive' } } },
+        { accused: { reg_number: { contains: search, mode: 'insensitive' } } },
+      ]
+    }
 
     const cases = await prisma.case.findMany({
       where,
@@ -39,7 +50,20 @@ router.get('/', requireAuth, requirePermission('cases.view'), async (req: Reques
         punishments: true,
       },
     })
-    res.json(cases)
+    const hydrated = await Promise.all(cases.map(async (caseRecord) => {
+      if (caseRecord.registry_code) return caseRecord
+      return prisma.case.update({
+        where: { id: caseRecord.id },
+        data: { registry_code: registryCode('СД', caseRecord.number) },
+        include: {
+          accused: { select: { id: true, reg_number: true, nickname: true } },
+          law: { select: { id: true, number: true, title: true } },
+          judge: { select: { id: true, login: true } },
+          punishments: true,
+        },
+      })
+    }))
+    res.json(hydrated)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
@@ -61,22 +85,25 @@ router.post('/', requireAuth, requirePermission('cases.create'), async (req: Req
       return
     }
 
-    const number = await generateCaseNumber()
-
-    const caseRecord = await prisma.case.create({
-      data: {
-        number,
-        accused_id,
-        law_id: law_id || null,
-        description,
-        status: 'OPENED',
-        opened_at: new Date(),
-      },
-      include: {
-        accused: { select: { id: true, reg_number: true, nickname: true } },
-        law: { select: { id: true, number: true, title: true } },
-        judge: { select: { id: true, login: true } },
-      },
+    const openedAt = new Date()
+    const caseRecord = await prisma.$transaction(async (tx) => {
+      const number = await nextDocumentNumber(tx, 'case', 'СД', openedAt)
+      return tx.case.create({
+        data: {
+          number,
+          registry_code: registryCode('СД', number),
+          accused_id,
+          law_id: law_id || null,
+          description,
+          status: 'OPENED',
+          opened_at: openedAt,
+        },
+        include: {
+          accused: { select: { id: true, reg_number: true, nickname: true } },
+          law: { select: { id: true, number: true, title: true } },
+          judge: { select: { id: true, login: true } },
+        },
+      })
     })
 
     res.status(201).json(caseRecord)
@@ -244,13 +271,13 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
     const seal = sealBlock({ number: caseRecord.number, signer: judge, role: 'Судья', date: closedDate !== '—' ? closedDate : openedDate, size: 134 })
 
     const sec = (label: string, value: string, mono = false) =>
-      `<div class="cs-field"><div class="cs-label">${label}</div><div class="cs-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${value}</div></div>`
+      `<div class="cs-field"><div class="cs-label">${escapeHtml(label)}</div><div class="cs-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${escapeHtml(value)}</div></div>`
 
     const header = `<div class="cs-header">
       <div class="cs-emblem">⚖</div>
       <div class="cs-namestate">ИМЕНЕМ ГОСУДАРСТВА ПЕЛЬАГРИЯ</div>
       <div class="cs-doctype">ПРИГОВОР СУДА</div>
-      <div class="cs-num">Дело №${caseRecord.number}</div>
+      <div class="cs-num">Дело №${escapeHtml(caseRecord.number)}</div>
     </div>`
 
     const body = `
@@ -269,17 +296,17 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
         ${caseRecord.verdict_amount ? sec('Сумма штрафа', `${caseRecord.verdict_amount} у.е.`, true) : ''}
       </div>
       <div class="cs-section-label">УСТАНОВИЛ — обстоятельства дела</div>
-      <div class="cs-block">${caseRecord.description}</div>
-      ${caseRecord.verdict_note ? `<div class="cs-section-label" style="margin-top:18px;">Примечание к приговору</div><div class="cs-block" style="border-left-color:${outcomeColor};">${caseRecord.verdict_note}</div>` : ''}
+      <div class="cs-block">${escapeHtml(caseRecord.description)}</div>
+      ${caseRecord.verdict_note ? `<div class="cs-section-label" style="margin-top:18px;">Примечание к приговору</div><div class="cs-block" style="border-left-color:${outcomeColor};">${escapeHtml(caseRecord.verdict_note)}</div>` : ''}
     `
 
     const footer = `
       <div class="cs-footer">
-        <div class="cs-barcode">${barcode}<div class="cs-barcode-text">${caseRecord.number}</div></div>
+        <div class="cs-barcode">${barcode}<div class="cs-barcode-text">${escapeHtml(caseRecord.number)}</div></div>
         <div class="cs-sign">
           ${seal}
           <div class="cs-sign-line"></div>
-          <div class="cs-sign-label">Судья: ${judge}</div>
+          <div class="cs-sign-label">Судья: ${escapeHtml(judge)}</div>
         </div>
       </div>
       <div class="cs-foot-strip">Государственная информационная система СОНАР · Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
@@ -311,15 +338,10 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
     const watermark = `<div style="width:520px;height:520px;">${guillocheRosette(seed + ':wm', 520)}</div>`
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'case' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="verdict-${caseRecord.number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `verdict-${caseRecord.number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'case verdict'))
   }
 })
 

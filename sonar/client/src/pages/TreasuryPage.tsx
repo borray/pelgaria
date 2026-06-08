@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconMinus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconMinus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Treasury, TreasuryTransaction } from '../types'
@@ -8,7 +8,7 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDateTime } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 export function TreasuryPage() {
   const canEdit = usePermission('treasury.edit')
@@ -39,8 +39,7 @@ export function TreasuryPage() {
       if (pdfFrom) params.set('from', pdfFrom)
       if (pdfTo) params.set('to', pdfTo)
       const query = params.toString()
-      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
-      await downloadPdf(`/api/treasury/report/pdf${query ? `?${query}` : ''}`, `treasury-report-${today}.pdf`)
+      await printPdf(`/api/treasury/report/pdf${query ? `?${query}` : ''}`)
       setShowPdfModal(false)
     } catch {
       alert('Ошибка генерации PDF')
@@ -158,11 +157,11 @@ export function TreasuryPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
-            <IconFileTypePdf size={16} />
-            Отчёт (PDF)
+            <IconPrinter size={16} />
+            Сформировать отчёт
           </Button>
           {canEdit && (
             <>
@@ -179,7 +178,7 @@ export function TreasuryPage() {
         </div>
       </div>
 
-      <div style={{ background: '#0A1628', borderRadius: '8px', padding: '32px 36px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#18211D', borderRadius: '8px', padding: '32px 36px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
             Текущий баланс
@@ -199,7 +198,7 @@ export function TreasuryPage() {
       </div>
 
       <div style={{ marginBottom: '12px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif', margin: '0 0 12px 0' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#18211D', fontFamily: 'Inter, sans-serif', margin: '0 0 12px 0' }}>
           История транзакций
         </h2>
         <Table
@@ -258,12 +257,12 @@ export function TreasuryPage() {
       <Modal
         open={showPdfModal}
         onClose={() => setShowPdfModal(false)}
-        title="Финансовый отчёт (PDF)"
+        title="Сформировать финансовый отчёт"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowPdfModal(false)}>Отмена</Button>
             <Button variant="primary" loading={pdfLoading} onClick={handleDownloadReportPdf}>
-              Скачать PDF
+              Открыть печать
             </Button>
           </>
         }
@@ -278,7 +277,7 @@ export function TreasuryPage() {
               type="date"
               value={pdfFrom}
               onChange={(e) => setPdfFrom(e.target.value)}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -287,7 +286,7 @@ export function TreasuryPage() {
               type="date"
               value={pdfTo}
               onChange={(e) => setPdfTo(e.target.value)}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }}
             />
           </div>
         </div>

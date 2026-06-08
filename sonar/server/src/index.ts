@@ -5,6 +5,9 @@ import path from 'path'
 import { createServer } from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
+import jwt from 'jsonwebtoken'
+import type { AuthUser } from './middleware/auth'
+import { closePdfBrowser } from './services/pdf'
 
 import authRouter from './routes/auth'
 import citizensRouter from './routes/citizens'
@@ -21,6 +24,8 @@ import territoriesRouter from './routes/territories'
 import diplomacyRouter from './routes/diplomacy'
 import chatRouter from './routes/chat'
 import discordRouter from './routes/discord'
+import dashboardRouter from './routes/dashboard'
+import printCenterRouter from './routes/printCenter'
 
 const app = express()
 const httpServer = createServer(app)
@@ -35,6 +40,7 @@ const io = new SocketIOServer(httpServer, {
     credentials: CLIENT_URL !== '*',
   },
 })
+app.set('io', io)
 
 app.use(
   cors({
@@ -47,7 +53,15 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
 const uploadsDir = path.join(__dirname, '..', 'uploads')
-app.use('/uploads', express.static(uploadsDir))
+app.use(
+  '/uploads',
+  express.static(uploadsDir, {
+    setHeaders: (res) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff')
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox")
+    },
+  })
+)
 
 app.use('/api/auth', authRouter)
 app.use('/api/citizens', citizensRouter)
@@ -64,25 +78,49 @@ app.use('/api/territories', territoriesRouter)
 app.use('/api/diplomacy', diplomacyRouter)
 app.use('/api/chat', chatRouter)
 app.use('/api/auth/discord', discordRouter)
+app.use('/api/dashboard', dashboardRouter)
+app.use('/api/print-center', printCenterRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
 // Socket.io for chat
-const userSocketMap = new Map<string, string>()
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token
+  const secret = process.env.JWT_SECRET
 
-io.on('connection', (socket) => {
-  const userId = socket.handshake.auth.userId as string | undefined
-
-  if (userId) {
-    userSocketMap.set(userId, socket.id)
-    socket.join(`user:${userId}`)
-    console.log(`User ${userId} connected via socket ${socket.id}`)
+  if (!token || !secret) {
+    next(new Error('Требуется авторизация'))
+    return
   }
 
-  socket.on('join_conversation', (conversationId: string) => {
-    socket.join(`conv:${conversationId}`)
+  try {
+    const user = jwt.verify(token, secret) as AuthUser
+    if (!user.permissions?.['chat.send']) {
+      next(new Error('Недостаточно прав'))
+      return
+    }
+    socket.data.user = user
+    next()
+  } catch {
+    next(new Error('Токен недействителен или истёк'))
+  }
+})
+
+io.on('connection', (socket) => {
+  const userId = (socket.data.user as AuthUser).id
+
+  socket.join(`user:${userId}`)
+  console.log(`User ${userId} connected via socket ${socket.id}`)
+
+  socket.on('join_conversation', async (conversationId: string) => {
+    const participant = await prisma.chatParticipant.findFirst({
+      where: { conversation_id: conversationId, user_id: userId },
+    })
+    if (participant) {
+      socket.join(`conv:${conversationId}`)
+    }
   })
 
   socket.on('leave_conversation', (conversationId: string) => {
@@ -90,48 +128,17 @@ io.on('connection', (socket) => {
   })
 
   socket.on(
-    'send_message',
-    async (data: {
-      conversation_id: string
-      body: string
-      sender_id: string
-      attachment_ids?: string[]
-    }) => {
-      try {
-        const message = await prisma.chatMessage.create({
-          data: {
-            conversation_id: data.conversation_id,
-            sender_id: data.sender_id,
-            body: data.body,
-            read_by: [data.sender_id],
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                login: true,
-                discord_username: true,
-                discord_avatar: true,
-              },
-            },
-            attachments: true,
-          },
-        })
-
-        io.to(`conv:${data.conversation_id}`).emit('new_message', message)
-      } catch (err) {
-        console.error('Socket send_message error:', err)
-        socket.emit('error', { message: 'Ошибка отправки сообщения' })
-      }
-    }
-  )
-
-  socket.on(
     'message_read',
     async (data: { conversation_id: string; message_id: string }) => {
       try {
-        if (!userId) return
-        const msg = await prisma.chatMessage.findUnique({ where: { id: data.message_id } })
+        const participant = await prisma.chatParticipant.findFirst({
+          where: { conversation_id: data.conversation_id, user_id: userId },
+        })
+        if (!participant) return
+
+        const msg = await prisma.chatMessage.findFirst({
+          where: { id: data.message_id, conversation_id: data.conversation_id },
+        })
         if (!msg) return
         const readBy = (msg.read_by as string[]) || []
         if (!readBy.includes(userId)) {
@@ -141,14 +148,11 @@ io.on('connection', (socket) => {
           })
         }
         // notify the sender
-        const senderSocketId = userSocketMap.get(msg.sender_id)
-        if (senderSocketId) {
-          io.to(senderSocketId).emit('message_read', {
-            conversation_id: data.conversation_id,
-            message_id: data.message_id,
-            read_by_user_id: userId,
-          })
-        }
+        io.to(`user:${msg.sender_id}`).emit('message_read', {
+          conversation_id: data.conversation_id,
+          message_id: data.message_id,
+          read_by_user_id: userId,
+        })
       } catch (err) {
         console.error('Socket message_read error:', err)
       }
@@ -157,21 +161,28 @@ io.on('connection', (socket) => {
 
   socket.on(
     'mark_read',
-    async (data: { conversation_id: string; user_id: string; message_ids: string[] }) => {
+    async (data: { conversation_id: string; message_ids: string[] }) => {
       try {
+        const participant = await prisma.chatParticipant.findFirst({
+          where: { conversation_id: data.conversation_id, user_id: userId },
+        })
+        if (!participant) return
+
         for (const msgId of data.message_ids) {
-          const msg = await prisma.chatMessage.findUnique({ where: { id: msgId } })
+          const msg = await prisma.chatMessage.findFirst({
+            where: { id: msgId, conversation_id: data.conversation_id },
+          })
           if (!msg) continue
           const readBy = (msg.read_by as string[]) || []
-          if (!readBy.includes(data.user_id)) {
+          if (!readBy.includes(userId)) {
             await prisma.chatMessage.update({
               where: { id: msgId },
-              data: { read_by: [...readBy, data.user_id] },
+              data: { read_by: [...readBy, userId] },
             })
           }
         }
         io.to(`conv:${data.conversation_id}`).emit('messages_read', {
-          user_id: data.user_id,
+          user_id: userId,
           message_ids: data.message_ids,
         })
       } catch (err) {
@@ -181,10 +192,7 @@ io.on('connection', (socket) => {
   )
 
   socket.on('disconnect', () => {
-    if (userId) {
-      userSocketMap.delete(userId)
-      console.log(`User ${userId} disconnected`)
-    }
+    console.log(`User ${userId} disconnected`)
   })
 })
 
@@ -193,5 +201,14 @@ const PORT = parseInt(process.env.PORT || '3001', 10)
 httpServer.listen(PORT, () => {
   console.log(`SONAR server running on port ${PORT}`)
 })
+
+async function shutdown() {
+  await closePdfBrowser()
+  await prisma.$disconnect()
+  httpServer.close(() => process.exit(0))
+}
+
+process.once('SIGTERM', shutdown)
+process.once('SIGINT', shutdown)
 
 export { io }

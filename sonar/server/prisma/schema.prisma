@@ -18,30 +18,31 @@ model Role {
 }
 
 model User {
-  id                   String    @id @default(cuid())
-  login                String    @unique
-  password_hash        String
-  role_id              String
-  role                 Role      @relation(fields: [role_id], references: [id])
-  citizen_id           String?   @unique
-  citizen              Citizen?  @relation(fields: [citizen_id], references: [id])
-  discord_id           String?
-  discord_username     String?
-  discord_avatar       String?
-  is_active            Boolean   @default(true)
-  must_change_password Boolean   @default(true)
-  created_at           DateTime  @default(now())
-  last_login_at        DateTime?
-  refresh_tokens       RefreshToken[]
-  issued_passports     Passport[]    @relation("IssuedBy")
-  judged_cases         Case[]        @relation("Judge")
-  issued_punishments   Punishment[]  @relation("IssuedBy")
-  revoked_punishments  Punishment[]  @relation("RevokedBy")
-  tax_markings         TaxCharge[]   @relation("MarkedBy")
+  id                    String                @id @default(cuid())
+  login                 String                @unique
+  password_hash         String
+  role_id               String
+  role                  Role                  @relation(fields: [role_id], references: [id])
+  citizen_id            String?               @unique
+  citizen               Citizen?              @relation(fields: [citizen_id], references: [id])
+  discord_id            String?
+  discord_username      String?
+  discord_avatar        String?
+  is_active             Boolean               @default(true)
+  must_change_password  Boolean               @default(true)
+  created_at            DateTime              @default(now())
+  last_login_at         DateTime?
+  refresh_tokens        RefreshToken[]
+  issued_passports      Passport[]            @relation("IssuedBy")
+  judged_cases          Case[]                @relation("Judge")
+  issued_punishments    Punishment[]          @relation("IssuedBy")
+  revoked_punishments   Punishment[]          @relation("RevokedBy")
+  tax_markings          TaxCharge[]           @relation("MarkedBy")
   treasury_transactions TreasuryTransaction[]
-  managed_territories  Territory[]
-  sent_messages        ChatMessage[]
-  chat_participants    ChatParticipant[]
+  managed_territories   Territory[]
+  sent_messages         ChatMessage[]
+  chat_participants     ChatParticipant[]
+  generated_documents   GeneratedDocument[]
 }
 
 model RefreshToken {
@@ -54,21 +55,22 @@ model RefreshToken {
 }
 
 model Citizen {
-  id               String        @id @default(cuid())
-  reg_number       String        @unique
-  nickname         String
-  discord_username String?
-  role_title       String        @default("Гражданин")
-  status           CitizenStatus @default(ACTIVE)
-  joined_at        DateTime      @default(now())
-  note             String?
-  user             User?
-  passports        Passport[]
-  cases            Case[]        @relation("Accused")
-  punishments      Punishment[]
-  tax_charges      TaxCharge[]
-  buildings        Building[]
-  created_at       DateTime      @default(now())
+  id                  String              @id @default(cuid())
+  reg_number          String              @unique
+  nickname            String
+  discord_username    String?
+  role_title          String              @default("Гражданин")
+  status              CitizenStatus       @default(ACTIVE)
+  joined_at           DateTime            @default(now())
+  note                String?
+  user                User?
+  passports           Passport[]
+  cases               Case[]              @relation("Accused")
+  punishments         Punishment[]
+  tax_charges         TaxCharge[]
+  buildings           Building[]
+  generated_documents GeneratedDocument[]
+  created_at          DateTime            @default(now())
 }
 
 enum CitizenStatus {
@@ -82,6 +84,7 @@ enum CitizenStatus {
 model Passport {
   id               String         @id @default(cuid())
   number           String         @unique
+  registry_code    String?        @unique
   citizen_id       String
   citizen          Citizen        @relation(fields: [citizen_id], references: [id])
   issued_at        DateTime       @default(now())
@@ -99,15 +102,16 @@ enum PassportStatus {
 }
 
 model Law {
-  id          String    @id @default(cuid())
-  number      String    @unique
-  type        LawType
-  title       String
-  body        String
-  status      LawStatus @default(ACTIVE)
-  adopted_at  DateTime  @default(now())
-  repealed_at DateTime?
-  cases       Case[]
+  id            String    @id @default(cuid())
+  number        String    @unique
+  registry_code String?   @unique
+  type          LawType
+  title         String
+  body          String
+  status        LawStatus @default(ACTIVE)
+  adopted_at    DateTime  @default(now())
+  repealed_at   DateTime?
+  cases         Case[]
 }
 
 enum LawType {
@@ -124,6 +128,7 @@ enum LawStatus {
 model Case {
   id             String       @id @default(cuid())
   number         String       @unique
+  registry_code  String?      @unique
   accused_id     String
   accused        Citizen      @relation("Accused", fields: [accused_id], references: [id])
   law_id         String?
@@ -160,21 +165,23 @@ enum VerdictType {
 }
 
 model Punishment {
-  id             String           @id @default(cuid())
-  citizen_id     String
-  citizen        Citizen          @relation(fields: [citizen_id], references: [id])
-  type           PunishmentType
-  reason         String
-  case_id        String?
-  case           Case?            @relation(fields: [case_id], references: [id])
-  issued_by_id   String
-  issued_by      User             @relation("IssuedBy", fields: [issued_by_id], references: [id])
-  issued_at      DateTime         @default(now())
-  expires_at     DateTime?
-  revoked_by_id  String?
-  revoked_by     User?            @relation("RevokedBy", fields: [revoked_by_id], references: [id])
-  revoked_at     DateTime?
-  status         PunishmentStatus @default(ACTIVE)
+  id            String           @id @default(cuid())
+  number        String?          @unique
+  registry_code String?          @unique
+  citizen_id    String
+  citizen       Citizen          @relation(fields: [citizen_id], references: [id])
+  type          PunishmentType
+  reason        String
+  case_id       String?
+  case          Case?            @relation(fields: [case_id], references: [id])
+  issued_by_id  String
+  issued_by     User             @relation("IssuedBy", fields: [issued_by_id], references: [id])
+  issued_at     DateTime         @default(now())
+  expires_at    DateTime?
+  revoked_by_id String?
+  revoked_by    User?            @relation("RevokedBy", fields: [revoked_by_id], references: [id])
+  revoked_at    DateTime?
+  status        PunishmentStatus @default(ACTIVE)
 }
 
 enum PunishmentType {
@@ -305,14 +312,38 @@ enum RelationStatus {
 }
 
 model DiplomaticTreaty {
-  id        String          @id @default(cuid())
-  number    String          @unique
-  state_id  String
-  state     DiplomaticState @relation(fields: [state_id], references: [id])
-  type      TreatyType
-  body      String
-  signed_at DateTime        @default(now())
-  status    TreatyStatus    @default(ACTIVE)
+  id            String          @id @default(cuid())
+  number        String          @unique
+  registry_code String?         @unique
+  state_id      String
+  state         DiplomaticState @relation(fields: [state_id], references: [id])
+  type          TreatyType
+  body          String
+  signed_at     DateTime        @default(now())
+  status        TreatyStatus    @default(ACTIVE)
+}
+
+model DocumentSequence {
+  key        String   @id
+  value      Int      @default(0)
+  updated_at DateTime @updatedAt
+}
+
+model GeneratedDocument {
+  id                 String   @id @default(cuid())
+  number             String   @unique
+  registry_code      String   @unique
+  template_type      String
+  title              String
+  payload            Json     @default("{}")
+  citizen_id         String?
+  citizen            Citizen? @relation(fields: [citizen_id], references: [id], onDelete: SetNull)
+  linked_entity_type String?
+  linked_entity_id   String?
+  status             String   @default("READY")
+  created_by_id      String
+  created_by         User     @relation(fields: [created_by_id], references: [id])
+  created_at         DateTime @default(now())
 }
 
 enum TreatyType {
@@ -328,11 +359,11 @@ enum TreatyStatus {
 }
 
 model ChatConversation {
-  id           String           @id @default(cuid())
+  id           String            @id @default(cuid())
   type         ConversationType
   participants ChatParticipant[]
   messages     ChatMessage[]
-  created_at   DateTime         @default(now())
+  created_at   DateTime          @default(now())
 }
 
 enum ConversationType {

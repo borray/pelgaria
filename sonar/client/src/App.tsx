@@ -23,6 +23,8 @@ import { AccountsPage } from './pages/AccountsPage'
 import { RolesPage } from './pages/RolesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
+import { DashboardPage } from './pages/DashboardPage'
+import { PrintCenterPage } from './pages/PrintCenterPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -49,7 +51,7 @@ export default function App() {
           </PrivateRoute>
         }
       >
-        <Route index element={<Navigate to="/citizens" replace />} />
+        <Route index element={<DashboardPage />} />
         <Route path="citizens" element={<CitizensPage />} />
         <Route path="citizens/:id" element={<CitizenDetailPage />} />
         <Route path="passports" element={<PassportsPage />} />
@@ -68,6 +70,7 @@ export default function App() {
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="roles/*" element={<RolesPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="print-center" element={<PrintCenterPage />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>
     </Routes>

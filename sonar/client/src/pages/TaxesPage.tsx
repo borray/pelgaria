@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { TaxPeriod, TaxCharge, Citizen } from '../types'
@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDate, formatAmount } from '../utils/formatters'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
 
 const CHARGE_STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -58,7 +58,7 @@ export function TaxesPage() {
   const handleDownloadPeriodPdf = async (period: TaxPeriod) => {
     setPdfLoadingId(period.id)
     try {
-      await downloadPdf(`/api/taxes/periods/${period.id}/pdf`, `taxes-${period.name.replace(/\s+/g, '-')}.pdf`)
+      await printPdf(`/api/taxes/periods/${period.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -195,7 +195,7 @@ export function TaxesPage() {
     {
       key: 'name',
       header: 'Название',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.name}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.name}</span>,
     },
     {
       key: 'starts_at',
@@ -217,9 +217,9 @@ export function TaxesPage() {
           size="sm"
           loading={pdfLoadingId === row.id}
           onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}
-          title="Скачать ведомость PDF"
+          title="Сформировать ведомость"
         >
-          <IconFileTypePdf size={14} />
+            <IconPrinter size={14} /> Сформировать
         </Button>
       ),
     },
@@ -229,7 +229,7 @@ export function TaxesPage() {
     {
       key: 'citizen',
       header: 'Гражданин',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.citizen?.nickname ?? '—'}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen?.nickname ?? '—'}</span>,
     },
     {
       key: 'period',
@@ -240,7 +240,7 @@ export function TaxesPage() {
       key: 'amount',
       header: 'Сумма',
       width: '120px',
-      render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 600, color: '#0A1628' }}>{formatAmount(row.amount)}</span>,
+      render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 600, color: '#18211D' }}>{formatAmount(row.amount)}</span>,
     },
     {
       key: 'building',
@@ -282,7 +282,7 @@ export function TaxesPage() {
     {
       key: 'citizen',
       header: 'Гражданин',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.citizen.nickname}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen.nickname}</span>,
     },
     {
       key: 'charged',
@@ -308,7 +308,7 @@ export function TaxesPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Налоги</h1>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Налоги</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           {tab === 'periods' && canCharge && (
             <Button variant="primary" size="sm" onClick={() => { setShowCreatePeriodModal(true); setPeriodError(null) }}>
@@ -328,12 +328,14 @@ export function TaxesPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '2px solid #E5E7EB' }}>
+      <div className="page-tabs" role="tablist">
         {(['periods', 'charges'] as const).map((t) => (
           <button
             key={t}
+            role="tab"
+            aria-selected={tab === t}
+            className={tab === t ? 'is-active' : ''}
             onClick={() => setTab(t)}
-            style={{ padding: '8px 20px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontFamily: 'Inter, sans-serif', fontWeight: tab === t ? 600 : 400, color: tab === t ? '#4A90D9' : '#6B7280', borderBottom: tab === t ? '2px solid #4A90D9' : '2px solid transparent', marginBottom: '-2px' }}
           >
             {t === 'periods' ? 'Периоды' : 'Начисления'}
           </button>
@@ -363,7 +365,7 @@ export function TaxesPage() {
           />
           {summary.length > 0 && (
             <div style={{ marginTop: '24px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0A1628', fontFamily: 'Inter, sans-serif', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#18211D', fontFamily: 'Inter, sans-serif', marginBottom: '12px' }}>
                 Сводка по гражданам
               </h2>
               <Table
@@ -391,11 +393,11 @@ export function TaxesPage() {
           <Input label="Название *" value={periodForm.name} onChange={(e) => setPeriodForm({ ...periodForm, name: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Начало *</label>
-            <input type="date" value={periodForm.starts_at} onChange={(e) => setPeriodForm({ ...periodForm, starts_at: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+            <input type="date" value={periodForm.starts_at} onChange={(e) => setPeriodForm({ ...periodForm, starts_at: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Конец *</label>
-            <input type="date" value={periodForm.ends_at} onChange={(e) => setPeriodForm({ ...periodForm, ends_at: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+            <input type="date" value={periodForm.ends_at} onChange={(e) => setPeriodForm({ ...periodForm, ends_at: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', outline: 'none' }} />
           </div>
           {periodError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{periodError}</div>}
         </form>
@@ -430,7 +432,7 @@ export function TaxesPage() {
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Сумма (у.е.) *</label>
-            <input type="number" min="0" value={chargeForm.amount} onChange={(e) => setChargeForm({ ...chargeForm, amount: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }} />
+            <input type="number" min="0" value={chargeForm.amount} onChange={(e) => setChargeForm({ ...chargeForm, amount: e.target.value })} style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }} />
           </div>
           {chargeError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{chargeError}</div>}
         </form>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IconPlus, IconSearch, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconSearch, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Building, Citizen } from '../types'
@@ -11,7 +11,8 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
-import { downloadPdf } from '../utils/pdf'
+import { printPdf } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -72,8 +73,7 @@ export function BuildingsPage() {
   const handleDownloadRegistryPdf = async () => {
     setPdfLoading(true)
     try {
-      const today = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')
-      await downloadPdf('/api/buildings/registry/pdf', `buildings-registry-${today}.pdf`)
+      await printPdf('/api/buildings/registry/pdf')
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -147,17 +147,13 @@ export function BuildingsPage() {
     {
       key: 'reg_number',
       header: 'Рег. номер',
-      width: '120px',
-      render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B', fontWeight: 600 }}>
-          {row.reg_number}
-        </span>
-      ),
+      width: '210px',
+      render: (row) => <RegistryMark code={row.reg_number} compact />,
     },
     {
       key: 'name',
       header: 'Название',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.name}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.name}</span>,
     },
     {
       key: 'type',
@@ -201,13 +197,13 @@ export function BuildingsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           РЕЛИКТ — Реестр объектов
         </h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" loading={pdfLoading} onClick={handleDownloadRegistryPdf}>
-            <IconFileTypePdf size={16} />
-            Реестр (PDF)
+            <IconPrinter size={16} />
+            Сформировать реестр
           </Button>
           {canCreate && (
             <Button variant="primary" onClick={openCreateModal}>
@@ -225,7 +221,7 @@ export function BuildingsPage() {
             placeholder="Поиск..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '160px' }} />
@@ -233,7 +229,7 @@ export function BuildingsPage() {
       </div>
 
       {!loading && buildings.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Объекты не найдены" description={search || typeFilter || statusFilter ? 'Измените параметры' : 'Добавьте первый объект'} action={canCreate ? <Button variant="primary" size="sm" onClick={openCreateModal}><IconPlus size={14} />Добавить</Button> : undefined} />
         </div>
       ) : (
@@ -254,7 +250,8 @@ export function BuildingsPage() {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Зарегистрировать объект"
-        width={560}
+        description="Новая запись РЕЛИКТ получит регистрационный номер и защищенный технический паспорт."
+        width={680}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button>
@@ -284,7 +281,7 @@ export function BuildingsPage() {
           <Input label="Дата постройки" type="date" value={form.built_at} onChange={(e) => setForm({ ...form, built_at: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Описание</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }} />
           </div>
           {createError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{createError}</div>}
         </form>

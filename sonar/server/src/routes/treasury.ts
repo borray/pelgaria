@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   sealBlock,
@@ -231,15 +231,10 @@ router.get('/report/pdf', requireAuth, requirePermission('treasury.view'), async
 
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'treasury' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="treasury-report-${printDate.replace(/\./g, '-')}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `treasury-report-${printDate.replace(/\./g, '-')}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'treasury report'))
   }
 })
 

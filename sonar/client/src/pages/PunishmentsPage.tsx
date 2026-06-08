@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconFileTypePdf } from '@tabler/icons-react'
+import { IconPlus, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Punishment, Citizen } from '../types'
@@ -10,7 +10,8 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
-import { downloadPdfPost } from '../utils/pdf'
+import { printPdfPost } from '../utils/pdf'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -41,6 +42,7 @@ export function PunishmentsPage() {
 
   const [punishments, setPunishments] = useState<Punishment[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -54,7 +56,7 @@ export function PunishmentsPage() {
   const handleDownloadPdf = async (p: Punishment) => {
     setPdfLoadingId(p.id)
     try {
-      await downloadPdfPost(`/api/punishments/${p.id}/pdf`, `punishment-${p.id.slice(0, 8)}.pdf`)
+      await printPdfPost(`/api/punishments/${p.id}/pdf`)
     } catch {
       alert('Ошибка генерации PDF')
     } finally {
@@ -68,6 +70,7 @@ export function PunishmentsPage() {
       const params = new URLSearchParams()
       if (typeFilter) params.set('type', typeFilter)
       if (statusFilter) params.set('status', statusFilter)
+      if (search) params.set('search', search)
       const res = await apiClient.get<Punishment[]>(`/punishments?${params.toString()}`)
       setPunishments(res.data)
     } catch {
@@ -75,7 +78,7 @@ export function PunishmentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [typeFilter, statusFilter])
+  }, [typeFilter, statusFilter, search])
 
   useEffect(() => {
     fetchPunishments()
@@ -133,9 +136,15 @@ export function PunishmentsPage() {
 
   const columns: TableColumn<Punishment>[] = [
     {
+      key: 'number',
+      header: 'Номер',
+      width: '210px',
+      render: (row) => <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 600 }}>{row.number ?? 'Формируется'}</span>,
+    },
+    {
       key: 'citizen',
       header: 'Гражданин',
-      render: (row) => <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.citizen?.nickname ?? '—'}</span>,
+      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen?.nickname ?? '—'}</span>,
     },
     {
       key: 'type',
@@ -147,6 +156,12 @@ export function PunishmentsPage() {
       key: 'reason',
       header: 'Причина',
       render: (row) => <span style={{ fontSize: '13px', color: '#374151' }}>{row.reason}</span>,
+    },
+    {
+      key: 'registry_code',
+      header: 'ШК',
+      width: '150px',
+      render: (row) => <RegistryMark code={row.registry_code} compact />,
     },
     {
       key: 'issued_by',
@@ -177,9 +192,9 @@ export function PunishmentsPage() {
             size="sm"
             loading={pdfLoadingId === row.id}
             onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
-            title="Скачать постановление PDF"
+            title="Сформировать постановление"
           >
-            <IconFileTypePdf size={14} />
+            <IconPrinter size={14} /> Сформировать
           </Button>
           {row.status === 'ACTIVE' && canRevoke && (
             <Button
@@ -199,7 +214,7 @@ export function PunishmentsPage() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0A1628', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
           Наказания
         </h1>
         {canIssue && (
@@ -211,12 +226,13 @@ export function PunishmentsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер, ШК или причина..." />
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '180px' }} />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '180px' }} />
       </div>
 
       {!loading && punishments.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Наказания не найдены" description={typeFilter || statusFilter ? 'Измените фильтры' : 'Нет наказаний'} action={canIssue ? <Button variant="primary" size="sm" onClick={openIssueModal}><IconPlus size={14} />Выдать</Button> : undefined} />
         </div>
       ) : (
@@ -235,6 +251,8 @@ export function PunishmentsPage() {
       <Modal
         open={showIssueModal}
         onClose={() => setShowIssueModal(false)}
+        description="СОНАР автоматически присвоит постановлению официальный номер и ШК."
+        width={640}
         title="Выдать наказание"
         footer={
           <>
@@ -264,7 +282,7 @@ export function PunishmentsPage() {
               value={form.reason}
               onChange={(e) => setForm({ ...form, reason: e.target.value })}
               rows={3}
-              style={{ padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
+              style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -273,7 +291,7 @@ export function PunishmentsPage() {
               type="date"
               value={form.issued_at}
               onChange={(e) => setForm({ ...form, issued_at: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -282,7 +300,7 @@ export function PunishmentsPage() {
               type="date"
               value={form.expires_at}
               onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
-              style={{ height: '36px', padding: '0 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
+              style={{ height: '36px', padding: '0 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none' }}
             />
           </div>
           {issueError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{issueError}</div>}

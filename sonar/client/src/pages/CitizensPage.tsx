@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { formatDate } from '../utils/formatters'
+import { RegistryMark } from '../components/ui/RegistryMark'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -107,18 +108,14 @@ export function CitizensPage() {
     {
       key: 'reg_number',
       header: 'Рег. номер',
-      width: '130px',
-      render: (row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#1B3A6B' }}>
-          {row.reg_number}
-        </span>
-      ),
+      width: '210px',
+      render: (row) => <RegistryMark code={row.reg_number} compact />,
     },
     {
       key: 'nickname',
       header: 'Никнейм',
       render: (row) => (
-        <span style={{ fontWeight: 500, color: '#0A1628' }}>{row.nickname}</span>
+        <span style={{ fontWeight: 500, color: '#18211D' }}>{row.nickname}</span>
       ),
     },
     {
@@ -164,7 +161,7 @@ export function CitizensPage() {
             margin: 0,
             fontSize: '20px',
             fontWeight: 600,
-            color: '#0A1628',
+            color: '#18211D',
             fontFamily: 'Inter, sans-serif',
           }}
         >
@@ -209,7 +206,7 @@ export function CitizensPage() {
               width: '100%',
               height: '36px',
               padding: '0 10px 0 34px',
-              border: '1px solid #D0D7E3',
+              border: '1px solid #CDD5D1',
               borderRadius: '4px',
               fontSize: '14px',
               fontFamily: 'Inter, sans-serif',
@@ -229,7 +226,7 @@ export function CitizensPage() {
       </div>
 
       {!loading && citizens.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState
             title="Граждане не найдены"
             description={
@@ -320,7 +317,7 @@ export function CitizensPage() {
               rows={3}
               style={{
                 padding: '8px 10px',
-                border: '1px solid #D0D7E3',
+                border: '1px solid #CDD5D1',
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontFamily: 'Inter, sans-serif',

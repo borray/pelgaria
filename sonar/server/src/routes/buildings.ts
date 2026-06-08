@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
-import { htmlToPdf } from '../services/pdf'
+import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
   guillocheField,
@@ -32,7 +32,12 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`)
   },
 })
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } })
+const allowedScreenshotTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, allowedScreenshotTypes.has(file.mimetype)),
+})
 
 async function generateBuildingNumber(): Promise<string> {
   const count = await prisma.building.count()
@@ -227,15 +232,10 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
 
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, kind: 'registry' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="buildings-registry-${printDate.replace(/\./g, '-')}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `buildings-registry-${printDate.replace(/\./g, '-')}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'building registry'))
   }
 })
 
@@ -358,15 +358,10 @@ router.get('/:id/pdf', requireAuth, requirePermission('relict.view'), async (req
     const watermark = `<div style="width:520px;height:520px;">${guillocheRosette(seed + ':wm', 520)}</div>`
     const html = pageShell({ seed, accent: ACCENT, header, body, footer, styles, watermark, kind: 'building' })
     const pdfBuffer = await htmlToPdf(html)
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="building-${building.reg_number}.pdf"`,
-      'Content-Length': pdfBuffer.length,
-    })
+    res.set(pdfHeaders(pdfBuffer, `building-${building.reg_number}.pdf`))
     res.send(pdfBuffer)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Ошибка генерации PDF' })
+    res.status(500).json(pdfError(err, 'building certificate'))
   }
 })
 

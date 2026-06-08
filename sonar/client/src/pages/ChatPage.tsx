@@ -7,14 +7,15 @@ import type { ChatConversation, ChatMessage, User } from '../types'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { formatDateTime } from '../utils/formatters'
+import { Modal } from '../components/ui/Modal'
 
 let socket: Socket | null = null
+type ChatUser = Pick<User, 'id' | 'login' | 'discord_username' | 'discord_avatar'>
 
-function getSocket(userId: string, token: string): Socket {
+function getSocket(token: string): Socket {
   if (!socket || !socket.connected) {
     socket = io('/', {
-      auth: { userId },
-      extraHeaders: { Authorization: `Bearer ${token}` },
+      auth: { token },
       transports: ['websocket', 'polling'],
     })
   }
@@ -29,7 +30,7 @@ export function ChatPage() {
   const [body, setBody] = useState('')
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [users, setUsers] = useState<User[]>([])
+  const [users, setUsers] = useState<ChatUser[]>([])
   const [showNewConvModal, setShowNewConvModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -45,10 +46,10 @@ export function ChatPage() {
 
   useEffect(() => {
     fetchConversations()
-    apiClient.get<User[]>('/accounts').then((r) => setUsers(r.data)).catch(() => {})
+    apiClient.get<ChatUser[]>('/chat/users').then((r) => setUsers(r.data)).catch(() => {})
 
     if (user && accessToken) {
-      const sock = getSocket(user.id, accessToken)
+      const sock = getSocket(accessToken)
       socketRef.current = sock
 
       sock.on('new_message', (message: ChatMessage) => {
@@ -164,11 +165,11 @@ export function ChatPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
       {/* Left panel */}
-      <div style={{ width: '260px', borderRight: '0.5px solid #D0D7E3', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #D0D7E3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#0A1628' }}>Чат</span>
+      <div style={{ width: '260px', borderRight: '0.5px solid #CDD5D1', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #CDD5D1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#18211D' }}>Чат</span>
           <button
             onClick={() => setShowNewConvModal(true)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center', padding: '2px' }}
@@ -198,7 +199,7 @@ export function ChatPage() {
                 onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = '#F8F9FB' }}
                 onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
               >
-                <div style={{ fontSize: '13px', fontWeight: unread || isActive ? 600 : 400, color: '#0A1628', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '13px', fontWeight: unread || isActive ? 600 : 400, color: '#18211D', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {getConvName(conv)}
                 </div>
                 <div style={{ fontSize: '12px', color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -218,8 +219,8 @@ export function ChatPage() {
           </div>
         ) : (
           <>
-            <div style={{ padding: '12px 20px', borderBottom: '0.5px solid #D0D7E3', background: '#F8F9FB' }}>
-              <span style={{ fontSize: '15px', fontWeight: 600, color: '#0A1628' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '0.5px solid #CDD5D1', background: '#F8F9FB' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#18211D' }}>
                 {activeConv ? getConvName(activeConv) : ''}
               </span>
             </div>
@@ -231,22 +232,22 @@ export function ChatPage() {
                 return (
                   <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '3px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: isOwn ? '#4A90D9' : '#374151' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: isOwn ? '#14715A' : '#374151' }}>
                         {msg.sender?.login ?? '?'}
                       </span>
                       <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{formatDateTime(msg.created_at)}</span>
                     </div>
                     {msg.body && (
-                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '8px', background: isOwn ? '#4A90D9' : '#F3F4F6', color: isOwn ? '#FFFFFF' : '#1F2937', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '8px', background: isOwn ? '#14715A' : '#F3F4F6', color: isOwn ? '#FFFFFF' : '#1F2937', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                         {msg.body}
                       </div>
                     )}
                     {msg.attachments?.map((att) => (
                       <div key={att.id} style={{ marginTop: '4px' }}>
                         {att.mime_type.startsWith('image/') ? (
-                          <img src={att.url} alt={att.original_name} style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '4px', border: '0.5px solid #D0D7E3', cursor: 'pointer' }} onClick={() => window.open(att.url, '_blank')} />
+                          <img src={att.url} alt={att.original_name} style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '4px', border: '0.5px solid #CDD5D1', cursor: 'pointer' }} onClick={() => window.open(att.url, '_blank')} />
                         ) : (
-                          <a href={att.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: '#F3F4F6', borderRadius: '4px', fontSize: '13px', color: '#4A90D9', textDecoration: 'none', border: '0.5px solid #D0D7E3' }}>
+                          <a href={att.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: '#F3F4F6', borderRadius: '4px', fontSize: '13px', color: '#14715A', textDecoration: 'none', border: '0.5px solid #CDD5D1' }}>
                             📎 {att.original_name}
                           </a>
                         )}
@@ -258,10 +259,10 @@ export function ChatPage() {
               <div ref={bottomRef} />
             </div>
 
-            <div style={{ borderTop: '0.5px solid #D0D7E3', padding: '12px 16px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+            <div style={{ borderTop: '0.5px solid #CDD5D1', padding: '12px 16px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                style={{ background: 'none', border: '1px solid #D0D7E3', borderRadius: '4px', cursor: 'pointer', color: '#6B7280', padding: '6px', display: 'flex', alignItems: 'center', flexShrink: 0, height: '36px', width: '36px', justifyContent: 'center' }}
+                style={{ background: 'none', border: '1px solid #CDD5D1', borderRadius: '4px', cursor: 'pointer', color: '#6B7280', padding: '6px', display: 'flex', alignItems: 'center', flexShrink: 0, height: '36px', width: '36px', justifyContent: 'center' }}
                 title="Прикрепить файл"
               >
                 <IconPaperclip size={16} />
@@ -273,7 +274,7 @@ export function ChatPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Сообщение... (Enter — отправить, Shift+Enter — новая строка)"
                 rows={1}
-                style={{ flex: 1, resize: 'none', padding: '8px 10px', border: '1px solid #D0D7E3', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', outline: 'none', maxHeight: '120px', overflow: 'auto' }}
+                style={{ flex: 1, resize: 'none', padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', outline: 'none', maxHeight: '120px', overflow: 'auto' }}
                 onInput={(e) => {
                   const ta = e.currentTarget
                   ta.style.height = 'auto'
@@ -288,35 +289,26 @@ export function ChatPage() {
         )}
       </div>
 
-      {showNewConvModal && (
-        <div onClick={() => setShowNewConvModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: '4px', padding: '24px', width: '360px', fontFamily: 'Inter, sans-serif' }}>
-            <h2 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#0A1628' }}>Новая беседа</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Button variant="secondary" onClick={() => handleCreateConversation('GENERAL')} style={{ justifyContent: 'flex-start' }}>
-                Общий чат
-              </Button>
-              <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '12px' }}>
-                <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Личная беседа</div>
-                <Select
-                  options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))}
-                  placeholder="— Выберите пользователя —"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  searchable
-                  style={{ marginBottom: '8px' }}
-                />
-                <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')}>
-                  Начать беседу
-                </Button>
-              </div>
-            </div>
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-              <Button variant="secondary" size="sm" onClick={() => setShowNewConvModal(false)}>Закрыть</Button>
-            </div>
-          </div>
+      <Modal
+        open={showNewConvModal}
+        onClose={() => setShowNewConvModal(false)}
+        title="Новая служебная беседа"
+        description="Создайте общий канал или защищённый диалог с сотрудником."
+        width={520}
+        footer={<Button variant="secondary" onClick={() => setShowNewConvModal(false)}>Закрыть</Button>}
+      >
+        <div className="form-section-stack">
+          <section className="form-section">
+            <div className="form-section-heading"><span>Канал</span><div><strong>Общая служебная связь</strong><small>Доступна участникам общего канала</small></div></div>
+            <Button variant="secondary" onClick={() => handleCreateConversation('GENERAL')}>Открыть общий чат</Button>
+          </section>
+          <section className="form-section">
+            <div className="form-section-heading"><span>Диалог</span><div><strong>Личная беседа</strong><small>Выберите одного получателя</small></div></div>
+            <Select options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))} placeholder="— Выберите пользователя —" value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} searchable />
+            <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')} style={{ marginTop: 12 }}>Начать беседу</Button>
+          </section>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }
