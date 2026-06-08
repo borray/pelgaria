@@ -369,7 +369,7 @@ router.post('/treaties/:id/pdf', requireAuth, requirePermission('diplomacy.view'
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="treaty-${treaty.number}.pdf"`,
+      'Content-Disposition': `inline; filename="treaty-${treaty.number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

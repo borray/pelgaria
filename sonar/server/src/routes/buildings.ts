@@ -234,7 +234,7 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="buildings-registry-${printDate.replace(/\./g, '-')}.pdf"`,
+      'Content-Disposition': `inline; filename="buildings-registry-${printDate.replace(/\./g, '-')}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)
@@ -365,7 +365,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('relict.view'), async (req
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="building-${building.reg_number}.pdf"`,
+      'Content-Disposition': `inline; filename="building-${building.reg_number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

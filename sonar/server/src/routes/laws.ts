@@ -299,7 +299,7 @@ router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req:
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="law-${law.number}.pdf"`,
+      'Content-Disposition': `inline; filename="law-${law.number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

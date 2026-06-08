@@ -233,7 +233,7 @@ router.get('/report/pdf', requireAuth, requirePermission('treasury.view'), async
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="treasury-report-${printDate.replace(/\./g, '-')}.pdf"`,
+      'Content-Disposition': `inline; filename="treasury-report-${printDate.replace(/\./g, '-')}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

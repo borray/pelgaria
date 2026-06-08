@@ -161,7 +161,7 @@ export function TreasuryPage() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
             <IconPrinter size={16} />
-            Печать отчёта
+            Сформировать отчёт
           </Button>
           {canEdit && (
             <>
@@ -257,7 +257,7 @@ export function TreasuryPage() {
       <Modal
         open={showPdfModal}
         onClose={() => setShowPdfModal(false)}
-        title="Печать финансового отчёта"
+        title="Сформировать финансовый отчёт"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowPdfModal(false)}>Отмена</Button>

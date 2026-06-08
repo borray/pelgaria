@@ -301,7 +301,7 @@ router.post('/:id/pdf', requireAuth, requirePermission('punishments.view'), asyn
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="punishment-${punishment.id.slice(0, 8)}.pdf"`,
+      'Content-Disposition': `inline; filename="punishment-${punishment.id.slice(0, 8)}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

@@ -339,7 +339,7 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
     const pdfBuffer = await htmlToPdf(html)
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="verdict-${caseRecord.number}.pdf"`,
+      'Content-Disposition': `inline; filename="verdict-${caseRecord.number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { IconBrandDiscord, IconLock, IconRadar, IconUser } from '@tabler/icons-react'
+import { IconBrandDiscord, IconInfoCircle, IconLock, IconUser } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
 import { useAuthStore } from '../store/auth'
@@ -33,22 +33,20 @@ export function LoginPage() {
   return (
     <main className="login-screen">
       <section className="login-story">
-        <div className="login-story-grid" />
         <div className="login-story-content">
-          <SonarBrand light size="lg" />
-          <div className="login-story-kicker"><span /> Государство Пельагрия</div>
-          <h1>Цифровой контур государственного управления</h1>
+          <SonarBrand size="lg" />
+          <div className="login-story-kicker">Служебная информационная система</div>
+          <h1>Единое рабочее пространство Пельагрии</h1>
           <p>
-            Реестры, законодательство, финансы и коммуникации объединены
-            в одной защищённой информационной системе.
+            Реестры, документы и рабочие процессы игрового государства собраны в одном сервисе.
           </p>
-          <div className="login-capabilities">
-            <div><IconRadar size={18} /><span><strong>Оперативно</strong>Актуальные данные в одном месте</span></div>
-            <div><IconLock size={18} /><span><strong>Защищённо</strong>Доступ согласно государственным ролям</span></div>
+          <div className="fiction-notice">
+            <IconInfoCircle size={20} />
+            <div>
+              <strong>Это вымышленный проект</strong>
+              <span>Пельагрия является государством в ролевой игре Minecraft. Сервис не относится к реальным государственным органам и не оказывает настоящие государственные услуги.</span>
+            </div>
           </div>
-        </div>
-        <div className="login-radar" aria-hidden="true">
-          <i /><i /><i /><span />
         </div>
       </section>
 
@@ -83,7 +81,7 @@ export function LoginPage() {
             Войти через Discord
           </button>
 
-          <small className="login-security">Защищённое соединение · СОНАР</small>
+          <small className="login-security">Игровой государственный сервис · Minecraft RP</small>
         </form>
       </section>
     </main>

@@ -190,9 +190,9 @@ export function PassportsPage() {
           size="sm"
           onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
           loading={pdfLoadingId === row.id}
-          title="Печать паспорта"
+          title="Сформировать паспорт"
         >
-          <IconPrinter size={14} />
+          <IconPrinter size={14} /> Сформировать
         </Button>
       ),
     },

@@ -385,7 +385,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('passports.view'), async (
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="passport-${passport.number}.pdf"`,
+      'Content-Disposition': `inline; filename="passport-${passport.number}.pdf"`,
       'Content-Length': pdfBuffer.length,
     })
     res.send(pdfBuffer)
