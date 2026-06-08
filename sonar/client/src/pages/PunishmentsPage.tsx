@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconPrinter, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -230,14 +231,9 @@ export function PunishmentsPage() {
             </Button>
           )}
           {canIssue && (
-            <Button
-              variant="danger"
-              size="sm"
-              title="Стереть запись навсегда"
-              onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}
-            >
-              <IconTrash size={14} />
-            </Button>
+            <ActionMenu items={[
+              { label: 'Стереть запись навсегда', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget(row) } },
+            ]} />
           )}
         </div>
       ),

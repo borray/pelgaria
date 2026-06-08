@@ -1,5 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, LawType, LawStatus, Prisma } from '@prisma/client'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
+import crypto from 'crypto'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
@@ -19,6 +23,49 @@ import { nextDocumentNumber, normalizeManualNumber, registryCode } from '../serv
 const router = Router()
 const prisma = new PrismaClient()
 
+// Типы нормативных актов: метка и буквенный код для ШК
+const LAW_TYPE_META: Record<LawType, { label: string; upper: string; kind: string }> = {
+  LAW: { label: 'Закон', upper: 'ЗАКОН', kind: 'ЗАК' },
+  DECREE: { label: 'Указ', upper: 'УКАЗ', kind: 'УКЗ' },
+  CONSTITUTION: { label: 'Конституционный акт', upper: 'КОНСТИТУЦИОННЫЙ АКТ', kind: 'КНС' },
+  REGULATION: { label: 'Постановление', upper: 'ПОСТАНОВЛЕНИЕ', kind: 'ПНВ' },
+  ORDER: { label: 'Распоряжение', upper: 'РАСПОРЯЖЕНИЕ', kind: 'РСП' },
+}
+
+function lawKind(type: LawType): string {
+  return LAW_TYPE_META[type]?.kind ?? 'ЗАК'
+}
+
+// Загрузка сканов и документов к нормативным актам
+const lawUploadsDir = path.join(process.cwd(), 'uploads', 'laws')
+if (!fs.existsSync(lawUploadsDir)) {
+  fs.mkdirSync(lawUploadsDir, { recursive: true })
+}
+
+const ALLOWED_MIME = new Set([
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+
+const lawUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, lawUploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).slice(0, 12)
+      cb(null, `${crypto.randomBytes(16).toString('hex')}${ext}`)
+    },
+  }),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, ALLOWED_MIME.has(file.mimetype))
+  },
+})
+
 async function renderLawPdf(law: {
   number: string
   registry_code?: string | null
@@ -29,7 +76,7 @@ async function renderLawPdf(law: {
   adopted_at: Date
   repealed_at: Date | null
 }): Promise<Buffer> {
-  const typeLabel = law.type === 'LAW' ? 'ЗАКОН' : 'УКАЗ'
+  const typeLabel = LAW_TYPE_META[law.type]?.upper ?? 'НОРМАТИВНЫЙ АКТ'
   const seed = law.number
   const adoptedDate = law.adopted_at.toLocaleDateString('ru-RU')
 
@@ -131,10 +178,9 @@ router.get('/', requireAuth, requirePermission('laws.view'), async (req: Request
     })
     const normalized = await Promise.all(laws.map(async (law) => {
       if (law.registry_code) return law
-      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
       return prisma.law.update({
         where: { id: law.id },
-        data: { registry_code: registryCode(kind, law.number) },
+        data: { registry_code: registryCode(lawKind(law.type), law.number) },
       })
     }))
     res.json(normalized)
@@ -173,18 +219,41 @@ router.post('/', requireAuth, requirePermission('laws.create'), async (req: Requ
       return
     }
 
+    let effective_at: Date | null
+    try {
+      effective_at = parseOptionalDate(req.body.effective_at)
+    } catch {
+      res.status(400).json({ error: 'Некорректная дата вступления в силу' })
+      return
+    }
+
+    const category = typeof req.body.category === 'string' && req.body.category.trim()
+      ? req.body.category.trim().slice(0, 120)
+      : null
+    const summary = typeof req.body.summary === 'string' && req.body.summary.trim()
+      ? req.body.summary.trim().slice(0, 600)
+      : null
+
+    if (!(type in LAW_TYPE_META)) {
+      res.status(400).json({ error: 'Неизвестный тип документа' })
+      return
+    }
+
     const law = await prisma.$transaction(async (tx) => {
-      const kind = type === 'LAW' ? 'ЗАК' : 'УКЗ'
+      const kind = lawKind(type as LawType)
       const number = manualNumber ?? await nextDocumentNumber(tx, `LAW:${type}`, kind, adopted_at)
       return tx.law.create({
         data: {
           number,
           registry_code: registryCode(kind, number),
           type: type as LawType,
+          category,
           title: title.trim(),
+          summary,
           body: body.trim(),
           status: 'ACTIVE',
           adopted_at,
+          effective_at,
         },
       })
     })
@@ -206,16 +275,17 @@ router.get('/:id', requireAuth, requirePermission('laws.view'), async (req: Requ
     const id = req.params.id as string
     let law = await prisma.law.findFirst({
       where: { OR: [{ id }, { number: id }, { registry_code: id }] },
+      include: { attachments: { orderBy: { uploaded_at: 'desc' } } },
     })
     if (!law) {
       res.status(404).json({ error: 'Закон не найден' })
       return
     }
     if (!law.registry_code) {
-      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
       law = await prisma.law.update({
         where: { id: law.id },
-        data: { registry_code: registryCode(kind, law.number) },
+        data: { registry_code: registryCode(lawKind(law.type), law.number) },
+        include: { attachments: { orderBy: { uploaded_at: 'desc' } } },
       })
     }
     res.json(law)
@@ -229,12 +299,22 @@ router.get('/:id', requireAuth, requirePermission('laws.view'), async (req: Requ
 router.put('/:id', requireAuth, requirePermission('laws.edit'), async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const { title, body, status } = req.body
+    const { title, body, status, category, summary } = req.body
 
     const existing = await prisma.law.findUnique({ where: { id } })
     if (!existing) {
       res.status(404).json({ error: 'Закон не найден' })
       return
+    }
+
+    let effective_at: Date | null | undefined = undefined
+    if (req.body.effective_at !== undefined) {
+      try {
+        effective_at = parseOptionalDate(req.body.effective_at)
+      } catch {
+        res.status(400).json({ error: 'Некорректная дата вступления в силу' })
+        return
+      }
     }
 
     const law = await prisma.law.update({
@@ -243,7 +323,12 @@ router.put('/:id', requireAuth, requirePermission('laws.edit'), async (req: Requ
         title: title ?? existing.title,
         body: body ?? existing.body,
         status: status ?? existing.status,
+        ...(category !== undefined ? { category: category ? String(category).trim().slice(0, 120) : null } : {}),
+        ...(summary !== undefined ? { summary: summary ? String(summary).trim().slice(0, 600) : null } : {}),
+        ...(effective_at !== undefined ? { effective_at } : {}),
+        ...(status === 'ACTIVE' && existing.status === 'REPEALED' ? { repealed_at: null } : {}),
       },
+      include: { attachments: { orderBy: { uploaded_at: 'desc' } } },
     })
 
     res.json(law)
@@ -290,10 +375,9 @@ router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req:
     }
 
     if (!law.registry_code) {
-      const kind = law.type === 'LAW' ? 'ЗАК' : 'УКЗ'
       law = await prisma.law.update({
         where: { id: law.id },
-        data: { registry_code: registryCode(kind, law.number) },
+        data: { registry_code: registryCode(lawKind(law.type), law.number) },
       })
     }
     const pdfBuffer = await renderLawPdf(law)
@@ -302,6 +386,78 @@ router.post('/:id/pdf', requireAuth, requirePermission('laws.view'), async (req:
     res.send(pdfBuffer)
   } catch (err) {
     res.status(500).json(pdfError(err, 'law document'))
+  }
+})
+
+// GET /api/laws/:id/attachments — список вложений (сканов/документов)
+router.get('/:id/attachments', requireAuth, requirePermission('laws.view'), async (req: Request, res: Response) => {
+  try {
+    const law_id = req.params.id as string
+    const attachments = await prisma.lawAttachment.findMany({
+      where: { law_id },
+      orderBy: { uploaded_at: 'desc' },
+    })
+    res.json(attachments)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось загрузить вложения' })
+  }
+})
+
+// POST /api/laws/:id/attachments — загрузка сканов и документов
+router.post('/:id/attachments', requireAuth, requirePermission('laws.edit'), lawUpload.array('files', 12), async (req: Request, res: Response) => {
+  try {
+    const law_id = req.params.id as string
+    const law = await prisma.law.findUnique({ where: { id: law_id } })
+    if (!law) {
+      res.status(404).json({ error: 'Закон не найден' })
+      return
+    }
+    const files = (req.files as Express.Multer.File[]) ?? []
+    if (files.length === 0) {
+      res.status(400).json({ error: 'Файлы не загружены или формат не поддерживается' })
+      return
+    }
+    const kindRaw = typeof req.body.kind === 'string' ? req.body.kind.toUpperCase() : 'DOCUMENT'
+    const kind = ['DOCUMENT', 'SCAN', 'APPENDIX'].includes(kindRaw) ? kindRaw : 'DOCUMENT'
+    const created = await prisma.$transaction(
+      files.map((f) =>
+        prisma.lawAttachment.create({
+          data: {
+            law_id,
+            kind,
+            filename: f.filename,
+            original_name: Buffer.from(f.originalname, 'latin1').toString('utf8'),
+            mime_type: f.mimetype,
+            size: f.size,
+            url: `/uploads/laws/${f.filename}`,
+          },
+        })
+      )
+    )
+    res.status(201).json(created)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось загрузить вложения' })
+  }
+})
+
+// DELETE /api/laws/:id/attachments/:attachmentId
+router.delete('/:id/attachments/:attachmentId', requireAuth, requirePermission('laws.edit'), async (req: Request, res: Response) => {
+  try {
+    const attachmentId = req.params.attachmentId as string
+    const attachment = await prisma.lawAttachment.findUnique({ where: { id: attachmentId } })
+    if (!attachment) {
+      res.status(404).json({ error: 'Вложение не найдено' })
+      return
+    }
+    await prisma.lawAttachment.delete({ where: { id: attachmentId } })
+    const filePath = path.join(lawUploadsDir, attachment.filename)
+    fs.promises.unlink(filePath).catch(() => undefined)
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось удалить вложение' })
   }
 })
 

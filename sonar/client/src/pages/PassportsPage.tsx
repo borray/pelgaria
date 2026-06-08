@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconPrinter, IconBan, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -245,14 +246,9 @@ export function PassportsPage() {
             </Button>
           )}
           {canIssue && row.status !== 'VALID' && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={(e) => { e.stopPropagation(); setEraseError(null); setEraseTarget(row) }}
-              title="Удалить запись навсегда"
-            >
-              <IconTrash size={14} />
-            </Button>
+            <ActionMenu items={[
+              { label: 'Удалить запись навсегда', icon: <IconTrash size={15} />, danger: true, onClick: () => { setEraseError(null); setEraseTarget(row) } },
+            ]} />
           )}
         </div>
       ),

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { IconArrowLeft, IconChecklist, IconTool, IconX } from '@tabler/icons-react'
 
+const shipped = [
+  'Проверка подлинности документов по номеру и ШК',
+  'Загрузка сканов и приложений к нормативным актам',
+  'Случайные защищённые номера документов',
+  'Меню действий и защита необратимых операций',
+]
+
 const deferred = [
   'Настраиваемые виджеты рабочего стола',
   'Сохранённые наборы фильтров для реестров',
@@ -38,11 +45,15 @@ export function ReconstructionPanel() {
             <section className="reconstruction-status">
               <IconChecklist size={20} />
               <div>
-                <strong>Рабочие разделы не отключены</strong>
-                <p>Реестры, документы, экономика, дипломатия и управление доступны в прежнем объёме.</p>
+                <strong>Все разделы работают в полном объёме</strong>
+                <p>Реестры, документы, экономика, дипломатия и управление доступны без ограничений. Идёт планомерное расширение функций.</p>
               </div>
             </section>
             <section>
+              <span className="reconstruction-kicker">Недавно введено в строй</span>
+              <ul>{shipped.map((item) => <li key={item} style={{ color: '#15734f' }}>{item}</li>)}</ul>
+            </section>
+            <section style={{ marginTop: 18 }}>
               <span className="reconstruction-kicker">Отложено до следующего этапа</span>
               <ul>{deferred.map((item) => <li key={item}>{item}</li>)}</ul>
             </section>

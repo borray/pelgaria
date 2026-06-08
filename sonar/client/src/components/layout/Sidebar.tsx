@@ -16,6 +16,7 @@ import {
   IconShield,
   IconLayoutDashboard,
   IconPrinter,
+  IconShieldCheck,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
 
@@ -48,6 +49,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           to: '/print-center',
           label: 'Документы',
           icon: <IconPrinter size={16} />,
+        },
+        {
+          to: '/verify',
+          label: 'Проверка подлинности',
+          icon: <IconShieldCheck size={16} />,
         },
       ],
     },

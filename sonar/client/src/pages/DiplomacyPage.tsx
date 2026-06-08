@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconPrinter, IconSearch, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { DiplomaticState, DiplomaticTreaty } from '../types'
 import { Button } from '../components/ui/Button'
+import { Spinner } from '../components/ui/Spinner'
 import { Select } from '../components/ui/Select'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
@@ -197,9 +199,9 @@ export function DiplomacyPage() {
             <IconPrinter size={14} /> Сформировать
           </Button>
           {canManage && (
-            <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget({ kind: 'treaty', id: row.id, label: row.number }) }} title="Удалить договор">
-              <IconTrash size={14} />
-            </Button>
+            <ActionMenu items={[
+              { label: 'Удалить договор', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget({ kind: 'treaty', id: row.id, label: row.number }) } },
+            ]} />
           )}
         </div>
       ),
@@ -255,7 +257,7 @@ export function DiplomacyPage() {
 
       {tab === 'states' && (
         loading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+          <div className="load-state"><Spinner /><span>Загрузка…</span></div>
         ) : states.length === 0 ? (
           <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
             <EmptyState title="Государства не найдены" description="Добавьте первое государство" action={canManage ? <Button variant="primary" size="sm" onClick={() => { setStateForm(emptyStateForm()); setShowStateModal(true) }}><IconPlus size={14} />Добавить</Button> : undefined} />
@@ -278,9 +280,9 @@ export function DiplomacyPage() {
                     </Button>
                   )}
                   {canManage && (
-                    <Button variant="danger" size="sm" onClick={() => { setDeleteError(null); setDeleteTarget({ kind: 'state', id: s.id, label: s.name }) }}>
-                      <IconTrash size={14} />Удалить
-                    </Button>
+                    <ActionMenu align="left" items={[
+                      { label: 'Удалить государство', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget({ kind: 'state', id: s.id, label: s.name }) } },
+                    ]} />
                   )}
                   <span style={{ fontSize: '12px', color: '#9CA3AF', alignSelf: 'center' }}>
                     {(s.treaties?.length ?? 0)} договоров

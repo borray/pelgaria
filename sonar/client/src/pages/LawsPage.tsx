@@ -14,11 +14,15 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { RegistryMark } from '../components/ui/RegistryMark'
 
-const TYPE_OPTIONS = [
-  { value: '', label: 'Все типы' },
+const LAW_TYPES = [
   { value: 'LAW', label: 'Закон' },
   { value: 'DECREE', label: 'Указ' },
+  { value: 'CONSTITUTION', label: 'Конституционный акт' },
+  { value: 'REGULATION', label: 'Постановление' },
+  { value: 'ORDER', label: 'Распоряжение' },
 ]
+
+const TYPE_OPTIONS = [{ value: '', label: 'Все типы' }, ...LAW_TYPES]
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -29,9 +33,12 @@ const STATUS_OPTIONS = [
 
 interface CreateLawForm {
   type: string
+  category: string
   title: string
+  summary: string
   body: string
   adopted_at: string
+  effective_at: string
   auto_number: boolean
   number: string
 }
@@ -39,9 +46,12 @@ interface CreateLawForm {
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyForm = (): CreateLawForm => ({
   type: 'LAW',
+  category: '',
   title: '',
+  summary: '',
   body: '',
   adopted_at: today(),
+  effective_at: '',
   auto_number: true,
   number: '',
 })
@@ -92,9 +102,12 @@ export function LawsPage() {
     try {
       await apiClient.post('/laws', {
         type: form.type,
+        category: form.category.trim() || null,
         title: form.title.trim(),
+        summary: form.summary.trim() || null,
         body: form.body.trim(),
         adopted_at: form.adopted_at,
+        effective_at: form.effective_at || null,
         auto_number: form.auto_number,
         ...(!form.auto_number ? { number: form.number } : {}),
       })
@@ -135,7 +148,12 @@ export function LawsPage() {
     {
       key: 'title',
       header: 'Название',
-      render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.title}</span>,
+      render: (row) => (
+        <div>
+          <span style={{ fontWeight: 500, color: '#18211D' }}>{row.title}</span>
+          {row.category && <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{row.category}</div>}
+        </div>
+      ),
     },
     {
       key: 'status',
@@ -221,9 +239,9 @@ export function LawsPage() {
             </div>
             {form.auto_number ? (
               <div className="document-preview">
-                Формат номера:
-                <strong>{form.type === 'LAW' ? 'ЗАК' : 'УКЗ'}-{new Date(form.adopted_at || Date.now()).getFullYear()}-0001</strong>
-                · ШК будет создан автоматически
+                Номер:
+                <strong>X7F3-A9K2-M4P8</strong>
+                · случайный защищённый код · ШК создаётся автоматически
               </div>
             ) : (
               <div style={{ marginTop: 12 }}>
@@ -235,10 +253,15 @@ export function LawsPage() {
           <section className="form-section">
             <div className="form-section-heading"><div><strong>Реквизиты</strong><span>Основные сведения нормативного акта</span></div></div>
             <div className="form-grid">
-              <Select label="Тип документа" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} options={[{ value: 'LAW', label: 'Закон' }, { value: 'DECREE', label: 'Указ' }]} />
+              <Select label="Тип документа" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} options={LAW_TYPES} />
+              <Input label="Категория / раздел" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Напр.: Уголовное право" />
               <Input label="Дата принятия *" type="date" value={form.adopted_at} onChange={(e) => setForm({ ...form, adopted_at: e.target.value })} />
+              <Input label="Вступает в силу" type="date" value={form.effective_at} onChange={(e) => setForm({ ...form, effective_at: e.target.value })} />
               <div className="span-2">
                 <Input label="Название документа *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} autoFocus placeholder="Краткое официальное наименование" />
+              </div>
+              <div className="span-2">
+                <Input label="Краткое описание" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} placeholder="Одно предложение о сути документа (необязательно)" />
               </div>
             </div>
           </section>

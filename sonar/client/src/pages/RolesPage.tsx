@@ -5,6 +5,7 @@ import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Role, Permission } from '../types'
 import { Button } from '../components/ui/Button'
+import { Spinner } from '../components/ui/Spinner'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -138,7 +139,7 @@ function RolesList() {
     }
   }
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+  if (loading) return <div className="load-state"><Spinner /><span>Загрузка…</span></div>
 
   return (
     <div>
@@ -248,7 +249,7 @@ function RoleDetail() {
     }
   }
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+  if (loading) return <div className="load-state"><Spinner /><span>Загрузка…</span></div>
   if (!role) return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Роль не найдена</div>
 
   return (

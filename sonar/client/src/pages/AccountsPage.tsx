@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -239,14 +240,9 @@ export function AccountsPage() {
             >
               {row.is_active ? 'Блок' : 'Разблок'}
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              title="Удалить аккаунт навсегда"
-              onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}
-            >
-              <IconTrash size={14} />
-            </Button>
+            <ActionMenu items={[
+              { label: 'Удалить аккаунт навсегда', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget(row) } },
+            ]} />
           </div>
         ) : null
       ),

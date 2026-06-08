@@ -1,17 +1,36 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconEdit, IconTrash, IconPrinter } from '@tabler/icons-react'
+import {
+  IconArrowLeft,
+  IconEdit,
+  IconTrash,
+  IconPrinter,
+  IconPaperclip,
+  IconUpload,
+  IconFileText,
+  IconPhoto,
+  IconExternalLink,
+  IconPlayerPause,
+  IconPlayerPlay,
+} from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
-import type { Law, Case } from '../types'
+import type { Law, Case, LawAttachment } from '../types'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Spinner } from '../components/ui/Spinner'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} Б`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} КБ`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
+}
 
 export function LawDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,14 +43,21 @@ export function LawDetailPage() {
   const [cases, setCases] = useState<Case[]>([])
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({ title: '', body: '' })
+  const [editForm, setEditForm] = useState({ title: '', body: '', category: '', summary: '' })
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
   const [showRepealModal, setShowRepealModal] = useState(false)
   const [repealLoading, setRepealLoading] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(false)
 
   const [pdfLoading, setPdfLoading] = useState(false)
+
+  const [attachments, setAttachments] = useState<LawAttachment[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!id) return
@@ -39,7 +65,8 @@ export function LawDetailPage() {
     apiClient.get<Law>(`/laws/${id}`)
       .then((r) => {
         setLaw(r.data)
-        setEditForm({ title: r.data.title, body: r.data.body })
+        setEditForm({ title: r.data.title, body: r.data.body, category: r.data.category ?? '', summary: r.data.summary ?? '' })
+        setAttachments(r.data.attachments ?? [])
       })
       .catch(() => setLaw(null))
       .finally(() => setLoading(false))
@@ -57,8 +84,10 @@ export function LawDetailPage() {
       const res = await apiClient.put<Law>(`/laws/${id}`, {
         title: editForm.title.trim(),
         body: editForm.body.trim(),
+        category: editForm.category.trim() || null,
+        summary: editForm.summary.trim() || null,
       })
-      setLaw(res.data)
+      setLaw((prev) => ({ ...res.data, attachments: prev?.attachments ?? attachments }))
       setShowEditModal(false)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка сохранения'
@@ -72,12 +101,24 @@ export function LawDetailPage() {
     setRepealLoading(true)
     try {
       const res = await apiClient.post<Law>(`/laws/${id}/repeal`, {})
-      setLaw(res.data)
+      setLaw((prev) => ({ ...res.data, attachments: prev?.attachments ?? attachments }))
       setShowRepealModal(false)
     } catch {
       alert('Ошибка отмены закона')
     } finally {
       setRepealLoading(false)
+    }
+  }
+
+  const changeStatus = async (status: 'ACTIVE' | 'SUSPENDED') => {
+    setStatusLoading(true)
+    try {
+      const res = await apiClient.put<Law>(`/laws/${id}`, { status })
+      setLaw((prev) => ({ ...res.data, attachments: prev?.attachments ?? attachments }))
+    } catch {
+      alert('Не удалось изменить статус')
+    } finally {
+      setStatusLoading(false)
     }
   }
 
@@ -92,7 +133,36 @@ export function LawDetailPage() {
     }
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Spinner /></div>
+  const uploadFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files)
+    if (list.length === 0) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const formData = new FormData()
+      list.forEach((f) => formData.append('files', f))
+      const res = await apiClient.post<LawAttachment[]>(`/laws/${id}/attachments`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setAttachments((prev) => [...res.data, ...prev])
+    } catch (err: unknown) {
+      setUploadError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось загрузить файлы')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const deleteAttachment = async (attachmentId: string) => {
+    try {
+      await apiClient.delete(`/laws/${id}/attachments/${attachmentId}`)
+      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId))
+    } catch {
+      alert('Не удалось удалить вложение')
+    }
+  }
+
+  if (loading) return <div className="load-state"><Spinner /><span>Загружаем документ…</span></div>
 
   if (!law) {
     return (
@@ -105,6 +175,23 @@ export function LawDetailPage() {
       </div>
     )
   }
+
+  const manageItems = [
+    {
+      label: law.status === 'SUSPENDED' ? 'Возобновить действие' : 'Приостановить действие',
+      icon: law.status === 'SUSPENDED' ? <IconPlayerPlay size={15} /> : <IconPlayerPause size={15} />,
+      onClick: () => changeStatus(law.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED'),
+      disabled: statusLoading || law.status === 'REPEALED',
+      hidden: !canEdit,
+    },
+    {
+      label: 'Отменить закон',
+      icon: <IconTrash size={15} />,
+      danger: true,
+      onClick: () => setShowRepealModal(true),
+      hidden: !canRepeal || law.status === 'REPEALED',
+    },
+  ]
 
   return (
     <div>
@@ -120,33 +207,30 @@ export function LawDetailPage() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#26342E' }}>{law.number}</span>
             {law.registry_code && <span className="registry-code">{law.registry_code}</span>}
             <Badge status={law.type} />
             <Badge status={law.status} />
+            {law.category && <span style={{ fontSize: '12px', color: '#6B7280' }}>· {law.category}</span>}
           </div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
             {law.title}
           </h1>
+          {law.summary && <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#6B7280', maxWidth: '640px', lineHeight: 1.5 }}>{law.summary}</p>}
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-          {canEdit && law.status === 'ACTIVE' && (
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+          {canEdit && law.status !== 'REPEALED' && (
             <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)}>
               <IconEdit size={14} />
               Редактировать
-            </Button>
-          )}
-          {canRepeal && law.status === 'ACTIVE' && (
-            <Button variant="danger" size="sm" onClick={() => setShowRepealModal(true)}>
-              <IconTrash size={14} />
-              Отменить закон
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={handleDownloadPdf} loading={pdfLoading}>
             <IconPrinter size={14} />
             Сформировать
           </Button>
+          <ActionMenu items={manageItems} label="Управление документом" />
         </div>
       </div>
 
@@ -157,6 +241,12 @@ export function LawDetailPage() {
               <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Дата принятия</div>
               <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>{formatDate(law.adopted_at)}</div>
             </div>
+            {law.effective_at && (
+              <div>
+                <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Вступает в силу</div>
+                <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>{formatDate(law.effective_at)}</div>
+              </div>
+            )}
             {law.repealed_at && (
               <div>
                 <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Дата отмены</div>
@@ -170,6 +260,70 @@ export function LawDetailPage() {
               {law.body}
             </div>
           </div>
+        </Card>
+
+        <Card style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>
+              <IconPaperclip size={16} />
+              Документы и сканы ({attachments.length})
+            </div>
+            {uploading && <span className="load-inline"><Spinner size={14} />Загрузка…</span>}
+          </div>
+
+          {canEdit && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,image/*,application/pdf"
+                style={{ display: 'none' }}
+                onChange={(e) => e.target.files && uploadFiles(e.target.files)}
+              />
+              <div
+                className={`attach-dropzone${dragOver ? ' is-drag' : ''}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files) }}
+              >
+                <IconUpload size={22} />
+                <div>
+                  <strong>Загрузить скан или документ</strong>
+                  <small>Перетащите файлы или нажмите. PDF, изображения, Word — до 25 МБ.</small>
+                </div>
+              </div>
+            </>
+          )}
+
+          {uploadError && <div className="form-error" style={{ marginTop: '12px' }}>{uploadError}</div>}
+
+          {attachments.length > 0 ? (
+            <div className="attach-list">
+              {attachments.map((att) => (
+                <div key={att.id} className="attach-row">
+                  <span className="attach-icon">
+                    {att.mime_type.startsWith('image/') ? <IconPhoto size={18} /> : <IconFileText size={18} />}
+                  </span>
+                  <div className="attach-meta">
+                    <strong>{att.original_name}</strong>
+                    <small>{formatFileSize(att.size)} · {formatDate(att.uploaded_at)}</small>
+                  </div>
+                  <div className="attach-actions">
+                    <a href={att.url} target="_blank" rel="noreferrer" title="Открыть"><IconExternalLink size={15} /></a>
+                    {canEdit && (
+                      <ActionMenu items={[
+                        { label: 'Удалить вложение', icon: <IconTrash size={15} />, danger: true, onClick: () => deleteAttachment(att.id) },
+                      ]} />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            !canEdit && <div style={{ fontSize: '13px', color: '#9CA3AF', padding: '8px 0' }}>Вложения не прикреплены.</div>
+          )}
         </Card>
 
         {cases.length > 0 && (
@@ -198,7 +352,7 @@ export function LawDetailPage() {
         open={showEditModal}
         onClose={() => { setShowEditModal(false); setEditError(null) }}
         title="Редактировать"
-        width={600}
+        width={620}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button>
@@ -208,6 +362,8 @@ export function LawDetailPage() {
       >
         <form onSubmit={handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Input label="Название" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+          <Input label="Категория / раздел" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+          <Input label="Краткое описание" value={editForm.summary} onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Текст</label>
             <textarea

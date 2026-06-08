@@ -4,6 +4,7 @@ import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Treasury, TreasuryTransaction } from '../types'
 import { Button } from '../components/ui/Button'
+import { Spinner } from '../components/ui/Spinner'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
@@ -151,7 +152,7 @@ export function TreasuryPage() {
   ]
 
   if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+    return <div className="load-state"><Spinner /><span>Загрузка казны…</span></div>
   }
 
   return (

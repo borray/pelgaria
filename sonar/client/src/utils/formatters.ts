@@ -52,6 +52,9 @@ const STATUS_LABELS: Record<string, string> = {
   DEMOLISHED: 'Снесено',
   LAW: 'Закон',
   DECREE: 'Указ',
+  CONSTITUTION: 'Конституционный акт',
+  REGULATION: 'Постановление',
+  ORDER: 'Распоряжение',
   REPEALED: 'Отменён',
   SUSPENDED: 'Приостановлен',
   NON_AGGRESSION: 'Пакт о ненападении',
@@ -98,6 +101,11 @@ const STATUS_COLORS: Record<string, string> = {
   REPEALED: '#DC2626',
   SUSPENDED: '#D97706',
   TERMINATED: '#DC2626',
+  LAW: '#14715A',
+  DECREE: '#14715A',
+  CONSTITUTION: '#7C3AED',
+  REGULATION: '#0E7490',
+  ORDER: '#B45309',
 }
 
 export function getStatusColor(status: string): string {
