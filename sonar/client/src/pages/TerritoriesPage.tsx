@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { Territory, User } from '../types'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
@@ -44,6 +45,7 @@ export function TerritoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Territory | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget))
 
   const fetchTerritories = useCallback(async () => {
     setLoading(true)
@@ -250,7 +252,7 @@ export function TerritoriesPage() {
       </Modal>
 
       <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Удалить территорию" description="Проверьте выбранную позицию перед удалением"
-        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить территорию</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" disabled={!deleteUnlocked} loading={deleteLoading} onClick={handleDelete}>{deleteUnlocked ? 'Удалить территорию' : `Подождите ${deleteCountdown}с`}</Button></>}
       >
         <div className="danger-confirm">Территория <strong>{deleteTarget?.name}</strong> будет удалена из реестра. Это действие нельзя отменить.</div>
         {deleteError && <div className="form-error">{deleteError}</div>}

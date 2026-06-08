@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconPrinter, IconSearch, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { DiplomaticState, DiplomaticTreaty } from '../types'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
@@ -66,6 +67,7 @@ export function DiplomacyPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ kind: 'state' | 'treaty'; id: string; label: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget))
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -341,7 +343,7 @@ export function DiplomacyPage() {
       </Modal>
 
       <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Подтвердите удаление" description="Удалённая запись не сможет быть восстановлена"
-        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" disabled={!deleteUnlocked} loading={deleteLoading} onClick={handleDelete}>{deleteUnlocked ? 'Удалить' : `Подождите ${deleteCountdown}с`}</Button></>}
       >
         <div className="danger-confirm">Вы собираетесь удалить {deleteTarget?.kind === 'state' ? 'государство' : 'договор'} <strong>{deleteTarget?.label}</strong>. Государство со связанными договорами удалить нельзя.</div>
         {deleteError && <div className="form-error">{deleteError}</div>}

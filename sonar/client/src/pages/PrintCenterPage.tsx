@@ -6,9 +6,11 @@ import {
   IconPlus,
   IconPrinter,
   IconSearch,
+  IconTrash,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import type { Building, Citizen, GeneratedDocument } from '../types'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
@@ -54,6 +56,10 @@ export function PrintCenterPage() {
   const [payload, setPayload] = useState<Record<string, string>>({})
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<GeneratedDocument | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget))
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
@@ -118,6 +124,21 @@ export function PrintCenterPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/print-center/documents/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      await fetchDocuments()
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   const stats = useMemo(() => ({
     total: documents.length,
     today: documents.filter((item) => new Date(item.created_at).toDateString() === new Date().toDateString()).length,
@@ -130,7 +151,12 @@ export function PrintCenterPage() {
     { key: 'citizen', header: 'Гражданин', render: (row) => row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки' },
     { key: 'link', header: 'Прикрепление', width: '150px', render: (row) => <span className={row.linked_entity_id ? 'link-status is-linked' : 'link-status'}><IconLink size={13} />{row.linked_entity_id ? row.linked_entity_type : 'Не прикреплен'}</span> },
     { key: 'created_at', header: 'Создан', width: '120px', render: (row) => formatDate(row.created_at) },
-    { key: 'actions', header: '', width: '130px', render: (row) => <Button variant="secondary" size="sm" title="Сформировать документ" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={15} />Сформировать</Button> },
+    { key: 'actions', header: '', width: '170px', render: (row) => (
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <Button variant="secondary" size="sm" title="Сформировать документ" onClick={(e) => { e.stopPropagation(); printPdf(`/api/print-center/documents/${row.id}/pdf`) }}><IconPrinter size={15} />Сформировать</Button>
+        <Button variant="danger" size="sm" title="Удалить документ" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}><IconTrash size={14} /></Button>
+      </div>
+    ) },
   ]
 
   return (
@@ -211,6 +237,26 @@ export function PrintCenterPage() {
             {error && <div className="form-error">{error}</div>}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить документ"
+        description="Документ будет безвозвратно удалён из архива СОНАР."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>
+            <Button variant="danger" disabled={!deleteUnlocked} loading={deleteLoading} onClick={handleDelete}>
+              {deleteUnlocked ? 'Удалить документ' : `Подождите ${deleteCountdown}с`}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm">
+          Документ <strong>{deleteTarget?.number}</strong> «{deleteTarget?.title}» будет удалён. Восстановление невозможно.
+        </div>
+        {deleteError && <div className="form-error">{deleteError}</div>}
       </Modal>
     </div>
   )

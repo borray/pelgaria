@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconPrinter } from '@tabler/icons-react'
+import { IconPlus, IconPrinter, IconBan } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { Passport, Citizen } from '../types'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -37,6 +38,10 @@ export function PassportsPage() {
   const [issueLoading, setIssueLoading] = useState(false)
   const [issueError, setIssueError] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+  const [revokeTarget, setRevokeTarget] = useState<Passport | null>(null)
+  const [revokeLoading, setRevokeLoading] = useState(false)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+  const { unlocked: revokeUnlocked, secondsLeft: revokeCountdown } = useTimedUnlock(Boolean(revokeTarget))
 
   const fetchPassports = useCallback(async () => {
     setLoading(true)
@@ -108,6 +113,21 @@ export function PassportsPage() {
       alert('Ошибка генерации PDF')
     } finally {
       setPdfLoadingId(null)
+    }
+  }
+
+  const handleRevoke = async () => {
+    if (!revokeTarget) return
+    setRevokeLoading(true)
+    setRevokeError(null)
+    try {
+      await apiClient.post(`/passports/${revokeTarget.id}/revoke`)
+      setRevokeTarget(null)
+      fetchPassports()
+    } catch (err: unknown) {
+      setRevokeError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка отзыва')
+    } finally {
+      setRevokeLoading(false)
     }
   }
 
@@ -183,17 +203,29 @@ export function PassportsPage() {
     {
       key: 'actions',
       header: '',
-      width: '60px',
+      width: '200px',
       render: (row) => (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
-          loading={pdfLoadingId === row.id}
-          title="Сформировать паспорт"
-        >
-          <IconPrinter size={14} /> Сформировать
-        </Button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); handleDownloadPdf(row) }}
+            loading={pdfLoadingId === row.id}
+            title="Сформировать паспорт"
+          >
+            <IconPrinter size={14} /> Сформировать
+          </Button>
+          {canIssue && row.status === 'VALID' && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setRevokeError(null); setRevokeTarget(row) }}
+              title="Отозвать паспорт"
+            >
+              <IconBan size={14} />
+            </Button>
+          )}
+        </div>
       ),
     },
   ]
@@ -290,6 +322,26 @@ export function PassportsPage() {
             <div className="form-error">{issueError}</div>
           )}
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(revokeTarget)}
+        onClose={() => setRevokeTarget(null)}
+        title="Отозвать паспорт"
+        description="Паспорт будет аннулирован и переведён в статус «Отозван». Действие необратимо."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRevokeTarget(null)}>Отмена</Button>
+            <Button variant="danger" disabled={!revokeUnlocked} loading={revokeLoading} onClick={handleRevoke}>
+              {revokeUnlocked ? 'Отозвать паспорт' : `Подождите ${revokeCountdown}с`}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm">
+          Паспорт <strong>{revokeTarget?.number}</strong> гражданина <strong>{revokeTarget?.citizen?.nickname}</strong> будет аннулирован. Гражданин потеряет действующий документ.
+        </div>
+        {revokeError && <div className="form-error">{revokeError}</div>}
       </Modal>
     </div>
   )

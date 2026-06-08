@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { IconEdit, IconTrash, IconArrowLeft, IconPrinter } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { Citizen, GeneratedDocument } from '../types'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -39,6 +40,7 @@ export function CitizenDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('passport')
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(showDeleteModal)
   const [editLoading, setEditLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -363,8 +365,8 @@ export function CitizenDetailPage() {
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
               Отмена
             </Button>
-            <Button variant="danger" loading={deleteLoading} onClick={handleDelete}>
-              Удалить
+            <Button variant="danger" disabled={!deleteUnlocked} loading={deleteLoading} onClick={handleDelete}>
+              {deleteUnlocked ? 'Удалить' : `Подождите ${deleteCountdown}с`}
             </Button>
           </>
         }
