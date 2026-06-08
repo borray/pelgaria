@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconPrinter } from '@tabler/icons-react'
+import { IconArrowLeft, IconPrinter, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Case, User } from '../types'
@@ -9,6 +9,10 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
+import { Input } from '../components/ui/Input'
+import { Spinner } from '../components/ui/Spinner'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
+import { useTypeConfirm } from '../hooks/useTypeConfirm'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
 
@@ -26,6 +30,11 @@ export function CaseDetailPage() {
   const canClose = usePermission('cases.close')
 
   const [caseData, setCaseData] = useState<Case | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(showDeleteModal, 6)
+  const deleteConfirm = useTypeConfirm(caseData?.number ?? '', showDeleteModal)
   const [loading, setLoading] = useState(true)
   const [judges, setJudges] = useState<User[]>([])
 
@@ -117,9 +126,21 @@ export function CaseDetailPage() {
     }
   }
 
-  if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Загрузка...</div>
+  const handleDelete = async () => {
+    if (!caseData) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/cases/${caseData.id}`)
+      navigate('/cases')
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
   }
+
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Spinner /></div>
 
   if (!caseData) {
     return (
@@ -172,6 +193,11 @@ export function CaseDetailPage() {
           {canClose && caseData.status !== 'CLOSED' && (
             <Button variant="danger" size="sm" onClick={() => setShowCloseModal(true)}>
               Закрыть дело
+            </Button>
+          )}
+          {canManage && (
+            <Button variant="danger" size="sm" onClick={() => { setDeleteError(null); setShowDeleteModal(true) }}>
+              <IconTrash size={14} /> Стереть дело
             </Button>
           )}
         </div>
@@ -331,6 +357,37 @@ export function CaseDetailPage() {
           )}
           {closeError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{closeError}</div>}
         </form>
+      </Modal>
+
+      <Modal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Удалить судебное дело"
+        description="Дело, наказания и все связанные записи будут стёрты без возможности восстановления."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отмена</Button>
+            <Button
+              variant="danger"
+              disabled={!deleteUnlocked || !deleteConfirm.confirmed}
+              loading={deleteLoading}
+              onClick={handleDelete}
+            >
+              {!deleteUnlocked ? `Подождите ${deleteCountdown}с` : 'Стереть навсегда'}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm" style={{ marginBottom: '14px' }}>
+          Дело <strong>{caseData?.number}</strong> против <strong>{caseData?.accused?.nickname}</strong> будет уничтожено навсегда. Это действие невозможно отменить.
+        </div>
+        <Input
+          label={`Введите номер дела «${caseData?.number}» для подтверждения`}
+          value={deleteConfirm.value}
+          onChange={deleteConfirm.onChange}
+          placeholder={caseData?.number}
+        />
+        {deleteError && <div className="form-error" style={{ marginTop: '10px' }}>{deleteError}</div>}
       </Modal>
     </div>
   )

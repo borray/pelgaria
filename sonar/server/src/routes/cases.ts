@@ -345,4 +345,21 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
   }
 })
 
+// DELETE /api/cases/:id — permanent erasure
+router.delete('/:id', requireAuth, requirePermission('cases.manage'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.case.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Дело не найдено' })
+      return
+    }
+    await prisma.case.delete({ where: { id } })
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 export default router

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconPrinter } from '@tabler/icons-react'
+import { IconPlus, IconPrinter, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
+import { useTimedUnlock } from '../hooks/useTimedUnlock'
+import { useTypeConfirm } from '../hooks/useTypeConfirm'
 import type { Punishment, Citizen } from '../types'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
+import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
@@ -52,6 +55,26 @@ export function PunishmentsPage() {
   const [issueError, setIssueError] = useState<string | null>(null)
   const [revokeLoadingId, setRevokeLoadingId] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Punishment | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget), 6)
+  const deleteConfirm = useTypeConfirm(deleteTarget?.number ?? '', Boolean(deleteTarget))
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/punishments/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      fetchPunishments()
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Ошибка удаления')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const handleDownloadPdf = async (p: Punishment) => {
     setPdfLoadingId(p.id)
@@ -206,6 +229,16 @@ export function PunishmentsPage() {
               Отозвать
             </Button>
           )}
+          {canIssue && (
+            <Button
+              variant="danger"
+              size="sm"
+              title="Стереть запись навсегда"
+              onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -305,6 +338,37 @@ export function PunishmentsPage() {
           </div>
           {issueError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{issueError}</div>}
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить запись о наказании"
+        description="Запись будет стёрта из реестра без возможности восстановления."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>
+            <Button
+              variant="danger"
+              disabled={!deleteUnlocked || !deleteConfirm.confirmed}
+              loading={deleteLoading}
+              onClick={handleDelete}
+            >
+              {!deleteUnlocked ? `Подождите ${deleteCountdown}с` : 'Стереть навсегда'}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm" style={{ marginBottom: '14px' }}>
+          Запись <strong>{deleteTarget?.number}</strong> о наказании гражданина <strong>{deleteTarget?.citizen?.nickname}</strong> будет уничтожена навсегда.
+        </div>
+        <Input
+          label={`Введите номер «${deleteTarget?.number ?? ''}» для подтверждения`}
+          value={deleteConfirm.value}
+          onChange={deleteConfirm.onChange}
+          placeholder={deleteTarget?.number ?? ''}
+        />
+        {deleteError && <div className="form-error" style={{ marginTop: '10px' }}>{deleteError}</div>}
       </Modal>
     </div>
   )

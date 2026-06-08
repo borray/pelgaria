@@ -235,4 +235,30 @@ router.post('/:id/reset-password', requireAuth, requirePermission('accounts.mana
   }
 })
 
+// DELETE /api/accounts/:id
+router.delete('/:id', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+
+    if (id === req.user!.id) {
+      res.status(400).json({ error: 'Нельзя удалить собственный аккаунт' })
+      return
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Аккаунт не найден' })
+      return
+    }
+
+    await prisma.refreshToken.deleteMany({ where: { user_id: id } })
+    await prisma.user.delete({ where: { id } })
+
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 export default router

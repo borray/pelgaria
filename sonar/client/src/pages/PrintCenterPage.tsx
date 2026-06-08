@@ -7,9 +7,11 @@ import {
   IconPrinter,
   IconSearch,
   IconTrash,
+  IconFileDownload,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import type { Building, Citizen, GeneratedDocument } from '../types'
+import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -43,6 +45,7 @@ const FIELD_LABELS: Record<string, string> = {
 }
 
 export function PrintCenterPage() {
+  const canAdmin = usePermission('accounts.manage')
   const [templates, setTemplates] = useState<FormTemplate[]>([])
   const [documents, setDocuments] = useState<GeneratedDocument[]>([])
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -154,7 +157,7 @@ export function PrintCenterPage() {
     { key: 'actions', header: '', width: '170px', render: (row) => (
       <div style={{ display: 'flex', gap: '6px' }}>
         <Button variant="secondary" size="sm" title="Сформировать документ" onClick={(e) => { e.stopPropagation(); printPdf(`/api/print-center/documents/${row.id}/pdf`) }}><IconPrinter size={15} />Сформировать</Button>
-        <Button variant="danger" size="sm" title="Удалить документ" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}><IconTrash size={14} /></Button>
+        {canAdmin && <Button variant="danger" size="sm" title="Удалить документ" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}><IconTrash size={14} /></Button>}
       </div>
     ) },
   ]
@@ -180,12 +183,21 @@ export function PrintCenterPage() {
         <div className="section-heading"><div><span>Каталог услуг</span><h2>Печатные формы</h2></div></div>
         <div className="service-grid">
           {templates.map((template) => (
-            <button key={template.id} className="service-card" onClick={() => openTemplate(template)}>
-              <span className="service-icon"><IconFileCertificate size={22} /></span>
-              <strong>{template.title}</strong>
-              <span>{template.description}</span>
-              <small>{template.prefix} · сформировать</small>
-            </button>
+            <div key={template.id} className="service-card-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <button className="service-card" onClick={() => openTemplate(template)}>
+                <span className="service-icon"><IconFileCertificate size={22} /></span>
+                <strong>{template.title}</strong>
+                <span>{template.description}</span>
+                <small>{template.prefix} · сформировать</small>
+              </button>
+              <button
+                className="service-card-blank"
+                onClick={() => printPdf(`/api/print-center/templates/${template.id}/blank-pdf`)}
+                title="Напечатать пустой бланк для заполнения вручную"
+              >
+                <IconFileDownload size={14} /> Печатать бланк
+              </button>
+            </div>
           ))}
         </div>
       </section>
