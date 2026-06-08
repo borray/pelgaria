@@ -3,12 +3,17 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
 import { requirePermission } from '../middleware/permissions'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
-import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
+import { nextDocumentNumber, randomDocumentCode, registryCode } from '../services/documentRegistry'
 import {
   barcodeStripes,
   guillocheRosette,
+  guillocheField,
+  guillochePattern,
+  microtextLine,
+  signatureSeal,
   pageShell,
   sealBlock,
+  A4_W,
   ACCENT,
   INK,
 } from '../services/templates'
@@ -75,8 +80,204 @@ function escapeHtml(value: unknown): string {
     .replace(/"/g, '&quot;')
 }
 
+// ---------------------------------------------------------------------------
+// Пробный лист проверки печатной станции — насыщен полиграфическими защитными
+// элементами: гильоши, ШК, чёрные реперные квадраты по краям, шкалы цвета и
+// серого, микротекст, реестровая печать.
+// ---------------------------------------------------------------------------
+function renderTestSheet(sheet: { number: string; registry_code: string; created_by_login: string; created_at: Date }): string {
+  const seed = sheet.registry_code
+  const date = sheet.created_at.toLocaleString('ru-RU')
+  const barcode = barcodeStripes(sheet.registry_code, 360, 60)
+  const barcode2 = barcodeStripes(`${sheet.number}:CTRL`, 220, 38)
+  const rosette = guillocheRosette(seed, 230)
+  const rosetteSmall = guillocheRosette(`${seed}:emblem`, 120)
+  const field = guillocheField(`${seed}:field`, A4_W - 120, 90, 0.5)
+  const band = guillochePattern(`${seed}:band`, A4_W - 120, 70)
+  const micro = microtextLine('ПЕЛЬАГРИЯ · СОНАР · ПРОБНЫЙ ЛИСТ · КОНТРОЛЬ ПЕЧАТИ', A4_W - 120)
+  const seal = signatureSeal({ number: sheet.number, signer: 'СТАНЦИЯ ПЕЧАТИ', role: 'Контроль качества', date, size: 150, rotate: -6 })
+
+  // Реперные (регистрационные) чёрные квадраты по углам и серединам краёв
+  const square = (cls: string) => `<div class="reg-square ${cls}"></div>`
+  const crosshair = (cls: string) => `<div class="reg-cross ${cls}"><span></span><span></span></div>`
+
+  // Шкала серого 0→100 %
+  const greySteps = Array.from({ length: 11 }, (_, i) => {
+    const v = Math.round((i / 10) * 255)
+    const pct = i * 10
+    return `<div class="ramp-cell" style="background:rgb(${v},${v},${v});color:${i > 5 ? '#000' : '#fff'};">${pct}</div>`
+  }).join('')
+
+  // Цветовые плашки CMYK + RGB для проверки цветопередачи
+  const colorBars = [
+    ['Cyan', '#00AEEF'], ['Magenta', '#EC008C'], ['Yellow', '#FFF200'], ['Key', '#231F20'],
+    ['Red', '#ED1C24'], ['Green', '#00A651'], ['Blue', '#2E3192'],
+  ].map(([label, color]) => `<div class="color-cell" style="background:${color};"><span>${label}</span></div>`).join('')
+
+  // Калибр толщины линий (разрешение)
+  const lineGauge = [0.25, 0.5, 0.75, 1, 1.5, 2, 3].map((w) =>
+    `<div class="gauge-col"><div class="gauge-bars">${Array.from({ length: 6 }, () => `<i style="height:${w}px;"></i>`).join('')}</div><small>${w}px</small></div>`
+  ).join('')
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { background:#fff; font-family:'Inter',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .sheet { position:relative; width:794px; min-height:1123px; background:#fff; overflow:hidden; }
+    /* чёрные реперные квадраты по краям */
+    .reg-square { position:absolute; width:22px; height:22px; background:#000; z-index:5; }
+    .reg-square.tl { top:14px; left:14px; } .reg-square.tr { top:14px; right:14px; }
+    .reg-square.bl { bottom:14px; left:14px; } .reg-square.br { bottom:14px; right:14px; }
+    .reg-square.tm { top:14px; left:50%; transform:translateX(-50%); } .reg-square.bm { bottom:14px; left:50%; transform:translateX(-50%); }
+    .reg-square.lm { left:14px; top:50%; transform:translateY(-50%); } .reg-square.rm { right:14px; top:50%; transform:translateY(-50%); }
+    .reg-cross { position:absolute; width:34px; height:34px; z-index:5; }
+    .reg-cross span { position:absolute; background:#000; }
+    .reg-cross span:first-child { left:50%; top:0; width:1.2px; height:100%; transform:translateX(-50%); }
+    .reg-cross span:last-child { top:50%; left:0; height:1.2px; width:100%; transform:translateY(-50%); }
+    .reg-cross.c1 { top:48px; left:48px; } .reg-cross.c2 { top:48px; right:48px; } .reg-cross.c3 { bottom:48px; left:48px; } .reg-cross.c4 { bottom:48px; right:48px; }
+    .frame { position:absolute; inset:46px; border:1.4px solid #111; z-index:1; }
+    .frame2 { position:absolute; inset:52px; border:0.5px solid #777; z-index:1; }
+    .inner { position:relative; z-index:3; padding:70px 60px 60px; }
+    .head { display:flex; align-items:center; gap:18px; border-bottom:2px solid #111; padding-bottom:16px; }
+    .head .emblem { width:74px; height:74px; flex-shrink:0; } .head .emblem svg { width:74px; height:74px; }
+    .head .state { font-size:10px; letter-spacing:3px; font-weight:700; color:${ACCENT}; }
+    .head h1 { font-family:'PT Serif',serif; font-size:26px; font-weight:700; text-transform:uppercase; color:${INK}; margin-top:5px; letter-spacing:.04em; }
+    .head .sub { font-size:11px; color:#555; margin-top:4px; letter-spacing:.04em; }
+    .head .meta { margin-left:auto; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; color:#222; line-height:1.7; }
+    .head .meta b { color:${ACCENT}; }
+    .section-title { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#444; margin:22px 0 8px; }
+    .rosette-wrap { position:absolute; top:330px; left:50%; transform:translateX(-50%); width:230px; height:230px; opacity:.5; z-index:2; pointer-events:none; }
+    .barcode-row { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-top:14px; }
+    .barcode-row .code { font-family:'JetBrains Mono',monospace; font-size:10px; color:#222; margin-top:4px; letter-spacing:.05em; }
+    .ramp { display:grid; grid-template-columns:repeat(11,1fr); border:1px solid #111; }
+    .ramp-cell { height:34px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:3px; font-family:'JetBrains Mono',monospace; font-size:9px; }
+    .colors { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .color-cell { height:46px; border:0.5px solid #1115; display:flex; align-items:flex-end; padding:4px; }
+    .color-cell span { font-size:8px; font-weight:700; color:#fff; mix-blend-mode:difference; }
+    .gauge { display:flex; gap:18px; align-items:flex-end; }
+    .gauge-col { text-align:center; } .gauge-bars { display:flex; flex-direction:column; gap:3px; width:60px; }
+    .gauge-bars i { display:block; width:100%; background:#000; } .gauge-col small { font-family:'JetBrains Mono',monospace; font-size:8px; color:#444; }
+    .band { margin-top:8px; opacity:.85; } .band svg, .field svg, .micro svg { display:block; width:100%; }
+    .field { margin-top:8px; opacity:.7; }
+    .micro { height:12px; overflow:hidden; margin:14px 0; }
+    .footer { display:flex; align-items:flex-end; justify-content:space-between; border-top:2px solid #111; margin-top:22px; padding-top:14px; }
+    .footer .note { font-size:10px; color:#555; max-width:430px; line-height:1.55; }
+    .footer .note b { color:#111; }
+    .seal-wrap { width:150px; height:150px; flex-shrink:0; }
+    .destroy-mark { margin-top:14px; text-align:center; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#8d302b; border:1px dashed #c2483f; border-radius:6px; padding:9px; }
+  </style></head><body>
+    <div class="sheet">
+      ${square('tl')}${square('tr')}${square('bl')}${square('br')}${square('tm')}${square('bm')}${square('lm')}${square('rm')}
+      ${crosshair('c1')}${crosshair('c2')}${crosshair('c3')}${crosshair('c4')}
+      <div class="frame"></div><div class="frame2"></div>
+      <div class="rosette-wrap">${rosette}</div>
+      <div class="inner">
+        <div class="head">
+          <div class="emblem">${rosetteSmall}</div>
+          <div>
+            <div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div>
+            <h1>Пробный лист</h1>
+            <div class="sub">Проверка печатной станции и защитных элементов</div>
+          </div>
+          <div class="meta">№ <b>${escapeHtml(sheet.number)}</b><br>${escapeHtml(sheet.registry_code)}<br>${escapeHtml(date)}<br>Оператор: ${escapeHtml(sheet.created_by_login)}</div>
+        </div>
+
+        <div class="section-title">Контрольные штрих-коды</div>
+        <div class="barcode-row">
+          <div>${barcode}<div class="code">ОСНОВНОЙ ШК · ${escapeHtml(sheet.registry_code)}</div></div>
+          <div>${barcode2}<div class="code">КОНТРОЛЬ · ${escapeHtml(sheet.number)}</div></div>
+        </div>
+
+        <div class="section-title">Шкала плотности (0–100 %)</div>
+        <div class="ramp">${greySteps}</div>
+
+        <div class="section-title">Цветовые плашки (CMYK / RGB)</div>
+        <div class="colors">${colorBars}</div>
+
+        <div class="section-title">Калибр толщины линий</div>
+        <div class="gauge">${lineGauge}</div>
+
+        <div class="section-title">Гильоширный растр и микротекст</div>
+        <div class="band">${band}</div>
+        <div class="micro">${micro}</div>
+        <div class="field">${field}</div>
+
+        <div class="footer">
+          <div class="note"><b>Назначение:</b> технологический образец для калибровки печати, совмещения красок и контроля защитных элементов. Юридической силы не имеет. Лист подлежит обязательному уничтожению — запись стирается из мини-базы СОНАР после подтверждения уничтожения.</div>
+          <div class="seal-wrap">${seal}</div>
+        </div>
+        <div class="destroy-mark">Образец · уничтожить после проверки · ${escapeHtml(sheet.registry_code)}</div>
+      </div>
+    </div>
+  </body></html>`
+}
+
 router.get('/templates', requireAuth, (_req: Request, res: Response) => {
   res.json(FORM_TEMPLATES)
+})
+
+// ── Пробные листы проверки печатной станции (отдельная мини-база) ──
+
+// GET /api/print-center/test-sheets — журнал пробных листов
+router.get('/test-sheets', requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const sheets = await prisma.printerTestSheet.findMany({ orderBy: { created_at: 'desc' } })
+    res.json(sheets)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Не удалось загрузить пробные листы' })
+  }
+})
+
+// POST /api/print-center/test-sheets — зарегистрировать пробный лист
+router.post('/test-sheets', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const number = randomDocumentCode()
+    const sheet = await prisma.printerTestSheet.create({
+      data: {
+        number,
+        registry_code: registryCode('ТЕСТ', number),
+        created_by_login: req.user!.login,
+        note: typeof req.body?.note === 'string' ? req.body.note.slice(0, 200) : null,
+      },
+    })
+    res.status(201).json(sheet)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Не удалось создать пробный лист' })
+  }
+})
+
+// GET /api/print-center/test-sheets/:id/pdf — печать пробного листа
+router.get('/test-sheets/:id/pdf', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const sheet = await prisma.printerTestSheet.findUnique({ where: { id: req.params.id as string } })
+    if (!sheet) {
+      res.status(404).json({ error: 'Пробный лист не найден' })
+      return
+    }
+    const pdf = await htmlToPdf(renderTestSheet(sheet))
+    res.set(pdfHeaders(pdf, `test-${sheet.number}.pdf`))
+    res.send(pdf)
+  } catch (error) {
+    res.status(500).json(pdfError(error, 'printer test sheet'))
+  }
+})
+
+// DELETE /api/print-center/test-sheets/:id — уничтожение пробного листа
+router.delete('/test-sheets/:id', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.printerTestSheet.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Пробный лист не найден' })
+      return
+    }
+    await prisma.printerTestSheet.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Не удалось уничтожить пробный лист' })
+  }
 })
 
 // GET /api/print-center/templates/:id/blank-pdf — blank form without saving to DB

@@ -8,9 +8,12 @@ import {
   IconSearch,
   IconTrash,
   IconFileDownload,
+  IconTestPipe,
+  IconScan,
+  IconFlame,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
-import type { Building, Citizen, GeneratedDocument } from '../types'
+import type { Building, Citizen, GeneratedDocument, PrinterTestSheet } from '../types'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import { Button } from '../components/ui/Button'
@@ -21,7 +24,8 @@ import { Table, type TableColumn } from '../components/ui/Table'
 import { RegistryMark } from '../components/ui/RegistryMark'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ActionMenu } from '../components/ui/ActionMenu'
-import { formatDate } from '../utils/formatters'
+import { Spinner } from '../components/ui/Spinner'
+import { formatDate, formatDateTime } from '../utils/formatters'
 import { confirmDocumentFormation, printPdf } from '../utils/pdf'
 
 interface FormTemplate {
@@ -64,6 +68,56 @@ export function PrintCenterPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const { unlocked: deleteUnlocked, secondsLeft: deleteCountdown } = useTimedUnlock(Boolean(deleteTarget))
+
+  const [testSheets, setTestSheets] = useState<PrinterTestSheet[]>([])
+  const [testLoading, setTestLoading] = useState(false)
+  const [creatingTest, setCreatingTest] = useState(false)
+  const [destroyTarget, setDestroyTarget] = useState<PrinterTestSheet | null>(null)
+  const [destroyLoading, setDestroyLoading] = useState(false)
+  const [destroyError, setDestroyError] = useState<string | null>(null)
+  const { unlocked: destroyUnlocked, secondsLeft: destroyCountdown } = useTimedUnlock(Boolean(destroyTarget))
+
+  const fetchTestSheets = useCallback(async () => {
+    setTestLoading(true)
+    try {
+      const res = await apiClient.get<PrinterTestSheet[]>('/print-center/test-sheets')
+      setTestSheets(res.data)
+    } catch {
+      setTestSheets([])
+    } finally {
+      setTestLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchTestSheets() }, [fetchTestSheets])
+
+  const runPrintTest = async () => {
+    setCreatingTest(true)
+    try {
+      const res = await apiClient.post<PrinterTestSheet>('/print-center/test-sheets', {})
+      await fetchTestSheets()
+      await printPdf(`/api/print-center/test-sheets/${res.data.id}/pdf`, true)
+    } catch {
+      // ignore; список обновится при следующем заходе
+    } finally {
+      setCreatingTest(false)
+    }
+  }
+
+  const handleDestroy = async () => {
+    if (!destroyTarget) return
+    setDestroyLoading(true)
+    setDestroyError(null)
+    try {
+      await apiClient.delete(`/print-center/test-sheets/${destroyTarget.id}`)
+      setDestroyTarget(null)
+      await fetchTestSheets()
+    } catch (err: unknown) {
+      setDestroyError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось уничтожить лист')
+    } finally {
+      setDestroyLoading(false)
+    }
+  }
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
@@ -211,6 +265,47 @@ export function PrintCenterPage() {
         </div>
       </section>
 
+      <section className="service-catalog test-station">
+        <div className="section-heading">
+          <div><span>Контроль оборудования</span><h2>Проверка станции печати</h2></div>
+          <Button variant="primary" loading={creatingTest} onClick={runPrintTest}>
+            <IconTestPipe size={16} /> Печатать пробный лист
+          </Button>
+        </div>
+        <div className="test-station-info">
+          <span className="test-station-icon"><IconScan size={20} /></span>
+          <p>
+            Пробный лист содержит гильоши, штрих-коды, реперные квадраты по краям, шкалу плотности,
+            цветовые плашки и микротекст для калибровки печати и контроля защитных элементов.
+            Все пробные листы хранятся в отдельной мини-базе и <strong>подлежат обязательному уничтожению</strong> после проверки.
+          </p>
+        </div>
+        <div className="test-sheet-list">
+          {testLoading ? (
+            <div className="load-state"><Spinner /><span>Загрузка пробных листов…</span></div>
+          ) : testSheets.length === 0 ? (
+            <EmptyState title="Пробных листов нет" description="Распечатайте пробный лист, чтобы проверить станцию печати." />
+          ) : (
+            testSheets.map((sheet) => (
+              <div key={sheet.id} className="test-sheet-row">
+                <span className="test-sheet-icon"><IconTestPipe size={17} /></span>
+                <div className="test-sheet-meta">
+                  <strong>{sheet.number}</strong>
+                  <RegistryMark code={sheet.registry_code} compact />
+                </div>
+                <span className="test-sheet-when">{formatDateTime(sheet.created_at)} · {sheet.created_by_login}</span>
+                <div className="test-sheet-actions">
+                  <Button variant="secondary" size="sm" title="Печать пробного листа" onClick={() => printPdf(`/api/print-center/test-sheets/${sheet.id}/pdf`)}><IconPrinter size={14} /></Button>
+                  <ActionMenu items={[
+                    { label: 'Уничтожить лист', icon: <IconFlame size={15} />, danger: true, onClick: () => { setDestroyError(null); setDestroyTarget(sheet) } },
+                  ]} />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
       <section className="print-archive">
         <div className="section-heading">
           <div><span>Журнал операций</span><h2>Архив печати</h2></div>
@@ -278,6 +373,27 @@ export function PrintCenterPage() {
           Документ <strong>{deleteTarget?.number}</strong> «{deleteTarget?.title}» будет удалён. Восстановление невозможно.
         </div>
         {deleteError && <div className="form-error">{deleteError}</div>}
+      </Modal>
+
+      <Modal
+        open={Boolean(destroyTarget)}
+        onClose={() => setDestroyTarget(null)}
+        title="Уничтожить пробный лист"
+        description="Запись будет стёрта из мини-базы пробных листов без возможности восстановления."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDestroyTarget(null)}>Отмена</Button>
+            <Button variant="danger" disabled={!destroyUnlocked} loading={destroyLoading} onClick={handleDestroy}>
+              <IconFlame size={15} />
+              {destroyUnlocked ? 'Подтвердить уничтожение' : `Подождите ${destroyCountdown}с`}
+            </Button>
+          </>
+        }
+      >
+        <div className="danger-confirm">
+          Пробный лист <strong>{destroyTarget?.number}</strong> ({destroyTarget?.registry_code}) будет уничтожен и удалён из мини-базы. Убедитесь, что бумажный образец также уничтожен.
+        </div>
+        {destroyError && <div className="form-error">{destroyError}</div>}
       </Modal>
     </div>
   )

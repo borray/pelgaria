@@ -296,6 +296,15 @@ export interface GeneratedDocument {
   created_at: string
 }
 
+export interface PrinterTestSheet {
+  id: string
+  number: string
+  registry_code: string
+  created_by_login: string
+  note?: string | null
+  created_at: string
+}
+
 export type Permission =
   | 'citizens.view'
   | 'citizens.create'

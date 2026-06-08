@@ -351,6 +351,15 @@ model DocumentSequence {
   updated_at DateTime @updatedAt
 }
 
+model PrinterTestSheet {
+  id               String   @id @default(cuid())
+  number           String   @unique
+  registry_code    String   @unique
+  created_by_login String
+  note             String?
+  created_at       DateTime @default(now())
+}
+
 model GeneratedDocument {
   id                 String   @id @default(cuid())
   number             String   @unique
