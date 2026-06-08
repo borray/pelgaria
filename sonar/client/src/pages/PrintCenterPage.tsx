@@ -20,6 +20,7 @@ import { Input } from '../components/ui/Input'
 import { Table, type TableColumn } from '../components/ui/Table'
 import { RegistryMark } from '../components/ui/RegistryMark'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDate } from '../utils/formatters'
 import { confirmDocumentFormation, printPdf } from '../utils/pdf'
 
@@ -154,10 +155,14 @@ export function PrintCenterPage() {
     { key: 'citizen', header: 'Гражданин', render: (row) => row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки' },
     { key: 'link', header: 'Прикрепление', width: '150px', render: (row) => <span className={row.linked_entity_id ? 'link-status is-linked' : 'link-status'}><IconLink size={13} />{row.linked_entity_id ? row.linked_entity_type : 'Не прикреплен'}</span> },
     { key: 'created_at', header: 'Создан', width: '120px', render: (row) => formatDate(row.created_at) },
-    { key: 'actions', header: '', width: '170px', render: (row) => (
-      <div style={{ display: 'flex', gap: '6px' }}>
+    { key: 'actions', header: '', width: '180px', render: (row) => (
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end' }}>
         <Button variant="secondary" size="sm" title="Сформировать документ" onClick={(e) => { e.stopPropagation(); printPdf(`/api/print-center/documents/${row.id}/pdf`) }}><IconPrinter size={15} />Сформировать</Button>
-        {canAdmin && <Button variant="danger" size="sm" title="Удалить документ" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}><IconTrash size={14} /></Button>}
+        {canAdmin && (
+          <ActionMenu items={[
+            { label: 'Удалить документ', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget(row) } },
+          ]} />
+        )}
       </div>
     ) },
   ]
@@ -183,20 +188,24 @@ export function PrintCenterPage() {
         <div className="section-heading"><div><span>Каталог услуг</span><h2>Печатные формы</h2></div></div>
         <div className="service-grid">
           {templates.map((template) => (
-            <div key={template.id} className="service-card-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button className="service-card" onClick={() => openTemplate(template)}>
+            <div key={template.id} className="service-card">
+              <button className="service-card-main" onClick={() => openTemplate(template)}>
                 <span className="service-icon"><IconFileCertificate size={22} /></span>
                 <strong>{template.title}</strong>
-                <span>{template.description}</span>
-                <small>{template.prefix} · сформировать</small>
+                <span className="service-desc">{template.description}</span>
               </button>
-              <button
-                className="service-card-blank"
-                onClick={() => printPdf(`/api/print-center/templates/${template.id}/blank-pdf`)}
-                title="Напечатать пустой бланк для заполнения вручную"
-              >
-                <IconFileDownload size={14} /> Печатать бланк
-              </button>
+              <div className="service-card-actions">
+                <button className="service-card-action" onClick={() => openTemplate(template)}>
+                  <IconPlus size={13} /> Заполнить
+                </button>
+                <button
+                  className="service-card-action is-ghost"
+                  onClick={() => printPdf(`/api/print-center/templates/${template.id}/blank-pdf`)}
+                  title="Напечатать пустой бланк для заполнения вручную"
+                >
+                  <IconFileDownload size={13} /> Бланк
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -62,19 +62,35 @@ export interface Passport {
   issued_by?: Pick<User, 'id' | 'login'>
 }
 
-export type LawType = 'LAW' | 'DECREE'
+export type LawType = 'LAW' | 'DECREE' | 'CONSTITUTION' | 'REGULATION' | 'ORDER'
 export type LawStatus = 'ACTIVE' | 'REPEALED' | 'SUSPENDED'
+
+export interface LawAttachment {
+  id: string
+  law_id: string
+  kind: string
+  filename: string
+  original_name: string
+  mime_type: string
+  size: number
+  url: string
+  uploaded_at: string
+}
 
 export interface Law {
   id: string
   number: string
   registry_code?: string | null
   type: LawType
+  category?: string | null
   title: string
+  summary?: string | null
   body: string
   status: LawStatus
   adopted_at: string
+  effective_at?: string | null
   repealed_at?: string | null
+  attachments?: LawAttachment[]
 }
 
 export type CaseStatus = 'OPENED' | 'IN_PROGRESS' | 'CLOSED'

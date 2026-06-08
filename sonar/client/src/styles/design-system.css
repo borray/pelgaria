@@ -502,3 +502,64 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .login-story { padding: 30px 22px; }.login-story h1 { font-size: 31px; }.login-story-kicker { margin-top: 38px; }.login-form-side { padding: 36px 22px; }
   .toast-region { right: 12px; bottom: 12px; left: 12px; }.toast-item { min-width: 0; max-width: none; }
 }
+
+/* ── Кебаб-меню действий ───────────────────────────── */
+.action-menu-trigger { width: 32px; height: 32px; display: inline-grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; color: #6b7670; background: #fff; cursor: pointer; transition: border-color .14s, color .14s, background .14s; }
+.action-menu-trigger:hover, .action-menu-trigger.is-open { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.action-menu-popover { position: fixed; z-index: 4200; width: 220px; padding: 6px; border: 1px solid var(--line-strong); border-radius: 9px; background: #fff; box-shadow: 0 16px 44px rgba(25, 39, 33, .18); animation: modalIn .13s ease-out; }
+.action-menu-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 6px; color: #3f4b45; background: transparent; cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+.action-menu-item:hover { background: var(--surface-subtle); }
+.action-menu-item:disabled { opacity: .45; cursor: not-allowed; }
+.action-menu-item.is-danger { color: var(--danger); }
+.action-menu-item.is-danger:hover { background: #fdf2f1; }
+.action-menu-icon { display: inline-grid; place-items: center; color: currentColor; }
+
+/* ── Состояния загрузки ────────────────────────────── */
+.load-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 200px; padding: 40px 24px; color: var(--muted); }
+.load-state span { font-size: 11px; letter-spacing: .02em; }
+.load-inline { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+
+/* ── Центр печати: переработанные карточки ─────────── */
+.service-card { min-height: 0; display: flex; flex-direction: column; padding: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fff; }
+.service-card-main { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1; padding: 16px 16px 12px; border: 0; background: transparent; text-align: left; cursor: pointer; font: inherit; }
+.service-card-main:hover { background: #f8faf8; }
+.service-card-main .service-icon { width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 8px; border-radius: 7px; color: var(--accent); background: var(--accent-soft); }
+.service-card-main strong { font-size: 12px; color: #37433d; }
+.service-card-main .service-desc { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.service-card-actions { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.service-card-action { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; border: 0; background: #fff; color: var(--accent); cursor: pointer; font: inherit; font-size: 10px; font-weight: 600; transition: background .14s; }
+.service-card-action:first-child { border-right: 1px solid var(--line); }
+.service-card-action:hover { background: var(--accent-soft); }
+.service-card-action.is-ghost { color: var(--quiet); font-weight: 500; }
+.service-card-action.is-ghost:hover { background: var(--surface-subtle); color: var(--accent); }
+
+/* ── Вложения / сканы документов ───────────────────── */
+.attach-dropzone { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px dashed var(--line-strong); border-radius: 9px; background: var(--surface-subtle); color: var(--muted); cursor: pointer; transition: border-color .14s, background .14s; }
+.attach-dropzone:hover, .attach-dropzone.is-drag { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.attach-dropzone strong { display: block; font-size: 12px; color: #35413b; }
+.attach-dropzone small { font-size: 10px; }
+.attach-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.attach-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.attach-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 7px; color: var(--accent); background: var(--accent-soft); }
+.attach-meta { min-width: 0; flex: 1; }
+.attach-meta strong { display: block; font-size: 12px; color: #35413b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-meta small { color: var(--quiet); font-size: 10px; }
+.attach-actions { display: flex; gap: 4px; flex: 0 0 auto; }
+.attach-actions a, .attach-actions button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 6px; color: #6b7670; background: #fff; cursor: pointer; text-decoration: none; }
+.attach-actions a:hover { border-color: var(--accent); color: var(--accent); }
+.attach-actions button:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── Проверка подлинности документа ────────────────── */
+.verify-shell { max-width: 720px; margin: 0 auto; }
+.verify-search { display: flex; gap: 10px; margin: 4px 0 20px; }
+.verify-search input { flex: 1; height: 46px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: 9px; outline: 0; color: var(--ink); background: #fff; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: .04em; }
+.verify-search input:focus { border-color: #67a391; box-shadow: 0 0 0 3px rgba(20, 113, 90, .09); }
+.verify-result { padding: 22px 24px; border-radius: 11px; border: 1px solid var(--line); background: #fff; animation: modalIn .16s ease-out; }
+.verify-result.is-valid { border-color: #bfe0d2; background: #f5faf8; }
+.verify-result.is-invalid { border-color: #e3bdb9; background: #fff8f7; }
+.verify-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 30px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
+.verify-result.is-valid .verify-badge { color: #15734f; background: #d8f0e4; }
+.verify-result.is-invalid .verify-badge { color: #8d302b; background: #fbe1de; }
+.verify-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-top: 18px; }
+.verify-field span { display: block; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--quiet); }
+.verify-field strong { display: block; margin-top: 4px; font-size: 13px; color: #35413b; font-weight: 600; }

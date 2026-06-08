@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -174,11 +175,11 @@ export function TerritoriesPage() {
       width: '180px',
       render: (row) => (
         canManage ? (
-          <div style={{ display: 'flex', gap: 7 }}>
+          <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
             <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); openEditModal(row) }}>Изменить</Button>
-            <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(row) }}>
-              <IconTrash size={14} />Удалить
-            </Button>
+            <ActionMenu items={[
+              { label: 'Удалить территорию', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget(row) } },
+            ]} />
           </div>
         ) : null
       ),

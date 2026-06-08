@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { IconArrowLeft, IconPrinter, IconTrash } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Case, User } from '../types'
@@ -196,9 +197,9 @@ export function CaseDetailPage() {
             </Button>
           )}
           {canManage && (
-            <Button variant="danger" size="sm" onClick={() => { setDeleteError(null); setShowDeleteModal(true) }}>
-              <IconTrash size={14} /> Стереть дело
-            </Button>
+            <ActionMenu items={[
+              { label: 'Стереть дело навсегда', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setShowDeleteModal(true) } },
+            ]} />
           )}
         </div>
       </div>

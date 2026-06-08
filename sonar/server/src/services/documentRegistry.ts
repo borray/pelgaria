@@ -3,20 +3,38 @@ import crypto from 'crypto'
 
 type DbClient = PrismaClient | Prisma.TransactionClient
 
+// Crockford-подобный алфавит без неоднозначных символов (нет I, O, 0, 1)
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function randomGroup(size: number): string {
+  const bytes = crypto.randomBytes(size)
+  let out = ''
+  for (let i = 0; i < size; i++) {
+    out += CODE_ALPHABET[bytes[i]! % CODE_ALPHABET.length]
+  }
+  return out
+}
+
+// Случайный «зашифрованный» код вида X7F3-A9K2-M4P8.
+// 3 группы по 4 символа из 32-символьного алфавита ≈ 60 бит энтропии —
+// порядок выдачи документов по номеру восстановить невозможно.
+export function randomDocumentCode(groups = 3, size = 4): string {
+  return Array.from({ length: groups }, () => randomGroup(size)).join('-')
+}
+
+/**
+ * Возвращает уникальный случайный номер документа.
+ * Номера больше НЕ выдаются по порядку — каждый получает непредсказуемый код.
+ * Сигнатура сохранена ради совместимости со всеми вызовами (passports, cases,
+ * punishments, laws, treaties, generated documents).
+ */
 export async function nextDocumentNumber(
-  db: DbClient,
-  key: string,
-  prefix: string,
-  date = new Date()
+  _db: DbClient,
+  _key: string,
+  _prefix: string,
+  _date = new Date()
 ): Promise<string> {
-  const year = date.getFullYear()
-  const sequenceKey = `${key}:${year}`
-  const sequence = await db.documentSequence.upsert({
-    where: { key: sequenceKey },
-    create: { key: sequenceKey, value: 1 },
-    update: { value: { increment: 1 } },
-  })
-  return `${prefix}-${year}-${String(sequence.value).padStart(4, '0')}`
+  return randomDocumentCode()
 }
 
 export function registryCode(kind: string, number: string): string {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { IconArrowLeft, IconEdit, IconTrash, IconUpload } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -173,9 +174,9 @@ export function BuildingDetailPage() {
             </Button>
           )}
           {canDelete && (
-            <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
-              <IconTrash size={14} />Удалить
-            </Button>
+            <ActionMenu items={[
+              { label: 'Удалить объект навсегда', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
+            ]} />
           )}
         </div>
       </div>

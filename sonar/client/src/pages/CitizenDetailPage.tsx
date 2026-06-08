@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { IconEdit, IconTrash, IconArrowLeft, IconPrinter } from '@tabler/icons-react'
+import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
@@ -174,10 +175,9 @@ export function CitizenDetailPage() {
           Сформировать досье
         </Button>
         {canDelete && (
-          <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
-            <IconTrash size={14} />
-            Удалить
-          </Button>
+          <ActionMenu items={[
+            { label: 'Удалить гражданина', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
+          ]} />
         )}
       </div>
 

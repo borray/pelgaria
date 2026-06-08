@@ -102,21 +102,43 @@ enum PassportStatus {
 }
 
 model Law {
-  id            String    @id @default(cuid())
-  number        String    @unique
-  registry_code String?   @unique
+  id            String          @id @default(cuid())
+  number        String          @unique
+  registry_code String?         @unique
   type          LawType
+  category      String?
   title         String
+  summary       String?
   body          String
-  status        LawStatus @default(ACTIVE)
-  adopted_at    DateTime  @default(now())
+  status        LawStatus       @default(ACTIVE)
+  adopted_at    DateTime        @default(now())
+  effective_at  DateTime?
   repealed_at   DateTime?
   cases         Case[]
+  attachments   LawAttachment[]
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt @default(now())
+}
+
+model LawAttachment {
+  id            String   @id @default(cuid())
+  law_id        String
+  law           Law      @relation(fields: [law_id], references: [id], onDelete: Cascade)
+  kind          String   @default("DOCUMENT")
+  filename      String
+  original_name String
+  mime_type     String
+  size          Int
+  url           String
+  uploaded_at   DateTime @default(now())
 }
 
 enum LawType {
   LAW
   DECREE
+  CONSTITUTION
+  REGULATION
+  ORDER
 }
 
 enum LawStatus {
