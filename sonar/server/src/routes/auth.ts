@@ -222,6 +222,89 @@ router.post('/change-password', requireAuth, async (req: Request, res: Response)
   }
 })
 
+// POST /api/auth/change-login — смена собственного логина
+router.post('/change-login', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const raw = typeof req.body?.login === 'string' ? req.body.login.trim() : ''
+
+    if (!raw) {
+      res.status(400).json({ error: 'Укажите новый логин' })
+      return
+    }
+    if (raw.length < 3 || raw.length > 32) {
+      res.status(400).json({ error: 'Логин должен содержать от 3 до 32 символов' })
+      return
+    }
+    if (!/^[A-Za-zА-Яа-яЁё0-9._-]+$/u.test(raw)) {
+      res.status(400).json({ error: 'Логин может содержать буквы, цифры, точку, дефис и подчёркивание' })
+      return
+    }
+
+    const current = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } })
+    if (!current) {
+      res.status(404).json({ error: 'Пользователь не найден' })
+      return
+    }
+    if (current.login === raw) {
+      res.status(400).json({ error: 'Это уже ваш текущий логин' })
+      return
+    }
+
+    const taken = await prisma.user.findFirst({
+      where: { login: { equals: raw, mode: 'insensitive' }, NOT: { id: userId } },
+      select: { id: true },
+    })
+    if (taken) {
+      res.status(409).json({ error: 'Такой логин уже занят' })
+      return
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { login: raw },
+      include: { role: true },
+    })
+
+    // Перевыпускаем токены, чтобы новый логин был актуален во всех частях системы
+    const permissions = (user.role.permissions as Record<string, boolean>) || {}
+    const tokenPayload = {
+      id: user.id,
+      login: user.login,
+      role: { id: user.role.id, name: user.role.name, color: user.role.color },
+      permissions,
+    }
+    const accessToken = generateAccessToken(tokenPayload)
+    const refreshTokenStr = generateRefreshToken(user.id)
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshTokenStr,
+        user_id: user.id,
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    })
+
+    res.json({
+      accessToken,
+      refreshToken: refreshTokenStr,
+      user: {
+        id: user.id,
+        login: user.login,
+        role: tokenPayload.role,
+        permissions,
+        must_change_password: user.must_change_password,
+        discord_username: user.discord_username,
+        discord_avatar: user.discord_avatar,
+        citizen_id: user.citizen_id,
+        last_login_at: user.last_login_at,
+      },
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req: Request, res: Response) => {
   try {
