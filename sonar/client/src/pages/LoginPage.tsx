@@ -1,15 +1,38 @@
 import React, { useEffect, useState } from 'react'
 import { IconBrandDiscord, IconInfoCircle, IconLock, IconUser } from '@tabler/icons-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
 import { useAuthStore } from '../store/auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login, user, isLoading } = useAuthStore()
   const [loginVal, setLoginVal] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [discordReady, setDiscordReady] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const code = searchParams.get('error')
+    const messages: Record<string, string> = {
+      discord_not_linked: 'Этот Discord ещё не привязан к служебной учётной записи. Сначала войдите по паролю и привяжите Discord в профиле.',
+      discord_unavailable: 'Вход через Discord пока не настроен администратором.',
+      discord_cancelled: 'Авторизация Discord была отменена.',
+      discord_exchange: 'Discord не подтвердил код авторизации. Повторите вход.',
+      discord_profile: 'Не удалось получить профиль Discord.',
+      discord_state: 'Сессия Discord устарела или недействительна. Начните вход заново.',
+      discord: 'Не удалось завершить вход через Discord.',
+    }
+    if (code && messages[code]) setError(messages[code])
+  }, [searchParams])
+
+  useEffect(() => {
+    fetch('/api/auth/discord/status')
+      .then(async (response) => response.ok ? response.json() as Promise<{ configured: boolean }> : { configured: false })
+      .then((data) => setDiscordReady(data.configured))
+      .catch(() => setDiscordReady(false))
+  }, [])
 
   useEffect(() => {
     if (!user) return
@@ -76,10 +99,16 @@ export function LoginPage() {
 
           <div className="login-divider"><span>или</span></div>
 
-          <button className="login-discord" type="button" onClick={() => { window.location.href = '/api/auth/discord/login' }}>
+          <button
+            className="login-discord"
+            type="button"
+            disabled={discordReady !== true}
+            onClick={() => { window.location.href = '/api/auth/discord/login' }}
+          >
             <IconBrandDiscord size={19} />
-            Войти через Discord
+            {discordReady === null ? 'Проверяем Discord...' : discordReady ? 'Войти через Discord' : 'Discord пока не подключён'}
           </button>
+          {discordReady === false && <p className="login-discord-note">Администратору нужно добавить Client ID и Client Secret приложения Discord.</p>}
 
           <small className="login-security">Игровой государственный сервис · Minecraft RP</small>
         </form>
