@@ -1,17 +1,33 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { IconBrandDiscord, IconUnlink, IconKey, IconUser } from '@tabler/icons-react'
+import {
+  IconBrandDiscord,
+  IconUnlink,
+  IconKey,
+  IconId,
+  IconEdit,
+  IconCheck,
+  IconX,
+  IconShieldLock,
+} from '@tabler/icons-react'
 import { useAuthStore } from '../store/auth'
 import api from '../api/client'
-import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
+import { formatDateTime } from '../utils/formatters'
 
 export function ProfilePage() {
-  const { user, setUser } = useAuthStore()
+  const { user, setUser, setTokens } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [discordStatus, setDiscordStatus] = useState<string | null>(null)
+  const [linking, setLinking] = useState(false)
+
+  const [editingLogin, setEditingLogin] = useState(false)
+  const [loginValue, setLoginValue] = useState(user?.login ?? '')
+  const [loginError, setLoginError] = useState<string | null>(null)
+  const [loginSuccess, setLoginSuccess] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
 
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwError, setPwError] = useState<string | null>(null)
@@ -24,8 +40,16 @@ export function ProfilePage() {
     if (discord === 'error') setDiscordStatus('Ошибка привязки Discord')
   }, [searchParams])
 
-  const handleLinkDiscord = () => {
-    window.location.href = '/api/auth/discord'
+  const handleLinkDiscord = async () => {
+    setLinking(true)
+    setDiscordStatus(null)
+    try {
+      const res = await api.get<{ url: string }>('/auth/discord')
+      window.location.href = res.data.url
+    } catch (err: any) {
+      setDiscordStatus(err?.response?.data?.error ?? 'Discord пока не подключён')
+      setLinking(false)
+    }
   }
 
   const handleUnlinkDiscord = async () => {
@@ -39,11 +63,43 @@ export function ProfilePage() {
     }
   }
 
+  const startEditLogin = () => {
+    setLoginValue(user?.login ?? '')
+    setLoginError(null)
+    setLoginSuccess(false)
+    setEditingLogin(true)
+  }
+
+  const handleChangeLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError(null)
+    setLoginSuccess(false)
+    const value = loginValue.trim()
+    if (value.length < 3) {
+      setLoginError('Минимум 3 символа')
+      return
+    }
+    if (value === user?.login) {
+      setEditingLogin(false)
+      return
+    }
+    setLoginLoading(true)
+    try {
+      const res = await api.post('/auth/change-login', { login: value })
+      setTokens(res.data.accessToken, res.data.refreshToken, res.data.user)
+      setEditingLogin(false)
+      setLoginSuccess(true)
+    } catch (err: any) {
+      setLoginError(err.response?.data?.error ?? 'Не удалось изменить логин')
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setPwError(null)
     setPwSuccess(false)
-
     if (pwForm.next !== pwForm.confirm) {
       setPwError('Пароли не совпадают')
       return
@@ -52,7 +108,6 @@ export function ProfilePage() {
       setPwError('Минимум 6 символов')
       return
     }
-
     setPwLoading(true)
     try {
       await api.post('/auth/change-password', {
@@ -70,139 +125,141 @@ export function ProfilePage() {
 
   if (!user) return null
 
+  const initials = user.login.slice(0, 2).toUpperCase()
+
   return (
-    <div style={{ maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="profile-page">
+      <div className="page-heading">
+        <div>
+          <span className="page-kicker">СОНАР · Учётная запись</span>
+          <h1>Профиль</h1>
+          <p>Управление учётной записью, привязкой Discord и безопасностью.</p>
+        </div>
+      </div>
 
-      {/* Основные данные */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: '50%',
-            background: '#26342E', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {user.discord_avatar
-              ? <img src={user.discord_avatar} style={{ width: 48, height: 48, borderRadius: '50%' }} alt="" />
-              : <IconUser size={24} color="#fff" />
-            }
+      {/* Шапка профиля */}
+      <div className="profile-hero">
+        <div className="profile-avatar">
+          {user.discord_avatar
+            ? <img src={user.discord_avatar} alt="" />
+            : <span>{initials}</span>}
+        </div>
+        <div className="profile-hero-main">
+          <strong>{user.login}</strong>
+          <div className="profile-hero-meta">
+            <Badge status={user.role.name} label={user.role.name} color={user.role.color} />
+            {user.discord_username && (
+              <span className="profile-chip"><IconBrandDiscord size={13} /> @{user.discord_username}</span>
+            )}
           </div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 16, color: '#18211D' }}>{user.login}</div>
-            <div style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>
-              <Badge status={user.role.name} label={user.role.name} color={user.role.color} />
-            </div>
-          </div>
         </div>
-
-        <div style={{ display: 'grid', gap: 8, fontSize: 14 }}>
-          <Row label="Логин" value={user.login} mono />
-          <Row label="Роль" value={user.role.name} />
-        </div>
-      </Card>
-
-      {/* Discord */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <IconBrandDiscord size={20} color="#5865F2" />
-          <span style={{ fontWeight: 600, fontSize: 15 }}>Discord</span>
-        </div>
-
-        {discordStatus && (
-          <div style={{
-            padding: '8px 12px', marginBottom: 12, borderRadius: 4, fontSize: 13,
-            background: discordStatus.includes('успешно') || discordStatus.includes('отвязан') ? '#F0FDF4' : '#FEF2F2',
-            color: discordStatus.includes('успешно') || discordStatus.includes('отвязан') ? '#15803D' : '#DC2626',
-            border: `1px solid ${discordStatus.includes('успешно') || discordStatus.includes('отвязан') ? '#BBF7D0' : '#FECACA'}`,
-          }}>
-            {discordStatus}
+        {user.last_login_at && (
+          <div className="profile-hero-side">
+            <span>Последний вход</span>
+            <strong>{formatDateTime(user.last_login_at)}</strong>
           </div>
         )}
+      </div>
 
-        {user.discord_username ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="profile-grid">
+        {/* Учётная запись / смена логина */}
+        <section className="form-section">
+          <div className="form-section-heading">
+            <span><IconId size={15} /></span>
+            <div><strong>Учётная запись</strong><small>Логин для входа в систему</small></div>
+          </div>
+
+          {!editingLogin ? (
+            <div className="profile-row">
+              <div>
+                <div className="profile-row-label">Логин</div>
+                <div className="profile-row-value">{user.login}</div>
+              </div>
+              <Button variant="secondary" size="sm" onClick={startEditLogin}>
+                <IconEdit size={14} /> Изменить
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleChangeLogin} className="profile-edit-form">
+              <Input
+                label="Новый логин"
+                value={loginValue}
+                autoFocus
+                onChange={(e) => setLoginValue(e.target.value)}
+                placeholder="3–32 символа: буквы, цифры, . _ -"
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button type="submit" variant="primary" size="sm" loading={loginLoading}>
+                  <IconCheck size={14} /> Сохранить
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setEditingLogin(false)}>
+                  <IconX size={14} /> Отмена
+                </Button>
+              </div>
+            </form>
+          )}
+          {loginError && <div className="form-error" style={{ marginTop: 12 }}>{loginError}</div>}
+          {loginSuccess && <div className="form-success" style={{ marginTop: 12 }}>Логин изменён</div>}
+
+          <div className="profile-row" style={{ marginTop: 6 }}>
             <div>
-              <div style={{ fontWeight: 500 }}>@{user.discord_username}</div>
-              <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Аккаунт привязан</div>
+              <div className="profile-row-label">Роль</div>
+              <div className="profile-row-value">{user.role.name}</div>
             </div>
-            <Button variant="secondary" size="sm" onClick={handleUnlinkDiscord}>
-              <IconUnlink size={14} style={{ marginRight: 4 }} />
-              Отвязать
-            </Button>
           </div>
-        ) : (
-          <div>
-            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 12 }}>
-              Discord не привязан. Привязка позволяет отображать ваш username в реестре и паспорте.
-            </div>
-            <Button variant="primary" size="sm" onClick={handleLinkDiscord}>
-              <IconBrandDiscord size={14} style={{ marginRight: 6 }} />
-              Привязать Discord
-            </Button>
+        </section>
+
+        {/* Discord */}
+        <section className="form-section">
+          <div className="form-section-heading">
+            <span style={{ color: '#5865F2', background: '#eaecfb', borderColor: '#cdd2f6' }}><IconBrandDiscord size={15} /></span>
+            <div><strong>Discord</strong><small>Привязка отображает ваш username в реестре и паспорте</small></div>
           </div>
-        )}
-      </Card>
 
-      {/* Смена пароля */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <IconKey size={20} color="#14715A" />
-          <span style={{ fontWeight: 600, fontSize: 15 }}>Смена пароля</span>
-        </div>
-
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Input
-            label="Текущий пароль"
-            type="password"
-            value={pwForm.current}
-            onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))}
-          />
-          <Input
-            label="Новый пароль"
-            type="password"
-            value={pwForm.next}
-            onChange={e => setPwForm(f => ({ ...f, next: e.target.value }))}
-          />
-          <Input
-            label="Подтвердить новый пароль"
-            type="password"
-            value={pwForm.confirm}
-            onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
-          />
-
-          {pwError && (
-            <div style={{
-              padding: '8px 12px', borderRadius: 4, fontSize: 13,
-              background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA',
-            }}>
-              {pwError}
+          {discordStatus && (
+            <div className={discordStatus.includes('успешно') || discordStatus.includes('отвязан') ? 'form-success' : 'form-error'} style={{ marginBottom: 12 }}>
+              {discordStatus}
             </div>
           )}
 
-          {pwSuccess && (
-            <div style={{
-              padding: '8px 12px', borderRadius: 4, fontSize: 13,
-              background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0',
-            }}>
-              Пароль успешно изменён
+          {user.discord_username ? (
+            <div className="profile-row">
+              <div>
+                <div className="profile-row-label">Привязан аккаунт</div>
+                <div className="profile-row-value">@{user.discord_username}</div>
+              </div>
+              <Button variant="secondary" size="sm" onClick={handleUnlinkDiscord}>
+                <IconUnlink size={14} /> Отвязать
+              </Button>
             </div>
-          )}
-
-          <div>
-            <Button type="submit" variant="primary" size="sm" loading={pwLoading}>
-              Сменить пароль
+          ) : (
+            <Button variant="primary" size="sm" loading={linking} onClick={handleLinkDiscord}>
+              <IconBrandDiscord size={14} /> Привязать Discord
             </Button>
+          )}
+        </section>
+
+        {/* Смена пароля */}
+        <section className="form-section profile-span-2">
+          <div className="form-section-heading">
+            <span><IconShieldLock size={15} /></span>
+            <div><strong>Безопасность</strong><small>Смена пароля для входа</small></div>
           </div>
-        </form>
-      </Card>
 
-    </div>
-  )
-}
-
-function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <span style={{ color: '#6B7280', minWidth: 100 }}>{label}:</span>
-      <span style={{ fontFamily: mono ? 'JetBrains Mono, monospace' : undefined }}>{value}</span>
+          <form onSubmit={handleChangePassword} className="profile-pw-grid">
+            <Input label="Текущий пароль" type="password" value={pwForm.current} onChange={(e) => setPwForm((f) => ({ ...f, current: e.target.value }))} />
+            <Input label="Новый пароль" type="password" value={pwForm.next} onChange={(e) => setPwForm((f) => ({ ...f, next: e.target.value }))} />
+            <Input label="Подтвердите новый пароль" type="password" value={pwForm.confirm} onChange={(e) => setPwForm((f) => ({ ...f, confirm: e.target.value }))} />
+            <div className="profile-pw-actions">
+              <Button type="submit" variant="primary" size="sm" loading={pwLoading}>
+                <IconKey size={14} /> Сменить пароль
+              </Button>
+            </div>
+          </form>
+          {pwError && <div className="form-error" style={{ marginTop: 12 }}>{pwError}</div>}
+          {pwSuccess && <div className="form-success" style={{ marginTop: 12 }}>Пароль успешно изменён</div>}
+        </section>
+      </div>
     </div>
   )
 }

@@ -58,7 +58,9 @@ router.get('/status', (_req: Request, res: Response) => {
   res.json({ configured: discordConfigured() })
 })
 
-// GET /api/auth/discord — redirect to Discord OAuth (link account, requires auth)
+// GET /api/auth/discord — выдаёт ссылку на OAuth Discord для привязки аккаунта.
+// Эндпоинт под requireAuth: токен приходит в заголовке (axios), поэтому
+// возвращаем URL как JSON, а переход на Discord делает уже сам клиент.
 router.get('/', requireAuth, (req: Request, res: Response) => {
   if (!discordConfigured()) {
     res.status(503).json({ error: 'Discord OAuth не настроен' })
@@ -73,7 +75,7 @@ router.get('/', requireAuth, (req: Request, res: Response) => {
     state: createOAuthState({ flow: 'link', userId: req.user!.id }),
   })
 
-  res.redirect(`https://discord.com/api/oauth2/authorize?${params.toString()}`)
+  res.json({ url: `https://discord.com/api/oauth2/authorize?${params.toString()}` })
 })
 
 // GET /api/auth/discord/login — redirect to Discord OAuth for login (no auth required)
