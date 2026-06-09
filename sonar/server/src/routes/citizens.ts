@@ -16,9 +16,19 @@ const router = Router()
 const prisma = new PrismaClient()
 
 async function generateRegNumber(): Promise<string> {
-  const count = await prisma.citizen.count()
-  const seq = count + 1
-  return `ПЕЛ-${String(seq).padStart(4, '0')}`
+  // Берём максимальный существующий номер, а НЕ count() — иначе после удаления
+  // гражданина номер совпадёт с уже занятым и нарушит уникальность.
+  const last = await prisma.citizen.findFirst({
+    where: { reg_number: { startsWith: 'ПЕЛ-' } },
+    orderBy: { reg_number: 'desc' },
+    select: { reg_number: true },
+  })
+  let next = 1
+  if (last) {
+    const n = parseInt(last.reg_number.replace(/\D/g, ''), 10)
+    if (!Number.isNaN(n)) next = n + 1
+  }
+  return `ПЕЛ-${String(next).padStart(4, '0')}`
 }
 
 // GET /api/citizens
@@ -74,19 +84,30 @@ router.post('/', requireAuth, requirePermission('citizens.create'), async (req: 
       return
     }
 
-    const reg_number = await generateRegNumber()
-
-    const citizen = await prisma.citizen.create({
-      data: {
-        reg_number,
-        nickname,
-        discord_username: discord_username || null,
-        role_title: role_title || 'Гражданин',
-        status: status || 'ACTIVE',
-        note: note || null,
-        joined_at: joined_at ? new Date(joined_at) : new Date(),
-      },
-    })
+    let citizen = null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const reg_number = await generateRegNumber()
+      try {
+        citizen = await prisma.citizen.create({
+          data: {
+            reg_number,
+            nickname,
+            discord_username: discord_username || null,
+            role_title: role_title || 'Гражданин',
+            status: status || 'ACTIVE',
+            note: note || null,
+            joined_at: joined_at ? new Date(joined_at) : new Date(),
+          },
+        })
+        break
+      } catch (e) {
+        // Повторяем при гонке за уникальный номер
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002' && attempt < 4) {
+          continue
+        }
+        throw e
+      }
+    }
 
     res.status(201).json(citizen)
   } catch (err) {
