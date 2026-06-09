@@ -43,6 +43,7 @@ const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string 
       { key: 'laws.create', label: 'Создавать' },
       { key: 'laws.edit', label: 'Редактировать' },
       { key: 'laws.repeal', label: 'Отменять' },
+      { key: 'laws.delete', label: 'Удалять записи' },
     ],
   },
   {
@@ -84,13 +85,6 @@ const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string 
       { key: 'relict.create', label: 'Создавать' },
       { key: 'relict.edit', label: 'Редактировать' },
       { key: 'relict.delete', label: 'Удалять' },
-    ],
-  },
-  {
-    group: 'Территории',
-    items: [
-      { key: 'territories.view', label: 'Просматривать' },
-      { key: 'territories.manage', label: 'Управлять' },
     ],
   },
   {

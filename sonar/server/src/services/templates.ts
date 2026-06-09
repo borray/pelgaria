@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import bwipjs from 'bwip-js'
 
 const GOOGLE_FONTS = ''
 
@@ -32,9 +33,9 @@ function seedStream(seed: string): () => number {
 // ---------------------------------------------------------------------------
 export function guillochePattern(seed: string, width: number, height: number): string {
   const rnd = seedStream(seed)
-  const numLines = 6 + Math.floor(rnd() * 4) // 6–9 lines
+  const numLines = 3
   const lines: string[] = []
-  const baseColors = [ACCENT, ACCENT_LIGHT, '#2C5AA0']
+  const baseColors = ['#111111']
   for (let i = 0; i < numLines; i++) {
     const amp1 = height * (0.12 + rnd() * 0.18)
     const amp2 = height * (0.05 + rnd() * 0.1)
@@ -49,7 +50,7 @@ export function guillochePattern(seed: string, width: number, height: number): s
     }
     const color = baseColors[i % baseColors.length]
     lines.push(
-      `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="0.6" opacity="0.22"/>`
+      `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="0.55" opacity="0.28"/>`
     )
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${lines.join('')}</svg>`
@@ -64,57 +65,19 @@ export function guillocheRosette(seed: string, size = 220): string {
   const rnd = seedStream('rosette:' + seed)
   const cx = size / 2
   const cy = size / 2
-  const maxR = size / 2 - 6
-
-  const R = 60 + Math.floor(rnd() * 70)
-  let r = 13 + Math.floor(rnd() * 34)
-  if (r === 0) r = 7
-  const d = 18 + Math.floor(rnd() * 46)
-  const passes = 3 + Math.floor(rnd() * 3) // 3–5 phase-shifted passes
-  const turns = r / gcd(R, r) // closes the curve
-  const steps = Math.max(720, Math.floor(turns * 240))
-
-  // normalize so the curve fits maxR
-  const ratio = (R - r) / r
-  const ampEstimate = (R - r) + d
-  const scale = maxR / ampEstimate
-
-  const colors = [ACCENT, ACCENT_LIGHT, '#2C5AA0', '#1B3A6B']
-  const paths: string[] = []
-  for (let p = 0; p < passes; p++) {
-    const phase = (p / passes) * Math.PI * 2
-    const rot = (p * 13 + rnd() * 20) * (Math.PI / 180)
-    const pts: string[] = []
-    for (let s = 0; s <= steps; s++) {
-      const t = (s / steps) * turns * Math.PI * 2 + phase
-      let x = (R - r) * Math.cos(t) + d * Math.cos(ratio * t)
-      let y = (R - r) * Math.sin(t) - d * Math.sin(ratio * t)
-      // rotate
-      const rx = x * Math.cos(rot) - y * Math.sin(rot)
-      const ry = x * Math.sin(rot) + y * Math.cos(rot)
-      x = cx + rx * scale
-      y = cy + ry * scale
-      pts.push(`${x.toFixed(2)},${y.toFixed(2)}`)
-    }
-    paths.push(
-      `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p % colors.length]}" stroke-width="0.5" opacity="0.5"/>`
-    )
-  }
-  // concentric guide rings
-  const rings = [maxR, maxR * 0.7, maxR * 0.42]
-    .map((rr) => `<circle cx="${cx}" cy="${cy}" r="${rr.toFixed(1)}" fill="none" stroke="${ACCENT}" stroke-width="0.4" opacity="0.25"/>`)
+  const outer = size / 2 - 5
+  const spokes = 8
+  const angleOffset = rnd() * Math.PI
+  const lines = Array.from({ length: spokes }, (_, index) => {
+    const angle = angleOffset + (index / spokes) * Math.PI * 2
+    const x = cx + Math.cos(angle) * outer * 0.72
+    const y = cy + Math.sin(angle) * outer * 0.72
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#111" stroke-width="0.55" opacity="0.34"/>`
+  }).join('')
+  const rings = [outer, outer * 0.68, outer * 0.28]
+    .map((radius, index) => `<circle cx="${cx}" cy="${cy}" r="${radius.toFixed(1)}" fill="none" stroke="#111" stroke-width="${index === 0 ? 1 : 0.55}" opacity="${index === 0 ? 0.7 : 0.38}"/>`)
     .join('')
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${rings}${paths.join('')}</svg>`
-}
-
-function gcd(a: number, b: number): number {
-  a = Math.abs(a)
-  b = Math.abs(b)
-  while (b) {
-    ;[a, b] = [b, a % b]
-  }
-  return a || 1
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${rings}${lines}<rect x="${cx - 2}" y="${cy - 2}" width="4" height="4" fill="#111"/></svg>`
 }
 
 // ---------------------------------------------------------------------------
@@ -230,9 +193,9 @@ export function guillocheField(
   opacity = 0.1
 ): string {
   const rnd = seedStream('field:' + seed)
-  const numLines = 10 + Math.floor(rnd() * 6)
+  const numLines = 4
   const lines: string[] = []
-  const colors = [ACCENT, ACCENT_LIGHT, '#2C5AA0']
+  const colors = ['#111111']
   for (let i = 0; i < numLines; i++) {
     const amp1 = height * (0.18 + rnd() * 0.22)
     const amp2 = height * (0.06 + rnd() * 0.12)
@@ -249,39 +212,40 @@ export function guillocheField(
       pts.push(`${x},${y.toFixed(2)}`)
     }
     lines.push(
-      `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="0.45" opacity="${opacity.toFixed(2)}"/>`
+      `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="0.5" opacity="${Math.min(opacity, 0.22).toFixed(2)}"/>`
     )
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;">${lines.join('')}</svg>`
 }
 
 // ---------------------------------------------------------------------------
-// Barcode SVG — Code128-like barcode from data hash
+// Barcode SVG — real Code 128 generated from a stable control hash
 // ---------------------------------------------------------------------------
 export function barcodeStripes(data: string, width: number, height: number): string {
-  const hash = crypto.createHash('sha256').update(data).digest('hex')
-  const pattern: number[] = []
-  for (let i = 0; i < hash.length; i++) {
-    const code = hash.charCodeAt(i)
-    const widths = [1, 1, 2, 1, 2]
-    for (let b = 0; b < 5; b++) {
-      pattern.push(widths[b % 5] * (1 + ((code >> b) & 1)))
-    }
-  }
-  const totalWidth = pattern.reduce((a, b) => a + b, 0)
-  const scale = width / totalWidth
-  let x = 0
-  const bars: string[] = []
-  pattern.forEach((w, i) => {
-    const sw = w * scale
-    if (i % 2 === 0) {
-      bars.push(
-        `<rect x="${x.toFixed(1)}" y="0" width="${sw.toFixed(1)}" height="${height}" fill="${INK}"/>`
-      )
-    }
-    x += sw
+  const control = `SONAR-${crypto.createHash('sha256').update(data).digest('hex').slice(0, 16).toUpperCase()}`
+  const svg = bwipjs.toSVG({
+    bcid: 'code128',
+    text: control,
+    scale: 2,
+    height: Math.max(10, Math.round(height / 3)),
+    includetext: false,
+    paddingwidth: 0,
+    paddingheight: 0,
   })
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${bars.join('')}</svg>`
+  return svg
+    .replace(/\swidth="[^"]*"/, '')
+    .replace(/\sheight="[^"]*"/, '')
+    .replace('<svg ', `<svg width="${width}" height="${height}" preserveAspectRatio="none" `)
+}
+
+export function qrCode(data: string, size = 92): string {
+  return bwipjs.toSVG({
+    bcid: 'qrcode',
+    text: data,
+    scale: 3,
+    paddingwidth: 0,
+    paddingheight: 0,
+  }).replace('<svg ', `<svg width="${size}" height="${size}" `)
 }
 
 // ---------------------------------------------------------------------------
@@ -444,12 +408,10 @@ export interface PageShellOptions {
  */
 export function pageShell(opts: PageShellOptions): string {
   const accent = opts.accent ?? ACCENT
-  const border = guillocheBorder(opts.seed)
   const micro = microtextLine('ПЕЛЬАГРИЯ • СОНАР', A4_W - 96)
-  const watermark = opts.watermark ?? ''
   const controlCode = `СОНАР-${verificationHash(opts.seed, opts.kind ?? 'DOC', 'PRINT')}`
-  const controlBarcode = barcodeStripes(controlCode, 250, 34)
-  const securityRosette = guillocheRosette(`${opts.seed}:security`, 96)
+  const controlBarcode = barcodeStripes(controlCode, 330, 54)
+  const controlQr = qrCode(opts.seed, 86)
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -465,31 +427,34 @@ export function pageShell(opts: PageShellOptions): string {
     background: #FFFFFF;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
   }
-  .sheet-border { position: absolute; inset: 0; z-index: 0; }
+  .sheet-border { position:absolute; inset:18px; z-index:0; border:2px solid #000; outline:1px solid #000; outline-offset:5px; }
+  .registration-mark { position:absolute; width:18px; height:18px; background:#000; z-index:3; }
+  .registration-mark.tl { top:8px; left:8px; } .registration-mark.tr { top:8px; right:8px; }
+  .registration-mark.bl { bottom:8px; left:8px; } .registration-mark.br { bottom:8px; right:8px; }
   .sheet-inner {
     position: relative;
     z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
-    margin: 30px;
-    min-height: calc(${A4_H}px - 60px);
+    margin: 38px;
+    min-height: calc(${A4_H}px - 76px);
   }
   .doc-watermark {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    opacity: 0.06;
+    display: none;
     z-index: 0;
     pointer-events: none;
   }
   .doc-body { position: relative; z-index: 1; flex: 1; }
-  .doc-microstrip { height: 10px; overflow: hidden; opacity: 0.8; margin: 6px 0; }
+  .doc-microstrip { height: 8px; overflow: hidden; opacity: 1; margin: 5px 0; filter: grayscale(1) contrast(1.8); }
   .document-security {
     display: grid;
-    grid-template-columns: 86px 1fr 250px;
+    grid-template-columns: 86px 1fr 330px;
     align-items: center;
     gap: 14px;
     border-top: 2px solid #111;
@@ -498,17 +463,19 @@ export function pageShell(opts: PageShellOptions): string {
     padding: 8px 0;
     color: #111;
   }
-  .document-security-rosette { width: 62px; height: 62px; filter: grayscale(1) contrast(1.5); }
-  .document-security-rosette svg { width: 62px; height: 62px; }
+  .document-security-qr { width: 72px; height: 72px; }
+  .document-security-qr svg { width: 72px; height: 72px; shape-rendering: crispEdges; }
   .document-security-title { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
   .document-security-copy { font-size: 8px; line-height: 1.45; color: #444; margin-top: 4px; }
   .document-security-code { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .04em; margin-top: 2px; }
   .document-security-barcode { text-align: right; }
-  .document-security-barcode svg { filter: grayscale(1) contrast(2); }
+  .document-security-barcode svg { filter: grayscale(1) contrast(2.4); shape-rendering: crispEdges; }
   @media print {
+    @page { size: A4; margin: 0; }
     * { color: #000 !important; border-color: #222 !important; text-shadow: none !important; box-shadow: none !important; }
-    .sheet { filter: grayscale(1) contrast(1.08); }
-    .doc-watermark { opacity: .045; }
+    html, body, .sheet { background:#fff !important; }
+    .sheet { filter: grayscale(1) contrast(1.18); }
+    .doc-watermark { display:none !important; }
     svg { shape-rendering: crispEdges; }
   }
   ${opts.accent ? `.accent { color: ${accent}; }` : ''}
@@ -517,21 +484,22 @@ export function pageShell(opts: PageShellOptions): string {
 </head>
 <body>
   <div class="sheet">
-    <div class="sheet-border">${border}</div>
+    <div class="registration-mark tl"></div><div class="registration-mark tr"></div>
+    <div class="registration-mark bl"></div><div class="registration-mark br"></div>
+    <div class="sheet-border"></div>
     <div class="sheet-inner">
       ${opts.header}
       <div class="doc-microstrip">${micro}</div>
-      ${watermark ? `<div class="doc-watermark">${watermark}</div>` : ''}
       <div class="doc-body">
         ${opts.body}
       </div>
       <div class="doc-microstrip">${micro}</div>
       ${opts.footer}
       <div class="document-security">
-        <div class="document-security-rosette">${securityRosette}</div>
+        <div class="document-security-qr">${controlQr}</div>
         <div>
           <div class="document-security-title">Контроль печатного документа СОНАР</div>
-          <div class="document-security-copy">Подлинность проверяется по ШК и контрольному рисунку. Копия сохраняет юридическую силу только при совпадении реквизитов реестра.</div>
+          <div class="document-security-copy">Подлинность проверяется по крупному Code 128, QR и реквизитам реестра. Документ оптимизирован для чёрно-белой лазерной печати.</div>
           <div class="document-security-code">${controlCode}</div>
         </div>
         <div class="document-security-barcode">${controlBarcode}</div>
@@ -542,7 +510,7 @@ export function pageShell(opts: PageShellOptions): string {
 </html>`
 }
 
-/** Standard dark header bar contents builder (reusable). */
+/** Standard monochrome header block (reusable). */
 export function headerBar(opts: {
   title: string
   subtitle?: string
@@ -551,14 +519,14 @@ export function headerBar(opts: {
   accent?: string
 }): string {
   const accent = opts.accent ?? ACCENT_LIGHT
-  return `<div style="background:${INK};display:flex;align-items:center;padding:0 28px;height:86px;border-radius:2px;">
-    <div style="font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:3px;width:180px;flex-shrink:0;line-height:1.6;">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+  return `<div style="background:#fff;display:flex;align-items:center;padding:0 24px;height:86px;border:2px solid #000;">
+    <div style="font-size:11px;color:#111;text-transform:uppercase;letter-spacing:3px;width:180px;flex-shrink:0;line-height:1.6;">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
     <div style="flex:1;text-align:center;">
-      <div style="color:#fff;font-size:18px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${opts.title}</div>
-      ${opts.subtitle ? `<div style="color:rgba(255,255,255,0.55);font-size:11px;margin-top:4px;letter-spacing:0.05em;">${opts.subtitle}</div>` : ''}
+      <div style="color:#000;font-size:18px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${opts.title}</div>
+      ${opts.subtitle ? `<div style="color:#444;font-size:11px;margin-top:4px;letter-spacing:0.05em;">${opts.subtitle}</div>` : ''}
       ${opts.number ? `<div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:${accent};margin-top:5px;letter-spacing:0.05em;">${opts.number}</div>` : ''}
     </div>
-    <div style="width:180px;flex-shrink:0;text-align:right;font-size:12px;color:rgba(255,255,255,0.5);">${opts.date ?? ''}</div>
+    <div style="width:180px;flex-shrink:0;text-align:right;font-size:12px;color:#444;">${opts.date ?? ''}</div>
   </div>`
 }
 

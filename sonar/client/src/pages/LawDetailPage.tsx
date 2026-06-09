@@ -12,6 +12,8 @@ import {
   IconExternalLink,
   IconPlayerPause,
   IconPlayerPlay,
+  IconHistory,
+  IconGitBranch,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
@@ -21,10 +23,12 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { Spinner } from '../components/ui/Spinner'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
+import { useTypeConfirm } from '../hooks/useTypeConfirm'
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} Б`
@@ -37,19 +41,37 @@ export function LawDetailPage() {
   const navigate = useNavigate()
   const canEdit = usePermission('laws.edit')
   const canRepeal = usePermission('laws.repeal')
+  const canDelete = usePermission('laws.delete')
 
   const [law, setLaw] = useState<Law | null>(null)
   const [loading, setLoading] = useState(true)
   const [cases, setCases] = useState<Case[]>([])
+  const [availableLaws, setAvailableLaws] = useState<Law[]>([])
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState({ title: '', body: '', category: '', summary: '' })
+  const [editForm, setEditForm] = useState({
+    title: '',
+    short_title: '',
+    body: '',
+    category: '',
+    summary: '',
+    authority: '',
+    source: '',
+    keywords: '',
+    parent_id: '',
+    effective_at: '',
+    change_note: '',
+  })
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
   const [showRepealModal, setShowRepealModal] = useState(false)
   const [repealLoading, setRepealLoading] = useState(false)
+  const [repealReason, setRepealReason] = useState('')
   const [statusLoading, setStatusLoading] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [pdfLoading, setPdfLoading] = useState(false)
 
@@ -58,6 +80,7 @@ export function LawDetailPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const deleteConfirm = useTypeConfirm(law?.number ?? '', showDeleteModal)
 
   useEffect(() => {
     if (!id) return
@@ -65,7 +88,19 @@ export function LawDetailPage() {
     apiClient.get<Law>(`/laws/${id}`)
       .then((r) => {
         setLaw(r.data)
-        setEditForm({ title: r.data.title, body: r.data.body, category: r.data.category ?? '', summary: r.data.summary ?? '' })
+        setEditForm({
+          title: r.data.title,
+          short_title: r.data.short_title ?? '',
+          body: r.data.body,
+          category: r.data.category ?? '',
+          summary: r.data.summary ?? '',
+          authority: r.data.authority ?? '',
+          source: r.data.source ?? '',
+          keywords: r.data.keywords?.join(', ') ?? '',
+          parent_id: r.data.parent_id ?? '',
+          effective_at: r.data.effective_at?.slice(0, 10) ?? '',
+          change_note: '',
+        })
         setAttachments(r.data.attachments ?? [])
       })
       .catch(() => setLaw(null))
@@ -74,6 +109,10 @@ export function LawDetailPage() {
     apiClient.get<Case[]>('/cases')
       .then((r) => setCases(r.data.filter((c) => c.law_id === id)))
       .catch(() => setCases([]))
+
+    apiClient.get<Law[]>('/laws')
+      .then((r) => setAvailableLaws(r.data.filter((item) => item.id !== id && item.status === 'ACTIVE')))
+      .catch(() => setAvailableLaws([]))
   }, [id])
 
   const handleEdit = async (e: React.FormEvent) => {
@@ -86,6 +125,13 @@ export function LawDetailPage() {
         body: editForm.body.trim(),
         category: editForm.category.trim() || null,
         summary: editForm.summary.trim() || null,
+        short_title: editForm.short_title.trim() || null,
+        authority: editForm.authority.trim() || null,
+        source: editForm.source.trim() || null,
+        keywords: editForm.keywords,
+        parent_id: editForm.parent_id || null,
+        effective_at: editForm.effective_at || null,
+        change_note: editForm.change_note.trim() || 'Обновление редакции',
       })
       setLaw((prev) => ({ ...res.data, attachments: prev?.attachments ?? attachments }))
       setShowEditModal(false)
@@ -100,13 +146,28 @@ export function LawDetailPage() {
   const handleRepeal = async () => {
     setRepealLoading(true)
     try {
-      const res = await apiClient.post<Law>(`/laws/${id}/repeal`, {})
+      const res = await apiClient.post<Law>(`/laws/${id}/repeal`, { reason: repealReason.trim() || null })
       setLaw((prev) => ({ ...res.data, attachments: prev?.attachments ?? attachments }))
       setShowRepealModal(false)
+      setRepealReason('')
     } catch {
       alert('Ошибка отмены закона')
     } finally {
       setRepealLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!law || !deleteConfirm.confirmed) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/laws/${law.id}`, { data: { confirm_number: law.number } })
+      navigate('/laws')
+    } catch (error: unknown) {
+      setDeleteError((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось удалить документ')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -185,11 +246,18 @@ export function LawDetailPage() {
       hidden: !canEdit,
     },
     {
-      label: 'Отменить закон',
+      label: 'Отменить действие',
       icon: <IconTrash size={15} />,
       danger: true,
       onClick: () => setShowRepealModal(true),
       hidden: !canRepeal || law.status === 'REPEALED',
+    },
+    {
+      label: 'Удалить запись навсегда',
+      icon: <IconTrash size={15} />,
+      danger: true,
+      onClick: () => setShowDeleteModal(true),
+      hidden: !canDelete,
     },
   ]
 
@@ -212,6 +280,7 @@ export function LawDetailPage() {
             {law.registry_code && <span className="registry-code">{law.registry_code}</span>}
             <Badge status={law.type} />
             <Badge status={law.status} />
+            <span className="law-revision-pill">Редакция {law.revision_number}</span>
             {law.category && <span style={{ fontSize: '12px', color: '#6B7280' }}>· {law.category}</span>}
           </div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
@@ -253,7 +322,31 @@ export function LawDetailPage() {
                 <div style={{ fontSize: '14px', color: '#DC2626', fontWeight: 500 }}>{formatDate(law.repealed_at)}</div>
               </div>
             )}
+            {law.authority && (
+              <div>
+                <div className="law-meta-label">Издавший орган</div>
+                <div className="law-meta-value">{law.authority}</div>
+              </div>
+            )}
+            {law.source && (
+              <div>
+                <div className="law-meta-label">Источник публикации</div>
+                <div className="law-meta-value">{law.source}</div>
+              </div>
+            )}
           </div>
+          {law.parent && (
+            <Link className="law-relation-banner" to={`/laws/${law.parent.id}`}>
+              <IconGitBranch size={17} />
+              <span>Изменяет или дополняет</span>
+              <strong>{law.parent.number} · {law.parent.title}</strong>
+              <IconExternalLink size={15} />
+            </Link>
+          )}
+          {law.repeal_reason && <div className="law-repeal-note"><strong>Основание отмены</strong><span>{law.repeal_reason}</span></div>}
+          {law.keywords?.length > 0 && (
+            <div className="law-keywords">{law.keywords.map((keyword) => <span key={keyword}>{keyword}</span>)}</div>
+          )}
           <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '20px' }}>
             <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Текст документа</div>
             <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.8', fontFamily: 'Inter, sans-serif', whiteSpace: 'pre-wrap' }}>
@@ -261,6 +354,42 @@ export function LawDetailPage() {
             </div>
           </div>
         </Card>
+
+        {law.amendments && law.amendments.length > 0 && (
+          <Card style={{ padding: '20px 24px' }}>
+            <div className="law-card-heading"><IconGitBranch size={17} /><div><strong>Изменяющие документы</strong><small>{law.amendments.length} связанных актов</small></div></div>
+            <div className="law-linked-list">
+              {law.amendments.map((amendment) => (
+                <Link key={amendment.id} to={`/laws/${amendment.id}`}>
+                  <span>{amendment.number}</span>
+                  <strong>{amendment.title}</strong>
+                  <Badge status={amendment.status} />
+                  <IconArrowLeft className="law-link-arrow" size={15} />
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {law.revisions && law.revisions.length > 0 && (
+          <Card style={{ padding: '20px 24px' }}>
+            <div className="law-card-heading"><IconHistory size={17} /><div><strong>История редакций</strong><small>Предыдущие состояния документа сохранены автоматически</small></div></div>
+            <div className="law-timeline">
+              <div className="law-timeline-row is-current">
+                <span>{law.revision_number}</span>
+                <div><strong>Действующая редакция</strong><small>Последнее состояние документа</small></div>
+                <Badge status={law.status} />
+              </div>
+              {law.revisions.map((revision) => (
+                <div className="law-timeline-row" key={revision.id}>
+                  <span>{revision.revision_number}</span>
+                  <div><strong>{revision.change_note || 'Изменение документа'}</strong><small>{formatDate(revision.created_at)} · {revision.created_by}</small></div>
+                  <Badge status={revision.status} />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <Card style={{ padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
@@ -351,8 +480,9 @@ export function LawDetailPage() {
       <Modal
         open={showEditModal}
         onClose={() => { setShowEditModal(false); setEditError(null) }}
-        title="Редактировать"
-        width={620}
+        title="Новая редакция документа"
+        description={`Текущая редакция ${law.revision_number} будет сохранена в истории.`}
+        width={760}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>Отмена</Button>
@@ -361,9 +491,17 @@ export function LawDetailPage() {
         }
       >
         <form onSubmit={handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Input label="Название" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
-          <Input label="Категория / раздел" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
-          <Input label="Краткое описание" value={editForm.summary} onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })} />
+          <div className="form-grid">
+            <div className="span-2"><Input label="Полное название" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} /></div>
+            <Input label="Краткое название" value={editForm.short_title} onChange={(e) => setEditForm({ ...editForm, short_title: e.target.value })} />
+            <Input label="Категория / раздел" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+            <Input label="Издавший орган" value={editForm.authority} onChange={(e) => setEditForm({ ...editForm, authority: e.target.value })} />
+            <Input label="Источник публикации" value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} />
+            <Input label="Вступает в силу" type="date" value={editForm.effective_at} onChange={(e) => setEditForm({ ...editForm, effective_at: e.target.value })} />
+            <Input label="Ключевые слова" value={editForm.keywords} onChange={(e) => setEditForm({ ...editForm, keywords: e.target.value })} />
+            <div className="span-2"><Select searchable label="Изменяет или дополняет акт" value={editForm.parent_id} onChange={(e) => setEditForm({ ...editForm, parent_id: e.target.value })} placeholder="Самостоятельный документ" options={availableLaws.map((item) => ({ value: item.id, label: `${item.number} · ${item.title}` }))} /></div>
+            <div className="span-2"><Input label="Краткое описание" value={editForm.summary} onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })} /></div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', fontFamily: 'Inter, sans-serif' }}>Текст</label>
             <textarea
@@ -373,6 +511,7 @@ export function LawDetailPage() {
               style={{ padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', resize: 'vertical', outline: 'none' }}
             />
           </div>
+          <Input label="Что изменено в этой редакции *" value={editForm.change_note} onChange={(e) => setEditForm({ ...editForm, change_note: e.target.value })} placeholder="Например: уточнена статья 4 и добавлен порядок вступления в силу" />
           {editError && <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', color: '#DC2626', fontSize: '13px' }}>{editError}</div>}
         </form>
       </Modal>
@@ -380,17 +519,42 @@ export function LawDetailPage() {
       <Modal
         open={showRepealModal}
         onClose={() => setShowRepealModal(false)}
-        title="Отменить закон"
+        title="Отменить действие документа"
+        description="Документ останется в архиве законодательства и будет доступен для поиска."
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowRepealModal(false)}>Отмена</Button>
-            <Button variant="danger" loading={repealLoading} onClick={handleRepeal}>Отменить закон</Button>
+            <Button variant="danger" loading={repealLoading} onClick={handleRepeal}>Отменить действие</Button>
           </>
         }
       >
         <p style={{ fontSize: '14px', color: '#374151', fontFamily: 'Inter, sans-serif' }}>
-          Вы уверены, что хотите отменить закон <strong>{law.number}</strong>? Это действие нельзя отменить.
+          После отмены <strong>{law.number}</strong> перестанет считаться действующим. Предыдущая редакция будет сохранена.
         </p>
+        <label className="modal-field-label">Основание отмены</label>
+        <textarea className="document-textarea" rows={4} value={repealReason} onChange={(event) => setRepealReason(event.target.value)} placeholder="Укажите решение, заменяющий акт или другую причину" />
+      </Modal>
+
+      <Modal
+        open={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeleteError(null) }}
+        title="Удалить запись законодательства"
+        description="Удаление возможно только для документа без связанных дел и изменяющих актов."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отмена</Button>
+            <Button variant="danger" loading={deleteLoading} disabled={!deleteConfirm.confirmed} onClick={handleDelete}>Удалить навсегда</Button>
+          </>
+        }
+      >
+        <p className="destructive-copy">Запись <strong>{law.number}</strong>, её редакции и вложения будут удалены без возможности восстановления.</p>
+        <Input
+          label={`Введите номер ${law.number} для подтверждения`}
+          value={deleteConfirm.value}
+          onChange={deleteConfirm.onChange}
+          autoComplete="off"
+        />
+        {deleteError && <div className="form-error">{deleteError}</div>}
       </Modal>
     </div>
   )

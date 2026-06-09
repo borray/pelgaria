@@ -15,6 +15,7 @@ const ALL_PERMISSIONS: Record<string, boolean> = {
   'laws.create': true,
   'laws.edit': true,
   'laws.repeal': true,
+  'laws.delete': true,
   'cases.view': true,
   'cases.create': true,
   'cases.manage': true,
@@ -31,8 +32,6 @@ const ALL_PERMISSIONS: Record<string, boolean> = {
   'relict.create': true,
   'relict.edit': true,
   'relict.delete': true,
-  'territories.view': true,
-  'territories.manage': true,
   'accounts.manage': true,
   'roles.manage': true,
   'chat.send': true,
@@ -63,8 +62,6 @@ const MINISTER_PERMISSIONS: Record<string, boolean> = {
   'relict.view': true,
   'relict.create': true,
   'relict.edit': true,
-  'territories.view': true,
-  'territories.manage': true,
   'chat.send': true,
   'office.view': true,
   'office.create': true,
@@ -80,7 +77,6 @@ const CITIZEN_PERMISSIONS: Record<string, boolean> = {
   'taxes.view': true,
   'treasury.view': true,
   'relict.view': true,
-  'territories.view': true,
   'chat.send': true,
 }
 

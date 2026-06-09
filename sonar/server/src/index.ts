@@ -20,7 +20,6 @@ import punishmentsRouter from './routes/punishments'
 import taxesRouter from './routes/taxes'
 import treasuryRouter from './routes/treasury'
 import buildingsRouter from './routes/buildings'
-import territoriesRouter from './routes/territories'
 import chatRouter from './routes/chat'
 import discordRouter from './routes/discord'
 import dashboardRouter from './routes/dashboard'
@@ -75,7 +74,6 @@ app.use('/api/punishments', punishmentsRouter)
 app.use('/api/taxes', taxesRouter)
 app.use('/api/treasury', treasuryRouter)
 app.use('/api/buildings', buildingsRouter)
-app.use('/api/territories', territoriesRouter)
 app.use('/api/chat', chatRouter)
 app.use('/api/auth/discord', discordRouter)
 app.use('/api/dashboard', dashboardRouter)
@@ -209,20 +207,25 @@ async function ensurePermissionDefaults() {
       permissions['roles.manage'] === true ||
       permissions['cases.manage'] === true
     const canRegisterOffice = canManageOffice || permissions['citizens.create'] === true
+    const canDeleteLaws = permissions['accounts.manage'] === true || permissions['roles.manage'] === true
     const defaultsPresent =
       permissions['office.view'] === true &&
       permissions['office.create'] === true &&
-      (!canManageOffice || permissions['office.manage'] === true)
-    if (!canRegisterOffice || defaultsPresent) continue
+      (!canManageOffice || permissions['office.manage'] === true) &&
+      (!canDeleteLaws || permissions['laws.delete'] === true)
+    if ((!canRegisterOffice && !canDeleteLaws) || defaultsPresent) continue
 
     await prisma.role.update({
       where: { id: role.id },
       data: {
         permissions: {
           ...permissions,
-          'office.view': true,
-          'office.create': true,
-          ...(canManageOffice ? { 'office.manage': true } : {}),
+          ...(canRegisterOffice ? {
+            'office.view': true,
+            'office.create': true,
+            ...(canManageOffice ? { 'office.manage': true } : {}),
+          } : {}),
+          ...(canDeleteLaws ? { 'laws.delete': true } : {}),
         },
       },
     })

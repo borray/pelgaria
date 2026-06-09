@@ -16,7 +16,6 @@ import { TaxesPage } from './pages/TaxesPage'
 import { TreasuryPage } from './pages/TreasuryPage'
 import { BuildingsPage } from './pages/BuildingsPage'
 import { BuildingDetailPage } from './pages/BuildingDetailPage'
-import { TerritoriesPage } from './pages/TerritoriesPage'
 import { ChatPage } from './pages/ChatPage'
 import { AccountsPage } from './pages/AccountsPage'
 import { RolesPage } from './pages/RolesPage'
@@ -76,7 +75,6 @@ export default function App() {
         <Route path="treasury" element={<TreasuryPage />} />
         <Route path="buildings" element={<BuildingsPage />} />
         <Route path="buildings/:id" element={<BuildingDetailPage />} />
-        <Route path="territories" element={<TerritoriesPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="roles/*" element={<RolesPage />} />

@@ -106,22 +106,58 @@ enum PassportStatus {
 }
 
 model Law {
-  id            String          @id @default(cuid())
-  number        String          @unique
-  registry_code String?         @unique
-  type          LawType
-  category      String?
-  title         String
-  summary       String?
-  body          String
-  status        LawStatus       @default(ACTIVE)
-  adopted_at    DateTime        @default(now())
-  effective_at  DateTime?
-  repealed_at   DateTime?
-  cases         Case[]
-  attachments   LawAttachment[]
-  created_at    DateTime        @default(now())
-  updated_at    DateTime        @default(now()) @updatedAt
+  id              String          @id @default(cuid())
+  number          String          @unique
+  registry_code   String?         @unique
+  type            LawType
+  category        String?
+  title           String
+  short_title     String?
+  summary         String?
+  body            String
+  authority       String?
+  source          String?
+  keywords        String[]        @default([])
+  status          LawStatus       @default(ACTIVE)
+  revision_number Int             @default(1)
+  adopted_at      DateTime        @default(now())
+  effective_at    DateTime?
+  repealed_at     DateTime?
+  repeal_reason   String?
+  parent_id       String?
+  parent          Law?            @relation("LawAmendments", fields: [parent_id], references: [id], onDelete: SetNull)
+  amendments      Law[]           @relation("LawAmendments")
+  cases           Case[]
+  attachments     LawAttachment[]
+  revisions       LawRevision[]
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @default(now()) @updatedAt
+
+  @@index([type, status])
+  @@index([parent_id])
+}
+
+model LawRevision {
+  id              String    @id @default(cuid())
+  law_id          String
+  law             Law       @relation(fields: [law_id], references: [id], onDelete: Cascade)
+  revision_number Int
+  title           String
+  short_title     String?
+  summary         String?
+  body            String
+  category        String?
+  authority       String?
+  source          String?
+  keywords        String[]  @default([])
+  status          LawStatus
+  effective_at    DateTime?
+  change_note     String?
+  created_by      String
+  created_at      DateTime  @default(now())
+
+  @@unique([law_id, revision_number])
+  @@index([law_id, created_at])
 }
 
 model LawAttachment {

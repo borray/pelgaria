@@ -85,13 +85,42 @@ export interface Law {
   type: LawType
   category?: string | null
   title: string
+  short_title?: string | null
   summary?: string | null
   body: string
+  authority?: string | null
+  source?: string | null
+  keywords: string[]
   status: LawStatus
+  revision_number: number
   adopted_at: string
   effective_at?: string | null
   repealed_at?: string | null
+  repeal_reason?: string | null
+  parent_id?: string | null
+  parent?: Pick<Law, 'id' | 'number' | 'title'> | null
+  amendments?: Array<Pick<Law, 'id' | 'number' | 'title' | 'status' | 'adopted_at'>>
+  revisions?: LawRevision[]
   attachments?: LawAttachment[]
+}
+
+export interface LawRevision {
+  id: string
+  law_id: string
+  revision_number: number
+  title: string
+  short_title?: string | null
+  summary?: string | null
+  body: string
+  category?: string | null
+  authority?: string | null
+  source?: string | null
+  keywords: string[]
+  status: LawStatus
+  effective_at?: string | null
+  change_note?: string | null
+  created_by: string
+  created_at: string
 }
 
 export type CaseStatus = 'OPENED' | 'IN_PROGRESS' | 'CLOSED'
@@ -202,19 +231,6 @@ export interface Building {
   screenshot_url?: string | null
   tax_rate: number
   built_at?: string | null
-  created_at: string
-}
-
-export type TerritoryStatus = 'DEVELOPED' | 'UNDER_CONSTRUCTION' | 'DISPUTED' | 'NEUTRAL'
-
-export interface Territory {
-  id: string
-  name: string
-  description?: string | null
-  minister_id?: string | null
-  minister?: Pick<User, 'id' | 'login'> | null
-  coordinates?: string | null
-  status: TerritoryStatus
   created_at: string
 }
 
@@ -339,6 +355,7 @@ export type Permission =
   | 'laws.create'
   | 'laws.edit'
   | 'laws.repeal'
+  | 'laws.delete'
   | 'cases.view'
   | 'cases.create'
   | 'cases.manage'
@@ -355,8 +372,6 @@ export type Permission =
   | 'relict.create'
   | 'relict.edit'
   | 'relict.delete'
-  | 'territories.view'
-  | 'territories.manage'
   | 'accounts.manage'
   | 'roles.manage'
   | 'chat.send'
