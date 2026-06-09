@@ -1,12 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   IconBrandDiscord,
   IconInfoCircle,
   IconLock,
   IconUser,
-  IconActivity,
-  IconClock,
-  IconCalendarEvent,
 } from '@tabler/icons-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
@@ -21,7 +18,6 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [discordReady, setDiscordReady] = useState<boolean | null>(null)
   const [now, setNow] = useState(() => new Date())
-  const screenRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const code = searchParams.get('error')
@@ -54,18 +50,6 @@ export function LoginPage() {
     return () => clearInterval(t)
   }, [])
 
-  const handleMove = (event: React.MouseEvent) => {
-    const el = screenRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const px = (event.clientX - rect.left) / rect.width - 0.5
-    const py = (event.clientY - rect.top) / rect.height - 0.5
-    el.style.setProperty('--mx', `${event.clientX - rect.left}px`)
-    el.style.setProperty('--my', `${event.clientY - rect.top}px`)
-    el.style.setProperty('--px', px.toFixed(3))
-    el.style.setProperty('--py', py.toFixed(3))
-  }
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError(null)
@@ -81,85 +65,68 @@ export function LoginPage() {
   }
 
   const timeStr = now.toLocaleTimeString('ru-RU')
-  const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateStr = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <main className="login-screen" ref={screenRef} onMouseMove={handleMove}>
-      <div className="login-aurora" />
+    <main className="auth">
+      <div className="auth-bg" aria-hidden="true" />
+      <div className="auth-seal" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="94" fill="none" stroke="#34e0a1" strokeWidth="1" />
+          <circle cx="100" cy="100" r="76" fill="none" stroke="#34e0a1" strokeWidth="0.6" />
+          <g transform="translate(58 56) scale(2.4)" stroke="#34e0a1" fill="none">
+            <path d="M10 24.5V11.8c0-1 .8-1.8 1.8-1.8H25" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M14.2 25.8V15.2c0-.55.45-1 1-1h10.6" strokeWidth="2.2" strokeLinecap="round" />
+            <circle cx="23.5" cy="23.5" r="3.5" fill="#34e0a1" stroke="none" />
+          </g>
+        </svg>
+      </div>
 
-      <section className="login-story">
-        <div className="login-radar" aria-hidden="true">
-          <div className="login-radar-cross" />
-          <span className="login-blip" style={{ top: '32%', left: '64%', animationDelay: '0s' }} />
-          <span className="login-blip" style={{ top: '58%', left: '40%', animationDelay: '1.2s' }} />
-          <span className="login-blip" style={{ top: '46%', left: '72%', animationDelay: '2.4s' }} />
-          <span className="login-blip" style={{ top: '68%', left: '58%', animationDelay: '3.1s' }} />
-        </div>
+      <div className="auth-card">
+        <div className="auth-accent" />
+        <div className="auth-brand"><SonarBrand size="lg" light /></div>
+        <div className="auth-clock"><b>{timeStr}</b> · {dateStr}</div>
 
-        <div className="login-story-content">
-          <div className="login-emblem-tilt"><SonarBrand size="lg" light /></div>
-          <div className="login-story-kicker">Служебная информационная система</div>
-          <h1>Единое рабочее пространство <span className="accent-word">Пельгарии</span></h1>
-          <p>
-            Реестры, документы и рабочие процессы игрового государства собраны в одном сервисе.
-          </p>
+        <h1>Вход в систему</h1>
+        <p className="auth-sub">Служебная учётная запись · СОНАР Пельгарии</p>
 
-          <div className="login-chips">
-            <span className="login-chip"><span className="dot" /> Система · в сети</span>
-            <span className="login-chip"><IconClock size={14} /> <b>{timeStr}</b></span>
-            <span className="login-chip"><IconCalendarEvent size={14} /> {dateStr}</span>
-          </div>
-
-          <div className="fiction-notice">
-            <IconInfoCircle size={20} />
-            <div>
-              <strong>Это вымышленный проект</strong>
-              <span>Пельгария является государством в ролевой игре Minecraft. Сервис не относится к реальным государственным органам и не оказывает настоящие государственные услуги.</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="login-form-side">
-        <form className="login-card" onSubmit={handleSubmit}>
-          <div className="login-mobile-brand"><SonarBrand size="md" /></div>
-          <div className="login-heading">
-            <span><IconActivity size={11} style={{ verticalAlign: '-1px' }} /> Авторизация</span>
-            <h2>Вход в СОНАР</h2>
-            <p>Используйте служебную учётную запись</p>
-          </div>
-
-          <label className="login-field">
+        <form onSubmit={handleSubmit}>
+          <label className="auth-field">
             <span>Логин</span>
-            <div><IconUser size={18} /><input value={loginVal} onChange={(e) => setLoginVal(e.target.value)} autoComplete="username" autoFocus /></div>
+            <div><IconUser size={18} /><input value={loginVal} onChange={(e) => setLoginVal(e.target.value)} autoComplete="username" autoFocus placeholder="Ваш логин" /></div>
           </label>
-          <label className="login-field">
+          <label className="auth-field">
             <span>Пароль</span>
-            <div><IconLock size={18} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></div>
+            <div><IconLock size={18} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="••••••••" /></div>
           </label>
 
-          {error && <div className="login-error">{error}</div>}
+          {error && <div className="auth-error">{error}</div>}
 
-          <button className="login-submit" type="submit" disabled={isLoading}>
-            {isLoading ? 'Проверка данных...' : 'Войти в систему'}
+          <button className="auth-submit" type="submit" disabled={isLoading}>
+            {isLoading ? 'Проверка данных…' : 'Войти'}
           </button>
 
-          <div className="login-divider"><span>или</span></div>
+          <div className="auth-divider"><span>или</span></div>
 
           <button
-            className="login-discord"
+            className="auth-discord"
             type="button"
             disabled={discordReady !== true}
             onClick={() => { window.location.href = '/api/auth/discord/login' }}
           >
             <IconBrandDiscord size={19} />
-            {discordReady === null ? 'Проверяем Discord...' : discordReady ? 'Войти через Discord' : 'Discord пока не подключён'}
+            {discordReady === null ? 'Проверяем Discord…' : discordReady ? 'Войти через Discord' : 'Discord пока не подключён'}
           </button>
-          {discordReady === false && <p className="login-discord-note">Администратору нужно добавить Client ID и Client Secret приложения Discord.</p>}
-
-          <small className="login-security">Игровой государственный сервис · Minecraft RP</small>
+          {discordReady === false && <p className="auth-discord-note">Администратору нужно добавить Client ID и Client Secret приложения Discord.</p>}
         </form>
-      </section>
+
+        <div className="auth-fiction">
+          <IconInfoCircle size={16} style={{ flexShrink: 0 }} />
+          <span>Пельгария — вымышленное государство в ролевой игре Minecraft. Сервис не относится к реальным госорганам и не оказывает настоящих услуг.</span>
+        </div>
+      </div>
+
+      <footer className="auth-foot">Государство Пельгария · Minecraft RP</footer>
     </main>
   )
 }
