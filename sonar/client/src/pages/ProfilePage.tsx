@@ -21,7 +21,6 @@ export function ProfilePage() {
   const { user, setUser, setTokens } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [discordStatus, setDiscordStatus] = useState<string | null>(null)
-  const [linking, setLinking] = useState(false)
 
   const [editingLogin, setEditingLogin] = useState(false)
   const [loginValue, setLoginValue] = useState(user?.login ?? '')
@@ -51,18 +50,6 @@ export function ProfilePage() {
       setDiscordStatus(reasons[reason] ?? 'Ошибка привязки Discord')
     }
   }, [searchParams, setUser])
-
-  const handleLinkDiscord = async () => {
-    setLinking(true)
-    setDiscordStatus(null)
-    try {
-      const res = await api.get<{ url: string }>('/auth/discord')
-      window.location.href = res.data.url
-    } catch (err: any) {
-      setDiscordStatus(err?.response?.data?.error ?? 'Discord пока не подключён')
-      setLinking(false)
-    }
-  }
 
   const handleUnlinkDiscord = async () => {
     try {
@@ -245,9 +232,14 @@ export function ProfilePage() {
               </Button>
             </div>
           ) : (
-            <Button variant="primary" size="sm" loading={linking} onClick={handleLinkDiscord}>
-              <IconBrandDiscord size={14} /> Привязать Discord
-            </Button>
+            <div>
+              <Button variant="primary" size="sm" disabled title="Функция в доработке">
+                <IconBrandDiscord size={14} /> Привязать Discord
+              </Button>
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--quiet)' }}>
+                Привязка Discord временно недоступна — будет доступна позже.
+              </div>
+            </div>
           )}
         </section>
 

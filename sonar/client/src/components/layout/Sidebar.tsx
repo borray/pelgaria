@@ -219,7 +219,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         )
       })}
       <div className="sidebar-disclaimer">
-        <strong>Пельагрия</strong>
+        <strong>Пельгария</strong>
         <span>Игровой служебный портал Minecraft RP</span>
       </div>
       </nav>

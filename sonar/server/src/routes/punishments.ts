@@ -251,7 +251,7 @@ router.post('/:id/pdf', requireAuth, requirePermission('punishments.view'), asyn
 
     const header = `<div class="pn-header">
       <div class="pn-emblem">${guillocheRosette(seed, 96)}</div>
-      <div class="pn-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+      <div class="pn-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
       <div class="pn-doctype">ПОСТАНОВЛЕНИЕ О НАКАЗАНИИ</div>
       <div class="pn-num">№ ${punishment.id.slice(0, 8).toUpperCase()}</div>
     </div>`

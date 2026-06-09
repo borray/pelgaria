@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import { IconBrandDiscord, IconInfoCircle, IconLock, IconUser } from '@tabler/icons-react'
+import React, { useEffect, useRef, useState } from 'react'
+import {
+  IconBrandDiscord,
+  IconInfoCircle,
+  IconLock,
+  IconUser,
+  IconActivity,
+  IconClock,
+  IconCalendarEvent,
+} from '@tabler/icons-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
 import { useAuthStore } from '../store/auth'
@@ -12,6 +20,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [discordReady, setDiscordReady] = useState<boolean | null>(null)
+  const [now, setNow] = useState(() => new Date())
+  const screenRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const code = searchParams.get('error')
@@ -39,6 +49,23 @@ export function LoginPage() {
     navigate(user.must_change_password ? '/change-password' : '/', { replace: true })
   }, [user, navigate])
 
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const handleMove = (event: React.MouseEvent) => {
+    const el = screenRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const px = (event.clientX - rect.left) / rect.width - 0.5
+    const py = (event.clientY - rect.top) / rect.height - 0.5
+    el.style.setProperty('--mx', `${event.clientX - rect.left}px`)
+    el.style.setProperty('--my', `${event.clientY - rect.top}px`)
+    el.style.setProperty('--px', px.toFixed(3))
+    el.style.setProperty('--py', py.toFixed(3))
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError(null)
@@ -53,21 +80,41 @@ export function LoginPage() {
     }
   }
 
+  const timeStr = now.toLocaleTimeString('ru-RU')
+  const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+
   return (
-    <main className="login-screen">
+    <main className="login-screen" ref={screenRef} onMouseMove={handleMove}>
+      <div className="login-aurora" />
+
       <section className="login-story">
+        <div className="login-radar" aria-hidden="true">
+          <div className="login-radar-cross" />
+          <span className="login-blip" style={{ top: '32%', left: '64%', animationDelay: '0s' }} />
+          <span className="login-blip" style={{ top: '58%', left: '40%', animationDelay: '1.2s' }} />
+          <span className="login-blip" style={{ top: '46%', left: '72%', animationDelay: '2.4s' }} />
+          <span className="login-blip" style={{ top: '68%', left: '58%', animationDelay: '3.1s' }} />
+        </div>
+
         <div className="login-story-content">
-          <SonarBrand size="lg" />
+          <div className="login-emblem-tilt"><SonarBrand size="lg" light /></div>
           <div className="login-story-kicker">Служебная информационная система</div>
-          <h1>Единое рабочее пространство Пельагрии</h1>
+          <h1>Единое рабочее пространство <span className="accent-word">Пельгарии</span></h1>
           <p>
             Реестры, документы и рабочие процессы игрового государства собраны в одном сервисе.
           </p>
+
+          <div className="login-chips">
+            <span className="login-chip"><span className="dot" /> Система · в сети</span>
+            <span className="login-chip"><IconClock size={14} /> <b>{timeStr}</b></span>
+            <span className="login-chip"><IconCalendarEvent size={14} /> {dateStr}</span>
+          </div>
+
           <div className="fiction-notice">
             <IconInfoCircle size={20} />
             <div>
               <strong>Это вымышленный проект</strong>
-              <span>Пельагрия является государством в ролевой игре Minecraft. Сервис не относится к реальным государственным органам и не оказывает настоящие государственные услуги.</span>
+              <span>Пельгария является государством в ролевой игре Minecraft. Сервис не относится к реальным государственным органам и не оказывает настоящие государственные услуги.</span>
             </div>
           </div>
         </div>
@@ -77,7 +124,7 @@ export function LoginPage() {
         <form className="login-card" onSubmit={handleSubmit}>
           <div className="login-mobile-brand"><SonarBrand size="md" /></div>
           <div className="login-heading">
-            <span>Авторизация</span>
+            <span><IconActivity size={11} style={{ verticalAlign: '-1px' }} /> Авторизация</span>
             <h2>Вход в СОНАР</h2>
             <p>Используйте служебную учётную запись</p>
           </div>

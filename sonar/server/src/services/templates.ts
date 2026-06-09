@@ -309,7 +309,7 @@ export function signatureSeal(options: {
   const circ = (text: string) =>
     (text + ' • ').repeat(2)
 
-  const topText = circ('ГОСУДАРСТВО ПЕЛЬАГРИЯ')
+  const topText = circ('ГОСУДАРСТВО ПЕЛЬГАРИЯ')
   const botText = circ('СИСТЕМА СОНАР')
 
   // emblem star
@@ -407,7 +407,7 @@ export interface PageShellOptions {
  */
 export function pageShell(opts: PageShellOptions): string {
   const accent = opts.accent ?? ACCENT
-  const micro = microtextLine('ПЕЛЬАГРИЯ • СОНАР', A4_W - 96)
+  const micro = microtextLine('ПЕЛЬГАРИЯ • СОНАР', A4_W - 96)
   const controlCode = `СОНАР-${verificationHash(opts.seed, opts.kind ?? 'DOC', 'PRINT')}`
   const controlBarcode = barcodeStripes(controlCode, 330, 54)
   const controlQr = qrCode(opts.seed, 86)
@@ -577,7 +577,7 @@ export function headerBar(opts: {
 }): string {
   const accent = opts.accent ?? ACCENT_LIGHT
   return `<div style="background:#fff;display:flex;align-items:center;padding:0 24px;height:86px;border:2px solid #000;">
-    <div style="font-size:11px;color:#111;text-transform:uppercase;letter-spacing:3px;width:180px;flex-shrink:0;line-height:1.6;">ГОСУДАРСТВО<br>ПЕЛЬАГРИЯ</div>
+    <div style="font-size:11px;color:#111;text-transform:uppercase;letter-spacing:3px;width:180px;flex-shrink:0;line-height:1.6;">ГОСУДАРСТВО<br>ПЕЛЬГАРИЯ</div>
     <div style="flex:1;text-align:center;">
       <div style="color:#000;font-size:18px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">${opts.title}</div>
       ${opts.subtitle ? `<div style="color:#444;font-size:11px;margin-top:4px;letter-spacing:0.05em;">${opts.subtitle}</div>` : ''}

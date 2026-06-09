@@ -75,7 +75,7 @@ async function renderPassportPdf(passport: {
   const header = `<div class="pp-header">
     <div class="pp-rosette">${rosette}</div>
     <div class="pp-head-text">
-      <div class="pp-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+      <div class="pp-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
       <div class="pp-title">ВНУТРЕННИЙ ПАСПОРТ</div>
       <div class="pp-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
     </div>

@@ -244,7 +244,7 @@ router.get('/periods/:id/pdf', requireAuth, requirePermission('taxes.view'), asy
     const header = `<div class="tx-header">
       <div class="tx-emblem">${guillocheRosette(seed, 64)}</div>
       <div class="tx-head-text">
-        <div class="tx-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="tx-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
         <div class="tx-title">НАЛОГОВАЯ ВЕДОМОСТЬ</div>
         <div class="tx-sub">Государственная информационная система СОНАР · ${printDate}</div>
       </div>

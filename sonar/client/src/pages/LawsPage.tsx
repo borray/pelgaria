@@ -64,7 +64,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 const emptyForm = (type: LawType = 'LAW'): CreateLawForm => ({
   type,
   category: type === 'CONSTITUTION' ? 'Основы государственного строя' : '',
-  title: type === 'CONSTITUTION' ? 'Конституция Пельагрии' : '',
+  title: type === 'CONSTITUTION' ? 'Конституция Пельгарии' : '',
   short_title: '',
   summary: '',
   body: '',

@@ -275,7 +275,7 @@ router.post('/:id/pdf', requireAuth, requirePermission('cases.view'), async (req
 
     const header = `<div class="cs-header">
       <div class="cs-emblem">⚖</div>
-      <div class="cs-namestate">ИМЕНЕМ ГОСУДАРСТВА ПЕЛЬАГРИЯ</div>
+      <div class="cs-namestate">ИМЕНЕМ ГОСУДАРСТВА ПЕЛЬГАРИЯ</div>
       <div class="cs-doctype">ПРИГОВОР СУДА</div>
       <div class="cs-num">Дело №${escapeHtml(caseRecord.number)}</div>
     </div>`

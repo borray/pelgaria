@@ -171,7 +171,7 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
     const header = `<div class="rg-header">
       <div class="rg-emblem">${guillocheRosette(seed, 70)}</div>
       <div class="rg-head-text">
-        <div class="rg-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="rg-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
         <div class="rg-title">РЕЕСТР ПОСТРОЕК · РЕЛИКТ</div>
         <div class="rg-sub">Государственная информационная система СОНАР · ${printDate}</div>
       </div>
@@ -209,7 +209,7 @@ router.get('/registry/pdf', requireAuth, requirePermission('relict.view'), async
     const footer = `
       <div class="rg-footer">
         <span>Дата составления: ${printDate}</span>
-        <span>Реестр объектов государства Пельагрия</span>
+        <span>Реестр объектов государства Пельгария</span>
       </div>
     `
 
@@ -287,7 +287,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('relict.view'), async (req
     const header = `<div class="rk-header">
       <div class="rk-emblem">${guillocheRosette(seed, 84)}</div>
       <div class="rk-head-text">
-        <div class="rk-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · РЕЛИКТ</div>
+        <div class="rk-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ · РЕЛИКТ</div>
         <div class="rk-title">ТЕХНИЧЕСКИЙ ПАСПОРТ ОБЪЕКТА</div>
         <div class="rk-num">${building.reg_number}</div>
       </div>
@@ -325,7 +325,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('relict.view'), async (req
           <div class="rk-sign-label">Уполномоченный по реестру РЕЛИКТ</div>
         </div>
       </div>
-      <div class="rk-foot-strip">Реестр объектов государства Пельагрия · Дата печати: ${printDate}</div>
+      <div class="rk-foot-strip">Реестр объектов государства Пельгария · Дата печати: ${printDate}</div>
     `
 
     const styles = `
