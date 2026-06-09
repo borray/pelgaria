@@ -1,21 +1,29 @@
 import { useEffect, useState } from 'react'
-import { IconArrowLeft, IconChecklist, IconTool, IconX } from '@tabler/icons-react'
+import {
+  IconArchive,
+  IconBuildingCommunity,
+  IconChecklist,
+  IconFileCheck,
+  IconPrinter,
+  IconProgressCheck,
+  IconTool,
+  IconX,
+} from '@tabler/icons-react'
 
-const shipped = [
-  'Приёмная обращений с ответственными, сроками и журналом исполнения',
-  'Печатные карточки обращений с номером, ШК и историей решений',
-  'Новые формы: заявление, жалоба, служебная записка и разрешение на строительство',
-  'Проверка подлинности документов по номеру и ШК',
-  'Загрузка сканов и приложений к нормативным актам',
-  'Случайные защищённые номера документов',
-  'Меню действий и защита необратимых операций',
+const activeSystems = [
+  { title: 'Законодательство 2.0', text: 'Конституция, редакции, связи актов, архив и управляемое удаление.', Icon: IconFileCheck },
+  { title: 'Печатный контур', text: 'ЧБ-шаблоны, крупные Code 128 и QR, проверка подлинности.', Icon: IconPrinter },
+  { title: 'Приёмная', text: 'Обращения, сроки, ответственные, резолюции и журнал исполнения.', Icon: IconChecklist },
 ]
 
-const deferred = [
-  'Настраиваемые виджеты рабочего стола',
-  'Сохранённые наборы фильтров для реестров',
-  'Пакетное формирование и печать документов',
-  'Редактор собственных шаблонов печатных форм',
+const nextStages = [
+  { title: 'Реестр организаций', text: 'Подробные карточки, руководство, статус, реквизиты и связанные документы.', Icon: IconBuildingCommunity },
+  { title: 'Пакетная печать', text: 'Формирование нескольких справок и выписок одной операцией.', Icon: IconPrinter },
+]
+
+const archived = [
+  'Территории выведены из интерфейса; таблицы и старые записи сохранены.',
+  'Дипломатия выведена из рабочего контура; архивные данные не уничтожены.',
 ]
 
 export function ReconstructionPanel() {
@@ -42,28 +50,44 @@ export function ReconstructionPanel() {
           <aside className="reconstruction-panel" aria-label="Статус реконструкции">
             <header>
               <span><IconTool size={18} /></span>
-              <div><strong>Реконструкция СОНАР</strong><small>Статус функций и ближайшие этапы</small></div>
+              <div><strong>Развитие СОНАР</strong><small>Состояние системы и очередь обновлений</small></div>
               <button type="button" onClick={() => setOpen(false)} aria-label="Закрыть"><IconX size={18} /></button>
             </header>
-            <section className="reconstruction-status">
-              <IconChecklist size={20} />
+            <div className="reconstruction-release">
               <div>
-                <strong>Все разделы работают в полном объёме</strong>
-                <p>Реестры, документы, экономика и управление доступны без ограничений. Идёт планомерное расширение функций.</p>
+                <span>Текущий этап</span>
+                <strong>Контур документов и законодательства</strong>
+                <p>Обновлено 9 июня 2026 года</p>
+              </div>
+              <IconProgressCheck size={24} />
+            </div>
+            <section className="reconstruction-section">
+              <div className="reconstruction-section-title"><span>Работает сейчас</span><b>{activeSystems.length}</b></div>
+              <div className="reconstruction-cards">
+                {activeSystems.map(({ title, text, Icon }) => (
+                  <article key={title}>
+                    <span><Icon size={17} /></span>
+                    <div><strong>{title}</strong><p>{text}</p></div>
+                  </article>
+                ))}
               </div>
             </section>
-            <section>
-              <span className="reconstruction-kicker">Недавно введено в строй</span>
-              <ul>{shipped.map((item) => <li key={item} style={{ color: '#15734f' }}>{item}</li>)}</ul>
+            <section className="reconstruction-section">
+              <div className="reconstruction-section-title"><span>Следующий этап</span><b>{nextStages.length}</b></div>
+              <div className="reconstruction-cards is-next">
+                {nextStages.map(({ title, text, Icon }) => (
+                  <article key={title}>
+                    <span><Icon size={17} /></span>
+                    <div><strong>{title}</strong><p>{text}</p></div>
+                  </article>
+                ))}
+              </div>
             </section>
-            <section style={{ marginTop: 18 }}>
-              <span className="reconstruction-kicker">Отложено до следующего этапа</span>
-              <ul>{deferred.map((item) => <li key={item}>{item}</li>)}</ul>
+            <section className="reconstruction-archive">
+              <div className="reconstruction-section-title"><span>Выведено из рабочего контура</span><IconArchive size={15} /></div>
+              {archived.map((item) => <p key={item}>{item}</p>)}
             </section>
-            <footer>
-              <IconArrowLeft size={16} />
-              Этот список будет сокращаться по мере готовности функций.
-            </footer>
+            <footer>Панель показывает фактическое состояние функций, без демонстрационных обещаний и пустых разделов.</footer>
           </aside>
         </div>
       )}

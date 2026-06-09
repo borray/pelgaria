@@ -402,9 +402,8 @@ export interface PageShellOptions {
 }
 
 /**
- * Renders a complete A4 page with a guilloche border frame, microtext strips,
- * a header bar, a flex body that fills the sheet, and a pinned footer.
- * Laser-friendly: light backgrounds, fine SVG line art, one dark header bar.
+ * Renders paginated A4 output with safe print margins, repeating verification
+ * controls, microtext, and document-specific header/body/footer sections.
  */
 export function pageShell(opts: PageShellOptions): string {
   const accent = opts.accent ?? ACCENT
@@ -471,11 +470,67 @@ export function pageShell(opts: PageShellOptions): string {
   .document-security-barcode { text-align: right; }
   .document-security-barcode svg { filter: grayscale(1) contrast(2.4); shape-rendering: crispEdges; }
   @media print {
-    @page { size: A4; margin: 0; }
+    @page { size: A4; margin: 38px 38px 110px; }
     * { color: #000 !important; border-color: #222 !important; text-shadow: none !important; box-shadow: none !important; }
-    html, body, .sheet { background:#fff !important; }
-    .sheet { filter: grayscale(1) contrast(1.18); }
+    html, body { width:auto !important; background:#fff !important; }
+    .sheet {
+      position:static !important;
+      width:auto !important;
+      min-height:0 !important;
+      display:block !important;
+      overflow:visible !important;
+      background:#fff !important;
+    }
+    .sheet-inner {
+      display:block !important;
+      min-height:0 !important;
+      margin:0 !important;
+    }
+    .sheet-border {
+      display:none !important;
+    }
+    .registration-mark { display:none !important; }
     .doc-watermark { display:none !important; }
+    .doc-body { display:block !important; }
+    .document-security {
+      position:fixed !important;
+      z-index:10;
+      right:0;
+      bottom:14px;
+      left:0;
+      top:auto;
+      grid-template-columns:54px minmax(0,1fr) 255px;
+      min-height:60px;
+      margin:0;
+      padding:3px 0;
+      background:#fff !important;
+    }
+    .document-security-qr,
+    .document-security-qr svg { width:52px; height:52px; }
+    .document-security-title { font-size:8px; }
+    .document-security-copy { font-size:7px; line-height:1.35; margin-top:2px; }
+    .document-security-code { font-size:7px; }
+    .document-security-barcode svg { width:255px; height:42px; }
+    .document-footer {
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    table { page-break-inside:auto; }
+    thead { display:table-header-group; }
+    tfoot { display:table-footer-group; }
+    tr, th, td {
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    h1, h2, h3, h4 {
+      break-after:avoid;
+      page-break-after:avoid;
+    }
+    p { orphans:3; widows:3; }
+    img, svg, .office-field, .cs-field, .law-meta, .resolution {
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
     svg { shape-rendering: crispEdges; }
   }
   ${opts.accent ? `.accent { color: ${accent}; }` : ''}
@@ -487,22 +542,24 @@ export function pageShell(opts: PageShellOptions): string {
     <div class="registration-mark tl"></div><div class="registration-mark tr"></div>
     <div class="registration-mark bl"></div><div class="registration-mark br"></div>
     <div class="sheet-border"></div>
+    <div class="document-security">
+      <div class="document-security-qr">${controlQr}</div>
+      <div>
+        <div class="document-security-title">Контроль печатного документа СОНАР</div>
+        <div class="document-security-copy">Подлинность проверяется по крупному Code 128, QR и реквизитам реестра. Документ оптимизирован для чёрно-белой лазерной печати.</div>
+        <div class="document-security-code">${controlCode}</div>
+      </div>
+      <div class="document-security-barcode">${controlBarcode}</div>
+    </div>
     <div class="sheet-inner">
       ${opts.header}
       <div class="doc-microstrip">${micro}</div>
       <div class="doc-body">
         ${opts.body}
       </div>
-      <div class="doc-microstrip">${micro}</div>
-      ${opts.footer}
-      <div class="document-security">
-        <div class="document-security-qr">${controlQr}</div>
-        <div>
-          <div class="document-security-title">Контроль печатного документа СОНАР</div>
-          <div class="document-security-copy">Подлинность проверяется по крупному Code 128, QR и реквизитам реестра. Документ оптимизирован для чёрно-белой лазерной печати.</div>
-          <div class="document-security-code">${controlCode}</div>
-        </div>
-        <div class="document-security-barcode">${controlBarcode}</div>
+      <div class="document-footer">
+        <div class="doc-microstrip">${micro}</div>
+        ${opts.footer}
       </div>
     </div>
   </div>
