@@ -17,7 +17,7 @@ export function SonarBrand({ compact = false, light = false, size = 'md' }: Sona
       {!compact && (
         <span className="sonar-brand-copy">
           <strong>СОНАР</strong>
-          <small>Пельагрия</small>
+          <small>Пельгария</small>
         </span>
       )}
     </div>

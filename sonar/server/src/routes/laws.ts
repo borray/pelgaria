@@ -111,7 +111,7 @@ async function renderLawPdf(law: {
   const seal = sealBlock({ number: law.number, signer, role: signer, date: adoptedDate, size: 118 })
 
   const header = `<div class="law-header">
-    <div class="law-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+    <div class="law-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
     <div class="law-acttype">${typeLabel}</div>
     <div class="law-actsub">НОРМАТИВНЫЙ ПРАВОВОЙ АКТ · №${escapeHtml(law.number)} · РЕДАКЦИЯ ${law.revision_number}${law.registry_code ? ` · ${escapeHtml(law.registry_code)}` : ''}</div>
     <div class="law-rule"></div>

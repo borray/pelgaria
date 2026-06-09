@@ -149,7 +149,7 @@ router.get('/report/pdf', requireAuth, requirePermission('treasury.view'), async
     const header = `<div class="ts-header">
       <div class="ts-emblem">${guillocheRosette(seed, 64)}</div>
       <div class="ts-head-text">
-        <div class="ts-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="ts-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
         <div class="ts-title">ФИНАНСОВЫЙ ОТЧЁТ КАЗНЫ</div>
         <div class="ts-sub">Государственная информационная система СОНАР · ${printDate}</div>
       </div>

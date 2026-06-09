@@ -155,7 +155,7 @@ export function renderTestSheet(sheet: { number: string; registry_code: string; 
   ).join('')
 
   const textGauge = [6, 7, 8, 9, 10].map((size) =>
-    `<div style="font-size:${size}px;"><b>${size} px</b> · СОНАР ПЕЛЬАГРИЯ · 0123456789 · ШК ${escapeHtml(sheet.registry_code)}</div>`
+    `<div style="font-size:${size}px;"><b>${size} px</b> · СОНАР ПЕЛЬГАРИЯ · 0123456789 · ШК ${escapeHtml(sheet.registry_code)}</div>`
   ).join('')
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
@@ -235,7 +235,7 @@ export function renderTestSheet(sheet: { number: string; registry_code: string; 
       <div class="inner">
         <div class="head">
           <div>
-            <div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div>
+            <div class="state">ГОСУДАРСТВО ПЕЛЬГАРИЯ · СОНАР</div>
             <h1>Контрольный лист печати</h1>
             <div class="sub">Диагностика штрихкодов, QR, растра, геометрии и читаемости</div>
             <div class="headnote">ЧБ · лазер · PANTUM · 600/1200 DPI</div>
@@ -373,7 +373,7 @@ router.get('/templates/:id/blank-pdf', requireAuth, async (req: Request, res: Re
     const seal = `<div style="width:118px;height:118px;border:2px dashed #aaa;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#aaa;text-align:center;">МЕСТО<br>ЭЦП</div>`
     const header = `<div class="form-header">
       <div class="form-rosette">${guillocheRosette(`BLANK:${template.id}`, 88)}</div>
-      <div><div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div><div class="title">${escapeHtml(template.title)}</div><div class="number">№ ________________ · ________________</div></div>
+      <div><div class="state">ГОСУДАРСТВО ПЕЛЬГАРИЯ · СОНАР</div><div class="title">${escapeHtml(template.title)}</div><div class="number">№ ________________ · ________________</div></div>
     </div>`
     const body = `${subject}<div class="form-fields">${fields || '<div class="blank-lines">________________________________________________________________<br><br>________________________________________________________________<br><br>________________________________________________________________</div>'}</div>
       <div class="declaration">Настоящий документ подлежит заполнению вручную и последующей заверке уполномоченным лицом СОНАР.</div>`
@@ -548,7 +548,7 @@ router.get('/documents/:id/pdf', requireAuth, async (req: Request, res: Response
     const seal = sealBlock({ number: document.number, signer, role: 'Уполномоченное лицо', date: createdDate, size: 118 })
     const header = `<div class="form-header">
       <div class="form-rosette">${guillocheRosette(document.registry_code, 88)}</div>
-      <div><div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div><div class="title">${escapeHtml(document.title)}</div><div class="number">№ ${escapeHtml(document.number)} · ${escapeHtml(document.registry_code)}</div></div>
+      <div><div class="state">ГОСУДАРСТВО ПЕЛЬГАРИЯ · СОНАР</div><div class="title">${escapeHtml(document.title)}</div><div class="number">№ ${escapeHtml(document.number)} · ${escapeHtml(document.registry_code)}</div></div>
     </div>`
     const body = `${subject}<div class="form-fields">${fields || '<div class="blank-lines">________________________________________________________________<br><br>________________________________________________________________<br><br>________________________________________________________________</div>'}</div>
       <div class="declaration">Настоящий документ сформирован в государственной информационной системе СОНАР. Сведения внесены в электронный реестр и подтверждаются контрольным ШК.</div>`

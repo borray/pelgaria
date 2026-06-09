@@ -331,7 +331,7 @@ router.get('/:id/pdf', requireAuth, requirePermission('citizens.view'), async (r
     const header = `<div class="cz-header">
       <div class="cz-emblem">${guillocheRosette(seed, 70)}</div>
       <div class="cz-head-text">
-        <div class="cz-state">ГОСУДАРСТВО ПЕЛЬАГРИЯ</div>
+        <div class="cz-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
         <div class="cz-title">ЛИЧНОЕ ДЕЛО ГРАЖДАНИНА</div>
         <div class="cz-sub">Конфиденциально · ${printDate}</div>
       </div>
