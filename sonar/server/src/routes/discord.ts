@@ -112,6 +112,12 @@ router.get('/callback', async (req: Request, res: Response) => {
   try {
     const oauthState = readOAuthState(state)
 
+    // Ошибки привязки показываем в профиле (а не кидаем на /login → главную)
+    const fail = (code: string) =>
+      oauthState.flow === 'link'
+        ? `${CLIENT_URL}/profile?discord=error&reason=${code}`
+        : `${CLIENT_URL}/login?error=${code}`
+
     // Exchange code for token
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
@@ -126,7 +132,7 @@ router.get('/callback', async (req: Request, res: Response) => {
     })
 
     if (!tokenRes.ok) {
-      res.redirect(`${CLIENT_URL}/login?error=discord_exchange`)
+      res.redirect(fail('discord_exchange'))
       return
     }
 
@@ -138,7 +144,7 @@ router.get('/callback', async (req: Request, res: Response) => {
     })
 
     if (!userRes.ok) {
-      res.redirect(`${CLIENT_URL}/login?error=discord_profile`)
+      res.redirect(fail('discord_profile'))
       return
     }
 
@@ -233,7 +239,7 @@ router.get('/callback', async (req: Request, res: Response) => {
     res.redirect(`${CLIENT_URL}/profile?discord=success`)
   } catch (err) {
     console.error('Discord callback error:', err)
-    res.redirect(`${CLIENT_URL}/login?error=discord_state`)
+    res.redirect(`${CLIENT_URL}/profile?discord=error&reason=discord_state`)
   }
 })
 

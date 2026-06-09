@@ -36,9 +36,21 @@ export function ProfilePage() {
 
   useEffect(() => {
     const discord = searchParams.get('discord')
-    if (discord === 'success') setDiscordStatus('Discord успешно привязан')
-    if (discord === 'error') setDiscordStatus('Ошибка привязки Discord')
-  }, [searchParams])
+    if (discord === 'success') {
+      setDiscordStatus('Discord успешно привязан')
+      // Обновляем данные пользователя, чтобы привязка сразу отобразилась
+      api.get('/auth/me').then((r) => setUser(r.data)).catch(() => {})
+    }
+    if (discord === 'error') {
+      const reasons: Record<string, string> = {
+        discord_exchange: 'Не удалось завершить авторизацию Discord. Проверьте, что Client Secret в настройках указан верно.',
+        discord_profile: 'Не удалось получить профиль Discord. Попробуйте ещё раз.',
+        discord_state: 'Сессия привязки истекла. Нажмите «Привязать Discord» и попробуйте снова.',
+      }
+      const reason = searchParams.get('reason') ?? ''
+      setDiscordStatus(reasons[reason] ?? 'Ошибка привязки Discord')
+    }
+  }, [searchParams, setUser])
 
   const handleLinkDiscord = async () => {
     setLinking(true)
