@@ -6,14 +6,11 @@ import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import { nextDocumentNumber, randomDocumentCode, registryCode } from '../services/documentRegistry'
 import {
   barcodeStripes,
+  qrCode,
   guillocheRosette,
   guillocheField,
-  guillochePattern,
-  microtextLine,
-  signatureSeal,
   pageShell,
   sealBlock,
-  A4_W,
   ACCENT,
   INK,
 } from '../services/templates'
@@ -119,35 +116,27 @@ function escapeHtml(value: unknown): string {
 }
 
 // ---------------------------------------------------------------------------
-// Пробный лист проверки печатной станции — насыщен полиграфическими защитными
-// элементами: гильоши, ШК, чёрные реперные квадраты по краям, шкалы цвета и
-// серого, микротекст, реестровая печать.
+// Пробный лист проверки печатной станции: крупные машинно-читаемые коды,
+// реперные метки, шкалы плотности, растра, линий и мелкого текста.
 // ---------------------------------------------------------------------------
-function renderTestSheet(sheet: { number: string; registry_code: string; created_by_login: string; created_at: Date }): string {
-  const seed = sheet.registry_code
+export function renderTestSheet(sheet: { number: string; registry_code: string; created_by_login: string; created_at: Date }): string {
   const date = sheet.created_at.toLocaleString('ru-RU')
-  const barcode = barcodeStripes(sheet.registry_code, 360, 60)
-  const barcode2 = barcodeStripes(`${sheet.number}:CTRL`, 220, 38)
-  const rosette = guillocheRosette(seed, 230)
-  const rosetteSmall = guillocheRosette(`${seed}:emblem`, 120)
-  const field = guillocheField(`${seed}:field`, A4_W - 120, 90, 0.5)
-  const band = guillochePattern(`${seed}:band`, A4_W - 120, 70)
-  const micro = microtextLine('ПЕЛЬАГРИЯ · СОНАР · ПРОБНЫЙ ЛИСТ · КОНТРОЛЬ ПЕЧАТИ', A4_W - 120)
-  const seal = signatureSeal({ number: sheet.number, signer: 'СТАНЦИЯ ПЕЧАТИ', role: 'Контроль качества', date, size: 150, rotate: -6 })
+  const barcode = barcodeStripes(sheet.registry_code, 420, 72)
+  const barcode2 = barcodeStripes(`${sheet.number}:CTRL`, 260, 54)
+  const qr = qrCode(`СОНАР|ПРОБНЫЙ ЛИСТ|${sheet.registry_code}|${sheet.number}`, 112)
 
   // Реперные (регистрационные) чёрные квадраты по углам и серединам краёв
   const square = (cls: string) => `<div class="reg-square ${cls}"></div>`
   const crosshair = (cls: string) => `<div class="reg-cross ${cls}"><span></span><span></span></div>`
 
-  // Шкала серого 0→100 % (запрошенная плотность — мишень для растрирования лазера)
+  // Шкала серого 0→100 % — мишень для проверки плотности и провалов в тенях.
   const greySteps = Array.from({ length: 11 }, (_, i) => {
     const v = Math.round((i / 10) * 255)
     const pct = i * 10
     return `<div class="ramp-cell" style="background:rgb(${v},${v},${v});color:${i > 5 ? '#000' : '#fff'};">${pct}</div>`
   }).join('')
 
-  // Векторный полутоновый растр (точечный экран) — ключевой тест для ЧБ-лазера.
-  // Для каждой плотности радиус точки задаёт долю запечатки в ячейке 8×8.
+  // Векторный полутоновый растр — ключевой тест для ЧБ-лазера.
   const sid = sheet.number.replace(/[^A-Za-z0-9]/g, '')
   const halftoneCell = (pct: number): string => {
     if (pct >= 100) {
@@ -160,70 +149,82 @@ function renderTestSheet(sheet: { number: string; registry_code: string; created
   }
   const halftones = [10, 25, 40, 55, 70, 85, 100].map(halftoneCell).join('')
 
-  // Калибр толщины линий (тонкие линии при 600/1200 dpi)
+  // Калибр толщины линий при 600/1200 dpi.
   const lineGauge = [0.25, 0.5, 0.75, 1, 1.5, 2, 3].map((w) =>
     `<div class="gauge-col"><div class="gauge-bars">${Array.from({ length: 6 }, () => `<i style="height:${w}px;"></i>`).join('')}</div><small>${w}px</small></div>`
+  ).join('')
+
+  const textGauge = [6, 7, 8, 9, 10].map((size) =>
+    `<div style="font-size:${size}px;"><b>${size} px</b> · СОНАР ПЕЛЬАГРИЯ · 0123456789 · ШК ${escapeHtml(sheet.registry_code)}</div>`
   ).join('')
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { background:#fff; font-family:'Inter',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:A4; margin:0; }
     .sheet { position:relative; width:794px; min-height:1123px; background:#fff; overflow:hidden; }
-    /* чёрные реперные квадраты по краям */
-    .reg-square { position:absolute; width:22px; height:22px; background:#000; z-index:5; }
-    .reg-square.tl { top:14px; left:14px; } .reg-square.tr { top:14px; right:14px; }
-    .reg-square.bl { bottom:14px; left:14px; } .reg-square.br { bottom:14px; right:14px; }
-    .reg-square.tm { top:14px; left:50%; transform:translateX(-50%); } .reg-square.bm { bottom:14px; left:50%; transform:translateX(-50%); }
-    .reg-square.lm { left:14px; top:50%; transform:translateY(-50%); } .reg-square.rm { right:14px; top:50%; transform:translateY(-50%); }
+    .reg-square { position:absolute; width:18px; height:18px; background:#000; z-index:5; }
+    .reg-square.tl { top:10px; left:10px; } .reg-square.tr { top:10px; right:10px; }
+    .reg-square.bl { bottom:10px; left:10px; } .reg-square.br { bottom:10px; right:10px; }
+    .reg-square.tm { top:10px; left:50%; transform:translateX(-50%); } .reg-square.bm { bottom:10px; left:50%; transform:translateX(-50%); }
+    .reg-square.lm { left:10px; top:50%; transform:translateY(-50%); } .reg-square.rm { right:10px; top:50%; transform:translateY(-50%); }
     .reg-cross { position:absolute; width:34px; height:34px; z-index:5; }
     .reg-cross span { position:absolute; background:#000; }
     .reg-cross span:first-child { left:50%; top:0; width:1.2px; height:100%; transform:translateX(-50%); }
     .reg-cross span:last-child { top:50%; left:0; height:1.2px; width:100%; transform:translateY(-50%); }
-    .reg-cross.c1 { top:48px; left:48px; } .reg-cross.c2 { top:48px; right:48px; } .reg-cross.c3 { bottom:48px; left:48px; } .reg-cross.c4 { bottom:48px; right:48px; }
-    .frame { position:absolute; inset:46px; border:1.4px solid #111; z-index:1; }
-    .frame2 { position:absolute; inset:52px; border:0.5px solid #777; z-index:1; }
-    .inner { position:relative; z-index:3; padding:70px 60px 60px; }
-    .head { display:flex; align-items:center; gap:18px; border-bottom:2px solid #111; padding-bottom:16px; }
-    .head .emblem { width:74px; height:74px; flex-shrink:0; } .head .emblem svg { width:74px; height:74px; }
+    .reg-cross.c1 { top:39px; left:39px; } .reg-cross.c2 { top:39px; right:39px; } .reg-cross.c3 { bottom:39px; left:39px; } .reg-cross.c4 { bottom:39px; right:39px; }
+    .frame { position:absolute; inset:35px; border:2px solid #111; z-index:1; }
+    .frame2 { position:absolute; inset:41px; border:0.7px solid #777; z-index:1; }
+    .inner { position:relative; z-index:3; padding:52px 52px 48px; }
+    .head { display:grid; grid-template-columns:1fr auto; align-items:start; gap:18px; border-bottom:3px solid #111; padding-bottom:12px; }
     .head .state { font-size:10px; letter-spacing:3px; font-weight:700; color:#111; }
-    .head h1 { font-family:'PT Serif',serif; font-size:26px; font-weight:700; text-transform:uppercase; color:${INK}; margin-top:5px; letter-spacing:.04em; }
+    .head h1 { font-family:'PT Serif',serif; font-size:25px; font-weight:700; text-transform:uppercase; color:${INK}; margin-top:4px; letter-spacing:.04em; }
     .head .sub { font-size:11px; color:#444; margin-top:4px; letter-spacing:.04em; }
-    .head .headnote { display:inline-block; margin-top:6px; padding:2px 8px; border:1px solid #111; border-radius:3px; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#111; }
-    .head .meta { margin-left:auto; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; color:#222; line-height:1.7; }
+    .head .headnote { display:inline-block; margin-top:6px; padding:3px 8px; border:1px solid #111; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#111; }
+    .head .meta { text-align:right; font-family:'JetBrains Mono',monospace; font-size:10px; color:#222; line-height:1.65; }
     .head .meta b { color:#111; }
-    /* всё печатается ЧБ на лазере — переводим цветные элементы в чёткий монохром */
-    .ink svg { filter:grayscale(1) contrast(1.45); }
-    .bc svg { filter:grayscale(1) contrast(1.8); shape-rendering:crispEdges; }
-    .section-title { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#444; margin:22px 0 8px; }
-    .rosette-wrap { position:absolute; top:330px; left:50%; transform:translateX(-50%); width:230px; height:230px; opacity:.5; z-index:2; pointer-events:none; }
-    .barcode-row { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-top:14px; }
-    .barcode-row .code { font-family:'JetBrains Mono',monospace; font-size:10px; color:#222; margin-top:4px; letter-spacing:.05em; }
+    .bc svg, .qr svg { filter:grayscale(1) contrast(2.4); shape-rendering:crispEdges; }
+    .section-title { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#333; margin:14px 0 6px; }
+    .control-grid { display:grid; grid-template-columns:112px minmax(0,1fr); gap:16px; margin-top:12px; padding:12px; border:2px solid #111; }
+    .qr, .qr svg { width:112px; height:112px; }
+    .barcode-stack { display:flex; flex-direction:column; justify-content:space-between; min-width:0; }
+    .barcode-main svg { width:100%; height:72px; }
+    .barcode-secondary { display:grid; grid-template-columns:260px 1fr; align-items:end; gap:12px; margin-top:8px; }
+    .barcode-secondary svg { width:260px; height:54px; }
+    .code { font-family:'JetBrains Mono',monospace; font-size:9px; color:#222; margin-top:3px; letter-spacing:.03em; overflow-wrap:anywhere; }
+    .control-note { align-self:center; font-size:9px; line-height:1.5; color:#444; }
+    .control-note b { display:block; color:#111; font-size:10px; }
     .ramp { display:grid; grid-template-columns:repeat(11,1fr); border:1px solid #111; }
-    .ramp-cell { height:34px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:3px; font-family:'JetBrains Mono',monospace; font-size:9px; }
+    .ramp-cell { height:31px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:3px; font-family:'JetBrains Mono',monospace; font-size:8px; }
     .halftones { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
-    .ht-cell { text-align:center; } .ht-fill { height:40px; border:1px solid #111; overflow:hidden; }
+    .ht-cell { text-align:center; } .ht-fill { height:34px; border:1px solid #111; overflow:hidden; }
     .ht-fill svg { display:block; width:100%; height:100%; } .ht-cell small { font-family:'JetBrains Mono',monospace; font-size:8px; color:#333; }
     .mono-row { display:flex; gap:12px; align-items:stretch; }
-    .grad-bar { flex:1; height:42px; border:1px solid #111; background:linear-gradient(90deg,#000 0%,#fff 100%); }
+    .grad-bar { flex:1; height:34px; border:1px solid #111; background:linear-gradient(90deg,#000 0%,#fff 100%); }
     .grad-bar-label { font-family:'JetBrains Mono',monospace; font-size:8px; color:#333; margin-top:3px; }
-    .rev-patch { width:210px; flex:0 0 auto; background:#000; display:flex; align-items:center; justify-content:center; padding:8px; }
+    .rev-patch { width:185px; flex:0 0 auto; background:#000; display:flex; align-items:center; justify-content:center; padding:6px; }
     .rev-patch span { color:#fff; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.04em; text-align:center; line-height:1.5; }
-    .gauge { display:flex; gap:18px; align-items:flex-end; }
-    .gauge-col { text-align:center; } .gauge-bars { display:flex; flex-direction:column; gap:3px; width:60px; }
+    .diagnostics { display:grid; grid-template-columns:1.25fr .75fr; gap:16px; }
+    .gauge { display:flex; justify-content:space-between; gap:8px; align-items:flex-end; padding:9px; border:1px solid #777; }
+    .gauge-col { text-align:center; } .gauge-bars { display:flex; flex-direction:column; gap:3px; width:43px; }
     .gauge-bars i { display:block; width:100%; background:#000; } .gauge-col small { font-family:'JetBrains Mono',monospace; font-size:8px; color:#444; }
-    .band { margin-top:8px; opacity:.85; } .band svg, .field svg, .micro svg { display:block; width:100%; }
-    .field { margin-top:8px; opacity:.7; }
-    .micro { height:12px; overflow:hidden; margin:14px 0; }
-    .footer { display:flex; align-items:flex-end; justify-content:space-between; border-top:2px solid #111; margin-top:22px; padding-top:14px; }
-    .footer .note { font-size:10px; color:#555; max-width:430px; line-height:1.55; }
+    .text-gauge { display:flex; flex-direction:column; justify-content:center; gap:5px; padding:9px; border:1px solid #777; font-family:'JetBrains Mono',monospace; line-height:1.2; }
+    .alignment { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:7px; }
+    .alignment div { position:relative; height:28px; border:1px solid #111; }
+    .alignment div::before, .alignment div::after { content:''; position:absolute; background:#111; }
+    .alignment div::before { left:50%; top:0; width:1px; height:100%; }
+    .alignment div::after { top:50%; left:0; height:1px; width:100%; }
+    .alignment span { position:absolute; inset:7px; border:1px solid #777; }
+    .footer { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center; border-top:2px solid #111; margin-top:14px; padding-top:10px; }
+    .footer .note { font-size:9px; color:#555; line-height:1.5; }
     .footer .note b { color:#111; }
-    .seal-wrap { width:150px; height:150px; flex-shrink:0; }
-    .destroy-mark { margin-top:14px; text-align:center; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#000; border:1px dashed #000; border-radius:6px; padding:9px; }
+    .inspection { display:grid; grid-template-columns:repeat(3,72px); gap:5px; }
+    .inspection div { height:34px; padding:4px; border:1px solid #111; font-size:7px; text-align:center; text-transform:uppercase; }
+    .destroy-mark { margin-top:9px; text-align:center; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:#000; border:1px dashed #000; padding:7px; }
     @media print {
       html, body, .sheet { background:#fff !important; }
       * { color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      .ink svg { filter:grayscale(1) contrast(1.6) !important; }
-      .bc svg { filter:grayscale(1) contrast(2) !important; shape-rendering:crispEdges; }
+      .bc svg, .qr svg { filter:grayscale(1) contrast(2.4) !important; shape-rendering:crispEdges; }
       .reg-square, .reg-cross span, .rev-patch { background:#000 !important; }
     }
   </style></head><body>
@@ -231,48 +232,52 @@ function renderTestSheet(sheet: { number: string; registry_code: string; created
       ${square('tl')}${square('tr')}${square('bl')}${square('br')}${square('tm')}${square('bm')}${square('lm')}${square('rm')}
       ${crosshair('c1')}${crosshair('c2')}${crosshair('c3')}${crosshair('c4')}
       <div class="frame"></div><div class="frame2"></div>
-      <div class="rosette-wrap ink">${rosette}</div>
       <div class="inner">
         <div class="head">
-          <div class="emblem ink">${rosetteSmall}</div>
           <div>
             <div class="state">ГОСУДАРСТВО ПЕЛЬАГРИЯ · СОНАР</div>
-            <h1>Пробный лист</h1>
-            <div class="sub">Проверка печатной станции и защитных элементов</div>
-            <div class="headnote">ЧБ · лазер · оптимизировано для PANTUM M6500W</div>
+            <h1>Контрольный лист печати</h1>
+            <div class="sub">Диагностика штрихкодов, QR, растра, геометрии и читаемости</div>
+            <div class="headnote">ЧБ · лазер · PANTUM · 600/1200 DPI</div>
           </div>
           <div class="meta">№ <b>${escapeHtml(sheet.number)}</b><br>${escapeHtml(sheet.registry_code)}<br>${escapeHtml(date)}<br>Оператор: ${escapeHtml(sheet.created_by_login)}</div>
         </div>
 
-        <div class="section-title">Контрольные штрих-коды</div>
-        <div class="barcode-row">
-          <div class="bc">${barcode}<div class="code">ОСНОВНОЙ ШК · ${escapeHtml(sheet.registry_code)}</div></div>
-          <div class="bc">${barcode2}<div class="code">КОНТРОЛЬ · ${escapeHtml(sheet.number)}</div></div>
+        <div class="control-grid">
+          <div class="qr">${qr}</div>
+          <div class="barcode-stack">
+            <div class="bc barcode-main">${barcode}<div class="code">ОСНОВНОЙ CODE 128 · ${escapeHtml(sheet.registry_code)}</div></div>
+            <div class="barcode-secondary">
+              <div class="bc">${barcode2}<div class="code">КОНТРОЛЬ · ${escapeHtml(sheet.number)}</div></div>
+              <div class="control-note"><b>Проверка сканирования</b>QR содержит номер листа и ШК. Все коды векторные и рассчитаны на чёрно-белую печать без масштабирования.</div>
+            </div>
+          </div>
         </div>
 
-        <div class="section-title">Шкала плотности (0–100 %)</div>
+        <div class="section-title">01 · Шкала плотности тонера (0–100 %)</div>
         <div class="ramp">${greySteps}</div>
 
-        <div class="section-title">Полутоновый растр (точечный экран)</div>
+        <div class="section-title">02 · Полутоновый растр</div>
         <div class="halftones">${halftones}</div>
 
-        <div class="section-title">Градиент и реверс (баннинг · заливка тонера)</div>
+        <div class="section-title">03 · Градиент и реверс</div>
         <div class="mono-row">
           <div style="flex:1;"><div class="grad-bar"></div><div class="grad-bar-label">ПЛАВНЫЙ ПЕРЕХОД 0→100 % · контроль полос (banding)</div></div>
           <div class="rev-patch"><span>PANTUM M6500W<br>СОНАР · ${escapeHtml(sheet.number)}</span></div>
         </div>
 
-        <div class="section-title">Калибр толщины линий</div>
-        <div class="gauge">${lineGauge}</div>
+        <div class="section-title">04 · Линии и читаемость мелкого текста</div>
+        <div class="diagnostics">
+          <div class="gauge">${lineGauge}</div>
+          <div class="text-gauge">${textGauge}</div>
+        </div>
 
-        <div class="section-title">Гильоширный растр и микротекст</div>
-        <div class="band ink">${band}</div>
-        <div class="micro ink">${micro}</div>
-        <div class="field ink">${field}</div>
+        <div class="section-title">05 · Геометрия, совмещение и поля</div>
+        <div class="alignment">${Array.from({ length: 4 }, () => '<div><span></span></div>').join('')}</div>
 
         <div class="footer">
-          <div class="note"><b>Назначение:</b> технологический образец для калибровки печати, совмещения красок и контроля защитных элементов. Юридической силы не имеет. Лист подлежит обязательному уничтожению — запись стирается из мини-базы СОНАР после подтверждения уничтожения.</div>
-          <div class="seal-wrap ink">${seal}</div>
+          <div class="note"><b>Порядок проверки:</b> печатать в масштабе 100 %, без режима «подогнать». Убедиться, что QR и оба штрихкода считываются, квадраты не обрезаны, линии от 0,5 px различимы, а шкала серого не сливается. Юридической силы не имеет.</div>
+          <div class="inspection"><div>Коды<br>читаются</div><div>Поля<br>целы</div><div>Растр<br>ровный</div></div>
         </div>
         <div class="destroy-mark">Образец · уничтожить после проверки · ${escapeHtml(sheet.registry_code)}</div>
       </div>
