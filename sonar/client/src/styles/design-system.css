@@ -754,3 +754,34 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .profile-grid, .profile-pw-grid { grid-template-columns: 1fr; }
   .profile-hero-side { display: none; }
 }
+
+/* ── Мобильная оптимизация / PWA ───────────────────── */
+html { -webkit-text-size-adjust: 100%; }
+body { overscroll-behavior-y: none; }
+@supports (height: 100dvh) { .app-shell { height: 100dvh; } }
+
+/* Безопасные зоны при установке как приложение (standalone) */
+@media (display-mode: standalone) {
+  .app-topbar { padding-top: env(safe-area-inset-top); height: calc(68px + env(safe-area-inset-top)); }
+  .app-main { padding-bottom: calc(50px + env(safe-area-inset-bottom)); }
+  .app-sidebar { padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 600px) {
+  /* Поля ≥16px, чтобы iOS не зумил страницу при фокусе ввода */
+  .ui-input, .ui-select-trigger, .document-textarea,
+  .modal-content input, .modal-content textarea, .modal-content select,
+  .registry-search input, .archive-search input, .verify-search input { font-size: 16px !important; }
+  /* Удобные тап-таргеты */
+  .sidebar-link { min-height: 44px; }
+  .ui-button { min-height: 40px; }
+  .action-menu-item { padding: 12px 12px; }
+  /* Таблицы: плавная горизонтальная прокрутка + читаемость */
+  .ui-table-shell { -webkit-overflow-scrolling: touch; }
+  .ui-table { font-size: 13px; }
+  .ui-table th, .ui-table td { padding: 11px 12px; white-space: nowrap; }
+  /* Одноколоночные сетки на телефоне */
+  .profile-grid, .form-grid, .service-grid, .profile-pw-grid { grid-template-columns: 1fr; }
+  /* Меню действий ближе к краю экрана */
+  .action-menu-popover { width: min(260px, calc(100vw - 24px)); }
+}
