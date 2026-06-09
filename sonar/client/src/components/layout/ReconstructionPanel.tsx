@@ -18,6 +18,7 @@ const activeSystems = [
   { title: 'Станция печати', text: 'Суточная проверка по скану с оценкой разрешения, контраста и экспозиции.', Icon: IconPrinter },
   { title: 'Сканы и распознавание', text: 'Загрузка приложений, OCR, показатель уверенности и ручная сверка результата.', Icon: IconScan },
   { title: 'Единый реестр', text: 'Поиск по документам, обращениям, ШК, приложениям и распознанному тексту.', Icon: IconChecklist },
+  { title: 'Рабочие сессии', text: 'Каждая сессия открывается отдельной страницей с функциями своего режима обслуживания.', Icon: IconProgressCheck },
 ]
 
 const nextStages = [
@@ -60,7 +61,7 @@ export function ReconstructionPanel() {
             <div className="reconstruction-release">
               <div>
                 <span>Текущий этап</span>
-                <strong>Единый центр обслуживания</strong>
+                <strong>Рабочие пространства обслуживания и тёмная тема</strong>
                 <p>Обновлено 10 июня 2026 года</p>
               </div>
               <IconProgressCheck size={24} />

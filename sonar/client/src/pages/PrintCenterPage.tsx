@@ -15,6 +15,7 @@ import {
 import apiClient from '../api/client'
 import type { Building, Citizen, GeneratedDocument, PrinterTestSheet } from '../types'
 import { usePermission } from '../hooks/usePermission'
+import { useAuthStore } from '../store/auth'
 import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -69,8 +70,9 @@ const LONG_FIELDS = new Set([
   'conditions',
 ])
 
-export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: string } = {}) {
+export function PrintCenterPage({ serviceSessionId, embedded = false }: { serviceSessionId?: string; embedded?: boolean } = {}) {
   const canAdmin = usePermission('accounts.manage')
+  const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
   const [templates, setTemplates] = useState<FormTemplate[]>([])
   const [documents, setDocuments] = useState<GeneratedDocument[]>([])
   const [citizens, setCitizens] = useState<Citizen[]>([])
@@ -142,12 +144,15 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await apiClient.get<GeneratedDocument[]>(`/print-center/documents${search ? `?search=${encodeURIComponent(search)}` : ''}`)
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (serviceSessionId) params.set('service_session_id', serviceSessionId)
+      const res = await apiClient.get<GeneratedDocument[]>(`/print-center/documents${params.toString() ? `?${params}` : ''}`)
       setDocuments(res.data)
     } finally {
       setLoading(false)
     }
-  }, [search])
+  }, [search, serviceSessionId])
 
   useEffect(() => {
     Promise.allSettled([
@@ -208,7 +213,9 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
     setDeleteLoading(true)
     setDeleteError(null)
     try {
-      await apiClient.delete(`/print-center/documents/${deleteTarget.id}`)
+      await apiClient.delete(serviceSessionId
+        ? `/service-center/documents/${deleteTarget.id}`
+        : `/print-center/documents/${deleteTarget.id}`)
       setDeleteTarget(null)
       await fetchDocuments()
     } catch (err: unknown) {
@@ -233,7 +240,7 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
     { key: 'actions', header: '', width: '180px', render: (row) => (
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end' }}>
         <Button variant="secondary" size="sm" title="Сформировать документ" onClick={(e) => { e.stopPropagation(); printPdf(`/api/print-center/documents/${row.id}/pdf`) }}><IconPrinter size={15} />Сформировать</Button>
-        {canAdmin && (
+        {(serviceSessionId ? isHeadOfState : canAdmin) && (
           <ActionMenu items={[
             { label: 'Удалить документ', icon: <IconTrash size={15} />, danger: true, onClick: () => { setDeleteError(null); setDeleteTarget(row) } },
           ]} />
@@ -247,17 +254,17 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
       <div className="page-heading">
         <div>
           <span className="page-kicker">СОНАР · Документооборот</span>
-          <h1>Центр печати</h1>
-          <p>Формы, справки, выписки и архив сформированных документов.</p>
+          <h1>{embedded ? 'Документы сессии' : 'Центр печати'}</h1>
+          <p>{embedded ? 'Созданные здесь формы и справки автоматически входят в материалы текущей сессии.' : 'Формы, справки, выписки и архив сформированных документов.'}</p>
         </div>
         <Button variant="primary" onClick={() => templates[0] && openTemplate(templates[0])}><IconPlus size={16} />Новая форма</Button>
       </div>
 
-      <div className="portal-stats">
+      {!embedded && <div className="portal-stats">
         <div><IconArchive size={20} /><span>В архиве<strong>{stats.total}</strong></span></div>
         <div><IconPrinter size={20} /><span>Сегодня<strong>{stats.today}</strong></span></div>
         <div><IconLink size={20} /><span>Прикреплено<strong>{stats.linked}</strong></span></div>
-      </div>
+      </div>}
 
       <section className="service-catalog">
         <div className="section-heading"><div><span>Каталог услуг</span><h2>Печатные формы</h2></div></div>
@@ -286,7 +293,7 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
         </div>
       </section>
 
-      <section className="service-catalog test-station">
+      {!embedded && <section className="service-catalog test-station">
         <div className="section-heading">
           <div><span>Контроль оборудования</span><h2>Проверка станции печати</h2></div>
           {canAdmin && (
@@ -329,7 +336,7 @@ export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: strin
             ))
           )}
         </div>
-      </section>
+      </section>}
 
       <section className="print-archive">
         <div className="section-heading">

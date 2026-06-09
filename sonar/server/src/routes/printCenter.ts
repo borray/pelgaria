@@ -292,9 +292,17 @@ router.get('/templates', requireAuth, (_req: Request, res: Response) => {
 // ── Пробные листы проверки печатной станции (отдельная мини-база) ──
 
 // GET /api/print-center/test-sheets — журнал пробных листов
-router.get('/test-sheets', requireAuth, async (_req: Request, res: Response) => {
+router.get('/test-sheets', requireAuth, async (req: Request, res: Response) => {
   try {
-    const sheets = await prisma.printerTestSheet.findMany({ orderBy: { created_at: 'desc' } })
+    const sheets = await prisma.printerTestSheet.findMany({
+      where: {
+        OR: [
+          { created_by_id: req.user!.id },
+          { created_by_id: null, created_by_login: req.user!.login },
+        ],
+      },
+      orderBy: { created_at: 'desc' },
+    })
     res.json(sheets)
   } catch (error) {
     console.error(error)
@@ -311,6 +319,7 @@ router.post('/test-sheets', requireAuth, requirePermission('office.create'), asy
         number,
         registry_code: registryCode('ТЕСТ', number),
         created_by_login: req.user!.login,
+        created_by_id: req.user!.id,
         note: typeof req.body?.note === 'string' ? req.body.note.slice(0, 200) : null,
       },
     })
@@ -329,6 +338,13 @@ router.get('/test-sheets/:id/pdf', requireAuth, async (req: Request, res: Respon
       res.status(404).json({ error: 'Пробный лист не найден' })
       return
     }
+    const belongsToUser = sheet.created_by_id
+      ? sheet.created_by_id === req.user!.id
+      : sheet.created_by_login === req.user!.login
+    if (!belongsToUser && req.user!.role.name !== 'Глава государства') {
+      res.status(403).json({ error: 'Пробный лист принадлежит другой учётной записи' })
+      return
+    }
     const pdf = await htmlToPdf(renderTestSheet(sheet))
     res.set(pdfHeaders(pdf, `test-${sheet.number}.pdf`))
     res.send(pdf)
@@ -344,6 +360,10 @@ router.delete('/test-sheets/:id', requireAuth, requirePermission('accounts.manag
     const existing = await prisma.printerTestSheet.findUnique({ where: { id } })
     if (!existing) {
       res.status(404).json({ error: 'Пробный лист не найден' })
+      return
+    }
+    if (req.user!.role.name !== 'Глава государства') {
+      res.status(403).json({ error: 'Удаление пробных листов доступно только главе государства' })
       return
     }
     await prisma.printerTestSheet.delete({ where: { id } })
@@ -410,9 +430,11 @@ router.get('/documents', requireAuth, async (req: Request, res: Response) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
     const citizenId = typeof req.query.citizen_id === 'string' ? req.query.citizen_id : undefined
+    const serviceSessionId = typeof req.query.service_session_id === 'string' ? req.query.service_session_id : undefined
     const documents = await prisma.generatedDocument.findMany({
       where: {
         ...(citizenId ? { citizen_id: citizenId } : {}),
+        ...(serviceSessionId ? { service_session_id: serviceSessionId } : {}),
         ...(search ? {
           OR: [
             { number: { contains: search, mode: 'insensitive' } },

@@ -6,7 +6,7 @@ import { createWorker } from 'tesseract.js'
 import { Router, Request, Response } from 'express'
 import { Prisma, PrismaClient, ServiceSessionMode, ServiceSessionStatus } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
-import { requirePermission } from '../middleware/permissions'
+import { requireHeadOfState, requirePermission } from '../middleware/permissions'
 import { nextDocumentNumber, registryCode } from '../services/documentRegistry'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import { barcodeStripes, escapeHtml, pageShell, qrCode, INK } from '../services/templates'
@@ -58,11 +58,14 @@ function removeUploadedFile(file?: Express.Multer.File) {
   fs.promises.unlink(file.path).catch(() => undefined)
 }
 
-async function latestPrinterCheck(login: string) {
+async function latestPrinterCheck(userId: string, login: string) {
   const threshold = new Date(Date.now() - 24 * 60 * 60 * 1000)
   return prisma.printerTestSheet.findFirst({
     where: {
-      created_by_login: login,
+      OR: [
+        { created_by_id: userId },
+        { created_by_id: null, created_by_login: login },
+      ],
       status: 'PASSED',
       checked_at: { gte: threshold },
       expires_at: { gt: new Date() },
@@ -136,7 +139,7 @@ async function recognizeAttachment(id: string) {
 }
 
 router.get('/readiness', requireAuth, requirePermission('office.view'), async (req: Request, res: Response) => {
-  const check = await latestPrinterCheck(req.user!.login)
+  const check = await latestPrinterCheck(req.user!.id, req.user!.login)
   res.json({ ready: Boolean(check), check, valid_until: check?.expires_at ?? null })
 })
 
@@ -157,7 +160,10 @@ router.post(
         res.status(404).json({ error: 'Пробный лист не найден' })
         return
       }
-      if (sheet.created_by_login !== req.user!.login && req.user!.role.name !== 'Глава государства') {
+      const belongsToUser = sheet.created_by_id
+        ? sheet.created_by_id === req.user!.id
+        : sheet.created_by_login === req.user!.login
+      if (!belongsToUser && req.user!.role.name !== 'Глава государства') {
         removeUploadedFile(req.file)
         res.status(403).json({ error: 'Можно проверять только собственный пробный лист' })
         return
@@ -173,6 +179,7 @@ router.post(
       const updated = await prisma.printerTestSheet.update({
         where: { id: sheet.id },
         data: {
+          created_by_id: sheet.created_by_id ?? req.user!.id,
           status: evaluation.passed ? 'PASSED' : 'FAILED',
           scan_url: `/uploads/service-center/${req.file.filename}`,
           scan_filename: req.file.originalname,
@@ -227,7 +234,7 @@ router.post('/sessions', requireAuth, requirePermission('office.create'), async 
     return
   }
 
-  const check = await latestPrinterCheck(req.user!.login)
+  const check = await latestPrinterCheck(req.user!.id, req.user!.login)
   const bypass = req.body.printer_check_bypassed === true
   if (!check && !bypass) {
     res.status(428).json({ error: 'Перед началом сессии требуется проверка станции печати', code: 'PRINTER_CHECK_REQUIRED' })
@@ -357,6 +364,59 @@ router.patch('/attachments/:id', requireAuth, requirePermission('office.manage')
     },
   })
   res.json(attachment)
+})
+
+router.delete('/attachments/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  const attachment = await prisma.serviceAttachment.findUnique({ where: { id: req.params.id as string } })
+  if (!attachment) {
+    res.status(404).json({ error: 'Файл не найден' })
+    return
+  }
+  await prisma.serviceAttachment.delete({ where: { id: attachment.id } })
+  const filePath = path.join(process.cwd(), attachment.url.replace('/uploads/', 'uploads/'))
+  await fs.promises.unlink(filePath).catch(() => undefined)
+  res.status(204).end()
+})
+
+router.delete('/documents/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  const document = await prisma.generatedDocument.findUnique({ where: { id: req.params.id as string } })
+  if (!document) {
+    res.status(404).json({ error: 'Документ не найден' })
+    return
+  }
+  await prisma.generatedDocument.delete({ where: { id: document.id } })
+  res.status(204).end()
+})
+
+router.delete('/requests/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  const request = await prisma.serviceRequest.findUnique({ where: { id: req.params.id as string } })
+  if (!request) {
+    res.status(404).json({ error: 'Обращение не найдено' })
+    return
+  }
+  await prisma.serviceRequest.delete({ where: { id: request.id } })
+  res.status(204).end()
+})
+
+router.delete('/sessions/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  const session = await prisma.serviceSession.findUnique({
+    where: { id: req.params.id as string },
+    include: { attachments: true },
+  })
+  if (!session) {
+    res.status(404).json({ error: 'Сессия не найдена' })
+    return
+  }
+  await prisma.$transaction([
+    prisma.generatedDocument.deleteMany({ where: { service_session_id: session.id } }),
+    prisma.serviceRequest.deleteMany({ where: { service_session_id: session.id } }),
+    prisma.serviceSession.delete({ where: { id: session.id } }),
+  ])
+  await Promise.all(session.attachments.map((attachment) => {
+    const filePath = path.join(process.cwd(), attachment.url.replace('/uploads/', 'uploads/'))
+    return fs.promises.unlink(filePath).catch(() => undefined)
+  }))
+  res.status(204).end()
 })
 
 router.get('/registry', requireAuth, requirePermission('office.view'), async (req: Request, res: Response) => {

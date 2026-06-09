@@ -9,6 +9,7 @@ import {
   IconCheck,
   IconX,
   IconShieldLock,
+  IconPalette,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../store/auth'
 import api from '../api/client'
@@ -16,6 +17,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 import { formatDateTime } from '../utils/formatters'
+import { ThemeToggle } from '../components/ui/ThemeToggle'
 
 export function ProfilePage() {
   const { user, setUser, setTokens } = useAuthStore()
@@ -241,6 +243,21 @@ export function ProfilePage() {
               </div>
             </div>
           )}
+        </section>
+
+        {/* Смена пароля */}
+        <section className="form-section">
+          <div className="form-section-heading">
+            <span><IconPalette size={15} /></span>
+            <div><strong>Оформление</strong><small>Тема сохраняется на этом устройстве</small></div>
+          </div>
+          <div className="profile-row">
+            <div>
+              <div className="profile-row-label">Цветовая тема</div>
+              <div className="profile-row-value">Светлая или тёмная схема СОНАР</div>
+            </div>
+            <ThemeToggle />
+          </div>
         </section>
 
         {/* Смена пароля */}

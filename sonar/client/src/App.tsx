@@ -24,6 +24,7 @@ import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { VerificationPage } from './pages/VerificationPage'
 import { ServiceCenterPage } from './pages/ServiceCenterPage'
+import { ServiceSessionPage } from './pages/ServiceSessionPage'
 import apiClient from './api/client'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="print-center" element={<Navigate to="/office?tab=forms" replace />} />
         <Route path="verify" element={<VerificationPage />} />
         <Route path="office" element={<ServiceCenterPage />} />
+        <Route path="office/sessions/:id" element={<ServiceSessionPage />} />
         <Route path="service-center" element={<Navigate to="/office" replace />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>

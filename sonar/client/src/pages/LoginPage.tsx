@@ -9,6 +9,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
 import { useAuthStore } from '../store/auth'
+import { ThemeToggle } from '../components/ui/ThemeToggle'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -54,6 +55,7 @@ export function LoginPage() {
 
   return (
     <main className="auth">
+      <div className="auth-theme-toggle"><ThemeToggle compact /></div>
       <div className="auth-blobs" aria-hidden="true">
         <span className="auth-blob b1" />
         <span className="auth-blob b2" />

@@ -81,12 +81,14 @@ router.get('/', requireAuth, requirePermission('office.view'), async (req: Reque
     const priority = typeof req.query.priority === 'string' && REQUEST_PRIORITIES.has(req.query.priority as ServiceRequestPriority)
       ? req.query.priority as ServiceRequestPriority
       : undefined
+    const serviceSessionId = typeof req.query.service_session_id === 'string' ? req.query.service_session_id : undefined
     const mine = req.query.mine === 'true'
 
     const where: Prisma.ServiceRequestWhereInput = {
       ...(status ? { status } : {}),
       ...(type ? { type } : {}),
       ...(priority ? { priority } : {}),
+      ...(serviceSessionId ? { service_session_id: serviceSessionId } : {}),
       ...(mine ? { assignee_id: req.user!.id } : {}),
       ...(search ? {
         OR: [

@@ -93,7 +93,7 @@ const EMPTY_FORM = {
 const isOpen = (status: ServiceRequestStatus) =>
   ['RECEIVED', 'REVIEW', 'IN_PROGRESS', 'WAITING'].includes(status)
 
-export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } = {}) {
+export function OfficePage({ serviceSessionId, embedded = false }: { serviceSessionId?: string; embedded?: boolean } = {}) {
   const canCreate = usePermission('office.create')
   const canManage = usePermission('office.manage')
   const [requests, setRequests] = useState<ServiceRequest[]>([])
@@ -127,6 +127,7 @@ export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } =
       if (statusFilter) params.set('status', statusFilter)
       if (typeFilter) params.set('type', typeFilter)
       if (mineOnly) params.set('mine', 'true')
+      if (serviceSessionId) params.set('service_session_id', serviceSessionId)
       const suffix = params.toString() ? `?${params}` : ''
       const [requestRes, statsRes] = await Promise.all([
         apiClient.get<ServiceRequest[]>(`/office${suffix}`),
@@ -139,7 +140,7 @@ export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } =
     } finally {
       setLoading(false)
     }
-  }, [mineOnly, search, statusFilter, typeFilter])
+  }, [mineOnly, search, serviceSessionId, statusFilter, typeFilter])
 
   useEffect(() => {
     Promise.allSettled([
@@ -298,8 +299,8 @@ export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } =
       <div className="page-heading">
         <div>
           <span className="page-kicker">СОНАР · Документооборот</span>
-          <h1>Приёмная</h1>
-          <p>Обращения граждан, заявления, жалобы и служебные поручения с контролем исполнения.</p>
+          <h1>{embedded ? 'Обращения сессии' : 'Приёмная'}</h1>
+          <p>{embedded ? 'Все обращения на этой странице автоматически связаны с текущей сессией.' : 'Обращения граждан, заявления, жалобы и служебные поручения с контролем исполнения.'}</p>
         </div>
         {canCreate && (
           <Button variant="primary" onClick={() => { setCreateError(null); setCreateOpen(true) }}>
@@ -308,7 +309,7 @@ export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } =
         )}
       </div>
 
-      <div className="office-stats">
+      {!embedded && <div className="office-stats">
         {visibleStats.map((item) => {
           const Icon = item.icon
           return (
@@ -318,7 +319,7 @@ export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } =
             </div>
           )
         })}
-      </div>
+      </div>}
 
       <section className="office-register">
         <div className="section-heading office-toolbar-heading">

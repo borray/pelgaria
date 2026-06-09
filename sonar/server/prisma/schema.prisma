@@ -48,6 +48,7 @@ model User {
   service_request_events    ServiceRequestEvent[]
   service_sessions          ServiceSession[]        @relation("ServiceOperator")
   service_attachments       ServiceAttachment[]     @relation("ServiceAttachmentUploader")
+  printer_test_sheets       PrinterTestSheet[]       @relation("PrinterTestOwner")
 }
 
 model RefreshToken {
@@ -399,6 +400,8 @@ model PrinterTestSheet {
   number           String   @unique
   registry_code    String   @unique
   created_by_login String
+  created_by_id    String?
+  created_by       User?    @relation("PrinterTestOwner", fields: [created_by_id], references: [id], onDelete: SetNull)
   note             String?
   status           String   @default("PRINTED")
   scan_url         String?
@@ -410,6 +413,8 @@ model PrinterTestSheet {
   expires_at       DateTime?
   created_at       DateTime @default(now())
   service_sessions ServiceSession[]
+
+  @@index([created_by_id, checked_at])
 }
 
 model GeneratedDocument {
