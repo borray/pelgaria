@@ -293,7 +293,59 @@ export interface PrinterTestSheet {
   registry_code: string
   created_by_login: string
   note?: string | null
+  status: 'PRINTED' | 'PASSED' | 'FAILED'
+  scan_url?: string | null
+  scan_filename?: string | null
+  scan_mime_type?: string | null
+  quality_score?: number | null
+  quality_report?: { width?: number; height?: number; contrast?: number; brightness?: number; issues?: string[] } | null
+  checked_at?: string | null
+  expires_at?: string | null
   created_at: string
+}
+
+export type ServiceSessionMode = 'ONLINE' | 'OFFLINE' | 'INTERNAL'
+export type ServiceSessionStatus = 'ACTIVE' | 'WAITING_SCAN' | 'REVIEW' | 'COMPLETED' | 'CANCELLED'
+
+export interface ServiceAttachment {
+  id: string
+  session_id: string
+  kind: string
+  filename: string
+  original_name: string
+  mime_type: string
+  size: number
+  url: string
+  ocr_status: string
+  ocr_confidence?: number | null
+  ocr_text?: string | null
+  extracted_data: Record<string, unknown>
+  uploaded_by?: Pick<User, 'id' | 'login'>
+  created_at: string
+}
+
+export interface ServiceSession {
+  id: string
+  number: string
+  registry_code: string
+  mode: ServiceSessionMode
+  status: ServiceSessionStatus
+  subject: string
+  contact?: string | null
+  citizen_id?: string | null
+  citizen?: Pick<Citizen, 'id' | 'reg_number' | 'nickname'> | null
+  operator: Pick<User, 'id' | 'login'>
+  printer_check?: PrinterTestSheet | null
+  printer_check_bypassed: boolean
+  data: Record<string, unknown>
+  started_at: string
+  completed_at?: string | null
+  attachments?: ServiceAttachment[]
+  documents?: GeneratedDocument[]
+  requests?: ServiceRequest[]
+  _count?: { attachments: number; documents: number; requests: number }
+  created_at: string
+  updated_at: string
 }
 
 export type ServiceRequestType = 'APPLICATION' | 'COMPLAINT' | 'PETITION' | 'SERVICE' | 'INTERNAL'

@@ -93,7 +93,7 @@ const EMPTY_FORM = {
 const isOpen = (status: ServiceRequestStatus) =>
   ['RECEIVED', 'REVIEW', 'IN_PROGRESS', 'WAITING'].includes(status)
 
-export function OfficePage() {
+export function OfficePage({ serviceSessionId }: { serviceSessionId?: string } = {}) {
   const canCreate = usePermission('office.create')
   const canManage = usePermission('office.manage')
   const [requests, setRequests] = useState<ServiceRequest[]>([])
@@ -183,6 +183,7 @@ export function OfficePage() {
     try {
       const response = await apiClient.post<ServiceRequest>('/office', {
         ...createForm,
+        service_session_id: serviceSessionId || null,
         citizen_id: createForm.citizen_id || null,
         assignee_id: createForm.assignee_id || null,
         due_at: createForm.due_at || null,

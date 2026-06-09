@@ -6,19 +6,23 @@ import {
   IconFileCheck,
   IconPrinter,
   IconProgressCheck,
+  IconScan,
+  IconUserCheck,
   IconTool,
   IconX,
 } from '@tabler/icons-react'
 
 const activeSystems = [
   { title: 'Законодательство 2.0', text: 'Конституция, редакции, связи актов, архив и управляемое удаление.', Icon: IconFileCheck },
-  { title: 'Печатный контур', text: 'ЧБ-шаблоны, крупные Code 128 и QR, проверка подлинности.', Icon: IconPrinter },
-  { title: 'Приёмная', text: 'Обращения, сроки, ответственные, резолюции и журнал исполнения.', Icon: IconChecklist },
+  { title: 'Центр обслуживания', text: 'Онлайн-, офлайн- и внутренние сессии объединяют обращения, документы и заявителя.', Icon: IconUserCheck },
+  { title: 'Станция печати', text: 'Суточная проверка по скану с оценкой разрешения, контраста и экспозиции.', Icon: IconPrinter },
+  { title: 'Сканы и распознавание', text: 'Загрузка приложений, OCR, показатель уверенности и ручная сверка результата.', Icon: IconScan },
+  { title: 'Единый реестр', text: 'Поиск по документам, обращениям, ШК, приложениям и распознанному тексту.', Icon: IconChecklist },
 ]
 
 const nextStages = [
   { title: 'Реестр организаций', text: 'Подробные карточки, руководство, статус, реквизиты и связанные документы.', Icon: IconBuildingCommunity },
-  { title: 'Пакетная печать', text: 'Формирование нескольких справок и выписок одной операцией.', Icon: IconPrinter },
+  { title: 'Обучение распознавания', text: 'Улучшение разбора рукописных клеточных форм на подтверждённых сотрудником примерах.', Icon: IconScan },
 ]
 
 const archived = [
@@ -56,8 +60,8 @@ export function ReconstructionPanel() {
             <div className="reconstruction-release">
               <div>
                 <span>Текущий этап</span>
-                <strong>Контур документов и законодательства</strong>
-                <p>Обновлено 9 июня 2026 года</p>
+                <strong>Единый центр обслуживания</strong>
+                <p>Обновлено 10 июня 2026 года</p>
               </div>
               <IconProgressCheck size={24} />
             </div>

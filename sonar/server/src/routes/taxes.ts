@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient, TaxChargeStatus, Prisma } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
-import { requirePermission } from '../middleware/permissions'
+import { requireHeadOfState, requirePermission } from '../middleware/permissions'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
@@ -195,6 +195,71 @@ router.post('/charges/:id/pay', requireAuth, requirePermission('taxes.mark_paid'
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
+router.delete('/charges/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const charge = await prisma.taxCharge.findUnique({
+      where: { id },
+      include: { period: true },
+    })
+    if (!charge) {
+      res.status(404).json({ error: 'Начисление не найдено' })
+      return
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (charge.status === 'PAID') {
+        const treasury = await tx.treasury.findFirst()
+        if (treasury) {
+          await tx.treasury.update({
+            where: { id: treasury.id },
+            data: { balance: { decrement: charge.amount } },
+          })
+        }
+        await tx.treasuryTransaction.create({
+          data: {
+            amount: -charge.amount,
+            description: `Корректировка после удаления налога [${charge.period.name}]`,
+            performed_by_id: req.user!.id,
+          },
+        })
+      }
+      await tx.taxCharge.delete({ where: { id } })
+    })
+
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось удалить начисление' })
+  }
+})
+
+router.delete('/periods/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const period = await prisma.taxPeriod.findUnique({
+      where: { id },
+      include: { charges: { where: { status: 'PAID' } } },
+    })
+    if (!period) {
+      res.status(404).json({ error: 'Период не найден' })
+      return
+    }
+    if (period.charges.length > 0) {
+      res.status(409).json({ error: 'Нельзя удалить период с оплаченными начислениями. Сначала удалите их отдельно.' })
+      return
+    }
+    await prisma.$transaction([
+      prisma.taxCharge.deleteMany({ where: { period_id: id } }),
+      prisma.taxPeriod.delete({ where: { id } }),
+    ])
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось удалить налоговый период' })
   }
 })
 

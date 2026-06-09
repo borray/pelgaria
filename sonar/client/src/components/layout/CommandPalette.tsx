@@ -9,7 +9,6 @@ import {
   IconScale,
   IconSearch,
   IconUsers,
-  IconPrinter,
   IconInbox,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
@@ -24,8 +23,7 @@ const destinations = [
   { label: 'Казна', hint: 'Финансовые операции', path: '/treasury', icon: IconBuildingBank, permission: 'treasury.view' },
   { label: 'РЕЛИКТ', hint: 'Реестр объектов', path: '/buildings', icon: IconBuilding, permission: 'relict.view' },
   { label: 'Чат', hint: 'Защищённая связь', path: '/chat', icon: IconMessageCircle, permission: 'chat.send' },
-  { label: 'Приёмная', hint: 'Обращения, заявления и поручения', path: '/office', icon: IconInbox, permission: 'office.view' },
-  { label: 'Центр печати', hint: 'Справки, заявления и выписки', path: '/print-center', icon: IconPrinter },
+  { label: 'Центр обслуживания', hint: 'Сессии, обращения, формы и единый реестр', path: '/office', icon: IconInbox, permission: 'office.view' },
 ]
 
 export function CommandPalette() {

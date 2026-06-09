@@ -13,7 +13,6 @@ import {
   IconUserCog,
   IconShield,
   IconLayoutDashboard,
-  IconPrinter,
   IconShieldCheck,
   IconInbox,
 } from '@tabler/icons-react'
@@ -46,14 +45,9 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         },
         {
           to: '/office',
-          label: 'Приёмная',
+          label: 'Центр обслуживания',
           icon: <IconInbox size={16} />,
           permission: 'office.view',
-        },
-        {
-          to: '/print-center',
-          label: 'Документы',
-          icon: <IconPrinter size={16} />,
         },
         {
           to: '/verify',

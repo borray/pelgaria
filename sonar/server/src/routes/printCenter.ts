@@ -303,7 +303,7 @@ router.get('/test-sheets', requireAuth, async (_req: Request, res: Response) => 
 })
 
 // POST /api/print-center/test-sheets — зарегистрировать пробный лист
-router.post('/test-sheets', requireAuth, requirePermission('accounts.manage'), async (req: Request, res: Response) => {
+router.post('/test-sheets', requireAuth, requirePermission('office.create'), async (req: Request, res: Response) => {
   try {
     const number = randomDocumentCode()
     const sheet = await prisma.printerTestSheet.create({
@@ -467,6 +467,7 @@ router.post('/documents', requireAuth, async (req: Request, res: Response) => {
           citizen_id: citizenId,
           linked_entity_type: req.body.linked_entity_type || (citizenId ? 'CITIZEN' : null),
           linked_entity_id: req.body.linked_entity_id || citizenId,
+          service_session_id: req.body.service_session_id || null,
           created_by_id: req.user!.id,
         },
         include: {

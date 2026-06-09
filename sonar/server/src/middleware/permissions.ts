@@ -20,3 +20,17 @@ export function requirePermission(permission: string) {
     next()
   }
 }
+
+export function requireHeadOfState(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    res.status(401).json({ error: 'Требуется авторизация' })
+    return
+  }
+
+  if (req.user.role.name !== 'Глава государства') {
+    res.status(403).json({ error: 'Действие доступно только главе государства' })
+    return
+  }
+
+  next()
+}

@@ -46,6 +46,8 @@ model User {
   created_service_requests  ServiceRequest[]      @relation("RequestCreatedBy")
   assigned_service_requests ServiceRequest[]      @relation("RequestAssignee")
   service_request_events    ServiceRequestEvent[]
+  service_sessions          ServiceSession[]        @relation("ServiceOperator")
+  service_attachments       ServiceAttachment[]     @relation("ServiceAttachmentUploader")
 }
 
 model RefreshToken {
@@ -74,6 +76,7 @@ model Citizen {
   buildings           Building[]
   generated_documents GeneratedDocument[]
   service_requests    ServiceRequest[]
+  service_sessions    ServiceSession[]
   created_at          DateTime            @default(now())
 }
 
@@ -397,7 +400,16 @@ model PrinterTestSheet {
   registry_code    String   @unique
   created_by_login String
   note             String?
+  status           String   @default("PRINTED")
+  scan_url         String?
+  scan_filename    String?
+  scan_mime_type   String?
+  quality_score    Int?
+  quality_report   Json?
+  checked_at       DateTime?
+  expires_at       DateTime?
   created_at       DateTime @default(now())
+  service_sessions ServiceSession[]
 }
 
 model GeneratedDocument {
@@ -414,7 +426,11 @@ model GeneratedDocument {
   status             String   @default("READY")
   created_by_id      String
   created_by         User     @relation(fields: [created_by_id], references: [id])
+  service_session_id String?
+  service_session    ServiceSession? @relation(fields: [service_session_id], references: [id], onDelete: SetNull)
   created_at         DateTime @default(now())
+
+  @@index([service_session_id])
 }
 
 model ServiceRequest {
@@ -439,12 +455,79 @@ model ServiceRequest {
   resolution         String?
   resolved_at        DateTime?
   events             ServiceRequestEvent[]
+  service_session_id String?
+  service_session    ServiceSession?        @relation(fields: [service_session_id], references: [id], onDelete: SetNull)
   created_at         DateTime               @default(now())
   updated_at         DateTime               @updatedAt
 
   @@index([status, due_at])
   @@index([citizen_id])
   @@index([assignee_id])
+  @@index([service_session_id])
+}
+
+model ServiceSession {
+  id                 String              @id @default(cuid())
+  number             String              @unique
+  registry_code      String              @unique
+  mode               ServiceSessionMode
+  status             ServiceSessionStatus @default(ACTIVE)
+  subject            String
+  contact            String?
+  citizen_id         String?
+  citizen            Citizen?            @relation(fields: [citizen_id], references: [id], onDelete: SetNull)
+  operator_id        String
+  operator           User                @relation("ServiceOperator", fields: [operator_id], references: [id])
+  printer_check_id   String?
+  printer_check      PrinterTestSheet?   @relation(fields: [printer_check_id], references: [id], onDelete: SetNull)
+  printer_check_bypassed Boolean          @default(false)
+  data               Json                @default("{}")
+  started_at         DateTime            @default(now())
+  completed_at       DateTime?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  attachments        ServiceAttachment[]
+  documents          GeneratedDocument[]
+  requests           ServiceRequest[]
+
+  @@index([status, started_at])
+  @@index([citizen_id])
+  @@index([operator_id])
+}
+
+model ServiceAttachment {
+  id              String         @id @default(cuid())
+  session_id      String
+  session         ServiceSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  kind            String         @default("SCAN")
+  filename        String
+  original_name   String
+  mime_type       String
+  size            Int
+  url             String
+  ocr_status      String         @default("PENDING")
+  ocr_confidence  Float?
+  ocr_text        String?
+  extracted_data  Json           @default("{}")
+  uploaded_by_id  String
+  uploaded_by     User           @relation("ServiceAttachmentUploader", fields: [uploaded_by_id], references: [id])
+  created_at      DateTime       @default(now())
+
+  @@index([session_id, created_at])
+}
+
+enum ServiceSessionMode {
+  ONLINE
+  OFFLINE
+  INTERNAL
+}
+
+enum ServiceSessionStatus {
+  ACTIVE
+  WAITING_SCAN
+  REVIEW
+  COMPLETED
+  CANCELLED
 }
 
 model ServiceRequestEvent {

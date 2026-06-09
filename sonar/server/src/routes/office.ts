@@ -215,6 +215,7 @@ router.post('/', requireAuth, requirePermission('office.create'), async (req: Re
           created_by_id: req.user!.id,
           linked_entity_type: typeof req.body.linked_entity_type === 'string' ? req.body.linked_entity_type : null,
           linked_entity_id: typeof req.body.linked_entity_id === 'string' ? req.body.linked_entity_id : null,
+          service_session_id: typeof req.body.service_session_id === 'string' ? req.body.service_session_id : null,
           due_at: dueAt,
           events: {
             create: {

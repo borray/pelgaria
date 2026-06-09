@@ -69,7 +69,7 @@ const LONG_FIELDS = new Set([
   'conditions',
 ])
 
-export function PrintCenterPage() {
+export function PrintCenterPage({ serviceSessionId }: { serviceSessionId?: string } = {}) {
   const canAdmin = usePermission('accounts.manage')
   const [templates, setTemplates] = useState<FormTemplate[]>([])
   const [documents, setDocuments] = useState<GeneratedDocument[]>([])
@@ -187,6 +187,7 @@ export function PrintCenterPage() {
     try {
       const res = await apiClient.post<GeneratedDocument>('/print-center/documents', {
         template_type: selectedTemplate.id,
+        service_session_id: serviceSessionId || null,
         citizen_id: citizenId || null,
         linked_entity_type: linkId ? linkType : (citizenId ? 'CITIZEN' : null),
         linked_entity_id: linkId || citizenId || null,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconMinus, IconPrinter } from '@tabler/icons-react'
+import { IconPlus, IconMinus, IconPrinter, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { Treasury, TreasuryTransaction } from '../types'
@@ -10,9 +10,12 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
+import { ActionMenu } from '../components/ui/ActionMenu'
+import { useAuthStore } from '../store/auth'
 
 export function TreasuryPage() {
   const canEdit = usePermission('treasury.edit')
+  const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
 
   const [treasury, setTreasury] = useState<Treasury | null>(null)
   const [transactions, setTransactions] = useState<TreasuryTransaction[]>([])
@@ -32,6 +35,24 @@ export function TreasuryPage() {
   const [pdfFrom, setPdfFrom] = useState('')
   const [pdfTo, setPdfTo] = useState('')
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<TreasuryTransaction | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(`/treasury/transactions/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      await Promise.all([fetchTreasury(), fetchTransactions()])
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось удалить операцию')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const handleDownloadReportPdf = async () => {
     setPdfLoading(true)
@@ -149,6 +170,17 @@ export function TreasuryPage() {
         </span>
       ),
     },
+    {
+      key: 'actions',
+      header: '',
+      width: '48px',
+      render: (row) => isHeadOfState ? <ActionMenu items={[{
+        label: 'Удалить операцию',
+        icon: <IconTrash size={15} />,
+        danger: true,
+        onClick: () => { setDeleteError(null); setDeleteTarget(row) },
+      }]} /> : null,
+    },
   ]
 
   if (loading) {
@@ -222,6 +254,21 @@ export function TreasuryPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить операцию казны"
+        footer={<>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>
+          <Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить</Button>
+        </>}
+      >
+        <p style={{ margin: 0, color: '#374151', fontSize: 14 }}>
+          Операция «{deleteTarget?.description}» будет удалена, а текущий баланс автоматически пересчитан.
+        </p>
+        {deleteError && <div style={{ marginTop: 12, color: '#B42318', fontSize: 13 }}>{deleteError}</div>}
+      </Modal>
 
       <Modal
         open={showModal}

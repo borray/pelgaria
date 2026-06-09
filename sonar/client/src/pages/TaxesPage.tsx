@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconPlus, IconPrinter } from '@tabler/icons-react'
+import { IconPlus, IconPrinter, IconTrash } from '@tabler/icons-react'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
 import type { TaxPeriod, TaxCharge, Citizen } from '../types'
@@ -11,6 +11,8 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { formatDate, formatAmount } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
+import { ActionMenu } from '../components/ui/ActionMenu'
+import { useAuthStore } from '../store/auth'
 
 const CHARGE_STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -29,6 +31,7 @@ interface SummaryItem {
 export function TaxesPage() {
   const canCharge = usePermission('taxes.charge')
   const canMarkPaid = usePermission('taxes.mark_paid')
+  const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
 
   const [tab, setTab] = useState<'periods' | 'charges'>('periods')
   const [periods, setPeriods] = useState<TaxPeriod[]>([])
@@ -54,6 +57,24 @@ export function TaxesPage() {
   const [autoLoading, setAutoLoading] = useState(false)
   const [payLoadingId, setPayLoadingId] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: 'period' | 'charge'; id: string; title: string } | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await apiClient.delete(deleteTarget.kind === 'period' ? `/taxes/periods/${deleteTarget.id}` : `/taxes/charges/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      await Promise.all([fetchPeriods(), fetchCharges()])
+    } catch (err: unknown) {
+      setDeleteError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось удалить запись')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const handleDownloadPeriodPdf = async (period: TaxPeriod) => {
     setPdfLoadingId(period.id)
@@ -210,17 +231,19 @@ export function TaxesPage() {
     {
       key: 'pdf',
       header: '',
-      width: '80px',
+      width: '190px',
       render: (row) => (
-        <Button
-          variant="secondary"
-          size="sm"
-          loading={pdfLoadingId === row.id}
-          onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}
-          title="Сформировать ведомость"
-        >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+          <Button variant="secondary" size="sm" loading={pdfLoadingId === row.id} onClick={(e) => { e.stopPropagation(); handleDownloadPeriodPdf(row) }}>
             <IconPrinter size={14} /> Сформировать
-        </Button>
+          </Button>
+          {isHeadOfState && <ActionMenu items={[{
+            label: 'Удалить период',
+            icon: <IconTrash size={15} />,
+            danger: true,
+            onClick: () => setDeleteTarget({ kind: 'period', id: row.id, title: row.name }),
+          }]} />}
+        </div>
       ),
     },
   ]
@@ -262,9 +285,10 @@ export function TaxesPage() {
     {
       key: 'actions',
       header: '',
-      width: '120px',
+      width: '170px',
       render: (row) => (
-        row.status === 'UNPAID' && canMarkPaid ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+        {row.status === 'UNPAID' && canMarkPaid ? (
           <Button
             variant="primary"
             size="sm"
@@ -273,7 +297,14 @@ export function TaxesPage() {
           >
             Оплатить
           </Button>
-        ) : null
+        ) : null}
+        {isHeadOfState && <ActionMenu items={[{
+          label: 'Удалить начисление',
+          icon: <IconTrash size={15} />,
+          danger: true,
+          onClick: () => setDeleteTarget({ kind: 'charge', id: row.id, title: `${row.citizen?.nickname ?? 'Начисление'} · ${formatAmount(row.amount)}` }),
+        }]} />}
+        </div>
       ),
     },
   ]
@@ -377,6 +408,21 @@ export function TaxesPage() {
           )}
         </>
       )}
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить финансовую запись"
+        footer={<>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>
+          <Button variant="danger" loading={deleteLoading} onClick={handleDelete}>Удалить</Button>
+        </>}
+      >
+        <p style={{ margin: 0, color: '#374151', fontSize: 14 }}>
+          {deleteTarget?.title}. Баланс казны будет пересчитан автоматически.
+        </p>
+        {deleteError && <div style={{ marginTop: 12, color: '#B42318', fontSize: 13 }}>{deleteError}</div>}
+      </Modal>
 
       <Modal
         open={showCreatePeriodModal}

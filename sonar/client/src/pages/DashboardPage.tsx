@@ -5,7 +5,6 @@ import {
   IconArrowRight,
   IconBuilding,
   IconBuildingBank,
-  IconFileText,
   IconGavel,
   IconId,
   IconInbox,
@@ -70,10 +69,9 @@ export function DashboardPage() {
 
   const quickLinks = [
     { to: '/citizens', label: 'Реестр граждан', description: 'Карточки и учётные сведения', icon: IconUsers, permission: 'citizens.view' },
-    { to: '/office', label: 'Приёмная', description: 'Обращения, заявления и поручения', icon: IconInbox, permission: 'office.view' },
+    { to: '/office', label: 'Центр обслуживания', description: 'Сессии, обращения и документы', icon: IconInbox, permission: 'office.view' },
     { to: '/passports', label: 'Паспорта', description: 'Выдача и проверка документов', icon: IconId, permission: 'passports.view' },
     { to: '/laws', label: 'Законодательство', description: 'Законы, указы и архив', icon: IconScale, permission: 'laws.view' },
-    { to: '/print-center', label: 'Центр документов', description: 'Формы, справки и выписки', icon: IconFileText },
   ].filter((item) => !item.permission || hasPermission(item.permission))
 
   const events = [

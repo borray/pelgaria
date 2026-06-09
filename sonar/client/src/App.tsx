@@ -22,9 +22,8 @@ import { RolesPage } from './pages/RolesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { PrintCenterPage } from './pages/PrintCenterPage'
 import { VerificationPage } from './pages/VerificationPage'
-import { OfficePage } from './pages/OfficePage'
+import { ServiceCenterPage } from './pages/ServiceCenterPage'
 import apiClient from './api/client'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -79,9 +78,10 @@ export default function App() {
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="roles/*" element={<RolesPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="print-center" element={<PrintCenterPage />} />
+        <Route path="print-center" element={<Navigate to="/office?tab=forms" replace />} />
         <Route path="verify" element={<VerificationPage />} />
-        <Route path="office" element={<OfficePage />} />
+        <Route path="office" element={<ServiceCenterPage />} />
+        <Route path="service-center" element={<Navigate to="/office" replace />} />
         <Route path="*" element={<Navigate to="/citizens" replace />} />
       </Route>
     </Routes>

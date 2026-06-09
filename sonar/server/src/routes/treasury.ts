@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { requireAuth } from '../middleware/auth'
-import { requirePermission } from '../middleware/permissions'
+import { requireHeadOfState, requirePermission } from '../middleware/permissions'
 import { htmlToPdf, pdfError, pdfHeaders } from '../services/pdf'
 import {
   guillocheRosette,
@@ -94,6 +94,32 @@ router.post('/transactions', requireAuth, requirePermission('treasury.edit'), as
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+  }
+})
+
+router.delete('/transactions/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const transaction = await prisma.treasuryTransaction.findUnique({ where: { id } })
+    if (!transaction) {
+      res.status(404).json({ error: 'Операция не найдена' })
+      return
+    }
+
+    const treasury = await prisma.treasury.findFirst()
+    await prisma.$transaction([
+      prisma.treasuryTransaction.delete({ where: { id } }),
+      ...(treasury ? [
+        prisma.treasury.update({
+          where: { id: treasury.id },
+          data: { balance: { decrement: transaction.amount } },
+        }),
+      ] : []),
+    ])
+    res.status(204).end()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось удалить операцию' })
   }
 })
 
