@@ -21,7 +21,7 @@ const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string 
     ],
   },
   {
-    group: 'Граждане',
+    group: 'Игроки',
     items: [
       { key: 'citizens.view', label: 'Просматривать' },
       { key: 'citizens.create', label: 'Создавать' },

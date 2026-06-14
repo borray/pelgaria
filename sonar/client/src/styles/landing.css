@@ -1,0 +1,69 @@
+/* ── Публичный лендинг «Мост Пельгарии» (палитра флага: белый + синий) ── */
+.lp {
+  --lp-blue: #1d3f9e;
+  --lp-blue-bright: #2f6bff;
+  --lp-ink: #0f1f4a;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--lp-ink);
+  background: linear-gradient(180deg, #ffffff 0%, #eef3ff 55%, #e3ecff 100%);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* загадочное небо с мягкими синими орбами и звёздами */
+.lp-sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.lp-orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+.lp-orb.o1 { width: 44vmax; height: 44vmax; top: -16%; left: -10%; background: radial-gradient(circle, #bcd2ff, transparent 70%); animation: lp-drift1 30s ease-in-out infinite; }
+.lp-orb.o2 { width: 38vmax; height: 38vmax; top: 20%; right: -12%; background: radial-gradient(circle, #9ec0ff, transparent 70%); animation: lp-drift2 36s ease-in-out infinite; }
+.lp-orb.o3 { width: 30vmax; height: 30vmax; bottom: -14%; left: 30%; background: radial-gradient(circle, #cfe0ff, transparent 70%); animation: lp-drift3 42s ease-in-out infinite; }
+@keyframes lp-drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(5vmax,3vmax); } }
+@keyframes lp-drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-4vmax,4vmax); } }
+@keyframes lp-drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(3vmax,-3vmax); } }
+
+.lp-stars { position: absolute; inset: 0; }
+.lp-stars i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: var(--lp-blue-bright); opacity: .25; animation: lp-twinkle ease-in-out infinite; }
+@keyframes lp-twinkle { 0%, 100% { opacity: .08; transform: scale(.6); } 50% { opacity: .5; transform: scale(1); } }
+
+/* мост — главный загадочный мотив */
+.lp-bridge { position: absolute; left: 50%; bottom: 0; width: min(1200px, 124vw); height: auto; transform: translateX(-50%); opacity: .5; }
+.lp-bridge path[stroke], .lp-bridge line { vector-effect: non-scaling-stroke; }
+
+/* верхняя панель */
+.lp-top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 22px clamp(20px, 5vw, 64px); }
+.lp-mark { display: flex; align-items: center; gap: 12px; }
+.lp-flag { display: grid; grid-template-rows: 1fr 1fr; width: 34px; height: 24px; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 8px rgba(29,63,158,.25); }
+.lp-flag i:first-child { background: #fff; } .lp-flag i:last-child { background: var(--lp-blue); }
+.lp-mark strong { display: block; font-size: 15px; font-weight: 800; letter-spacing: .14em; color: var(--lp-ink); }
+.lp-mark small { display: block; margin-top: 2px; font-size: 10px; color: #5a6b96; letter-spacing: .02em; }
+.lp-enter-mini { border: 1px solid #c4d2f5; border-radius: 9px; padding: 9px 14px; color: var(--lp-blue); background: rgba(255,255,255,.7); font-weight: 650; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); transition: background .15s, border-color .15s; }
+.lp-enter-mini:hover { background: #fff; border-color: var(--lp-blue-bright); }
+
+/* герой */
+.lp-hero { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 920px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); width: 100%; }
+.lp-eyebrow { display: inline-flex; align-items: center; align-self: flex-start; gap: 8px; padding: 7px 14px; border: 1px solid #c4d2f5; border-radius: 30px; color: var(--lp-blue); background: rgba(255,255,255,.65); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; animation: lp-rise .6s ease both; }
+.lp-eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--lp-blue-bright); box-shadow: 0 0 0 0 rgba(47,107,255,.5); animation: lp-pulse 2s infinite; }
+.lp-hero h1 { margin: 20px 0 0; font-size: clamp(38px, 6.5vw, 78px); line-height: 1.04; font-weight: 800; letter-spacing: -.03em; color: var(--lp-ink); animation: lp-rise .6s .08s ease both; }
+.lp-hero p { max-width: 600px; margin: 22px 0 0; font-size: clamp(15px, 1.7vw, 18px); line-height: 1.7; color: #3c4c78; animation: lp-rise .6s .16s ease both; }
+.lp-hero p b { color: var(--lp-blue); }
+.lp-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 34px; animation: lp-rise .6s .24s ease both; }
+.lp-enter { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 26px; border: 0; border-radius: 12px; color: #fff; background: linear-gradient(135deg, var(--lp-blue-bright), var(--lp-blue)); font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 14px 30px rgba(29,63,158,.32); transition: transform .08s, box-shadow .2s; }
+.lp-enter:hover { box-shadow: 0 18px 40px rgba(29,63,158,.42); transform: translateY(-1px); }
+.lp-enter:active { transform: translateY(0); }
+.lp-soon { font-size: 13px; color: #6b7aa3; }
+
+.lp-foot { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px clamp(20px, 5vw, 64px); color: #7886ac; font-size: 11px; }
+
+@keyframes lp-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes lp-pulse { 0% { box-shadow: 0 0 0 0 rgba(47,107,255,.5); } 70% { box-shadow: 0 0 0 8px rgba(47,107,255,0); } 100% { box-shadow: 0 0 0 0 rgba(47,107,255,0); } }
+
+@media (max-width: 600px) {
+  .lp-foot { flex-direction: column; gap: 4px; text-align: center; }
+  .lp-enter-mini { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-orb, .lp-stars i, .lp-eyebrow, .lp-hero h1, .lp-hero p, .lp-actions, .lp-eyebrow::before { animation: none; }
+}

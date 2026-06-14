@@ -46,7 +46,7 @@ export function ChangePasswordPage() {
             <span><IconCheck size={22} /></span>
             <h1>Пароль изменён</h1>
             <p>Новая учётная запись готова к работе в СОНАР.</p>
-            <Button onClick={() => navigate('/')}>Перейти в систему</Button>
+            <Button onClick={() => navigate('/dashboard')}>Перейти в систему</Button>
           </div>
         ) : (
           <>

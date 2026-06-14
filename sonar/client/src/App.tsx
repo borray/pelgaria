@@ -2,6 +2,7 @@ import React, { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth'
 import { Layout } from './components/layout/Layout'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
@@ -62,39 +63,41 @@ export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
+        {/* Публичный лендинг «Мост Пельгарии» на корне домена */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route path="/discord-callback" element={<DiscordCallbackPage />} />
+        {/* Система СОНАР — служебный контур */}
         <Route
-          path="/"
           element={
             <PrivateRoute>
               <Layout />
             </PrivateRoute>
           }
         >
-          <Route index element={<DashboardPage />} />
-          <Route path="citizens" element={<CitizensPage />} />
-          <Route path="citizens/:id" element={<CitizenDetailPage />} />
-          <Route path="passports" element={<PassportsPage />} />
-          <Route path="laws" element={<LawsPage />} />
-          <Route path="laws/:id" element={<LawDetailPage />} />
-          <Route path="cases" element={<CasesPage />} />
-          <Route path="cases/:id" element={<CaseDetailPage />} />
-          <Route path="punishments" element={<PunishmentsPage />} />
-          <Route path="taxes" element={<TaxesPage />} />
-          <Route path="treasury" element={<TreasuryPage />} />
-          <Route path="buildings" element={<BuildingsPage />} />
-          <Route path="buildings/:id" element={<BuildingDetailPage />} />
-          <Route path="chat" element={<ChatPage />} />
-          <Route path="accounts" element={<AccountsPage />} />
-          <Route path="roles/*" element={<RolesPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="print-center" element={<Navigate to="/office?tab=print" replace />} />
-          <Route path="verify" element={<VerificationPage />} />
-          <Route path="office" element={<ServiceCenterPage />} />
-          <Route path="office/sessions/:id" element={<ServiceSessionPage />} />
-          <Route path="service-center" element={<Navigate to="/office" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/citizens" element={<CitizensPage />} />
+          <Route path="/citizens/:id" element={<CitizenDetailPage />} />
+          <Route path="/passports" element={<PassportsPage />} />
+          <Route path="/laws" element={<LawsPage />} />
+          <Route path="/laws/:id" element={<LawDetailPage />} />
+          <Route path="/cases" element={<CasesPage />} />
+          <Route path="/cases/:id" element={<CaseDetailPage />} />
+          <Route path="/punishments" element={<PunishmentsPage />} />
+          <Route path="/taxes" element={<TaxesPage />} />
+          <Route path="/treasury" element={<TreasuryPage />} />
+          <Route path="/buildings" element={<BuildingsPage />} />
+          <Route path="/buildings/:id" element={<BuildingDetailPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/accounts" element={<AccountsPage />} />
+          <Route path="/roles/*" element={<RolesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/print-center" element={<Navigate to="/office?tab=print" replace />} />
+          <Route path="/verify" element={<VerificationPage />} />
+          <Route path="/office" element={<ServiceCenterPage />} />
+          <Route path="/office/sessions/:id" element={<ServiceSessionPage />} />
+          <Route path="/service-center" element={<Navigate to="/office" replace />} />
           <Route path="*" element={<Navigate to="/citizens" replace />} />
         </Route>
       </Routes>

@@ -100,7 +100,7 @@ export function NavigationHub({ open, onClose }: { open: boolean; onClose: () =>
           <button type="button" onClick={onClose} aria-label="Закрыть"><IconX size={20} /></button>
         </header>
 
-        <NavLink to="/" end onClick={onClose} className="navigation-home-card">
+        <NavLink to="/dashboard" end onClick={onClose} className="navigation-home-card">
           <span><IconLayoutDashboard size={20} /></span>
           <div><strong>Операционный обзор</strong><small>Сводка, очередь задач и последние события</small></div>
           <IconArrowUpRight size={18} />

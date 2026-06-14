@@ -151,7 +151,7 @@ export function CitizensPage() {
     <div className="registry-page">
       <PageHeader
         eyebrow="Государственный реестр"
-        title="Граждане"
+        title="Игроки"
         description="Единая база жителей Пельгарии, их статусов, ролей и связанных государственных записей."
         actions={canCreate ? (
           <Button
@@ -186,7 +186,7 @@ export function CitizensPage() {
       {!loading && citizens.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState
-            title="Граждане не найдены"
+            title="Игроки не найдены"
             description={
               search || statusFilter
                 ? 'Попробуйте изменить параметры поиска'

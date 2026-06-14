@@ -19,21 +19,21 @@ export function Topbar({ onNavigationClick, navigationOpen }: { onNavigationClic
   }
 
   const primaryNavigation = [
-    { to: '/', label: 'Обзор' },
+    { to: '/dashboard', label: 'Обзор' },
     { to: '/office', label: 'Контакт', permission: 'office.view' },
-    { to: '/citizens', label: 'Граждане', permission: 'citizens.view' },
+    { to: '/citizens', label: 'Игроки', permission: 'citizens.view' },
     { to: '/laws', label: 'Право', permission: 'laws.view' },
   ].filter((item) => !item.permission || hasPermission(item.permission))
 
   return (
     <header className="app-topbar">
       <div className="topbar-leading">
-        <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
+        <Link to="/dashboard" aria-label="Обзор СОНАР" className="topbar-brand-link">
           <SonarBrand size="sm" />
         </Link>
         <nav className="topbar-primary-nav" aria-label="Основные разделы">
           {primaryNavigation.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'is-active' : ''}>
+            <NavLink key={item.to} to={item.to} end={item.to === '/dashboard'} className={({ isActive }) => isActive ? 'is-active' : ''}>
               {item.label}
             </NavLink>
           ))}

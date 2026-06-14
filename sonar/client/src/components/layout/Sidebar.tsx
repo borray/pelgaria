@@ -44,7 +44,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       title: 'Рабочий стол',
       items: [
         {
-          to: '/',
+          to: '/dashboard',
           label: 'Главная',
           icon: <IconLayoutDashboard size={16} />,
         },
@@ -66,7 +66,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       items: [
         {
           to: '/citizens',
-          label: 'Граждане',
+          label: 'Игроки',
           icon: <IconUsers size={16} />,
           permission: 'citizens.view',
         },
@@ -203,7 +203,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === '/'}
+                end={item.to === '/dashboard'}
                 onClick={onClose}
                 className={({ isActive }) => `sidebar-link${isActive ? ' is-active' : ''}`}
                 title={collapsed ? item.label : undefined}

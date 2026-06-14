@@ -41,7 +41,7 @@ export function LoginPage() {
 
   useEffect(() => {
     if (!user) return
-    navigate(user.must_change_password ? '/change-password' : '/', { replace: true })
+    navigate(user.must_change_password ? '/change-password' : '/dashboard', { replace: true })
   }, [user, navigate])
 
   const handleSubmit = async (event: React.FormEvent) => {
