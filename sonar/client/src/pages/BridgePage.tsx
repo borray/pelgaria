@@ -13,13 +13,14 @@ import {
   IconUsers,
 } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
+import { PelgariaMark } from '../components/brand/PelgariaMark'
 
 export function BridgePage() {
   return (
     <main className="bridge-page">
       <nav className="bridge-nav">
         <Link to="/" className="bridge-wordmark" aria-label="Мост Пельгарии">
-          <span>PG</span>
+          <span><PelgariaMark /></span>
           <div><strong>МОСТ ПЕЛЬГАРИИ</strong><small>PG-BRIDGE</small></div>
         </Link>
         <div className="bridge-nav-links">
@@ -40,7 +41,7 @@ export function BridgePage() {
           <i className="bridge-star bridge-star-one" />
           <i className="bridge-star bridge-star-two" />
           <i className="bridge-star bridge-star-three" />
-          <div className="bridge-moon" />
+          <div className="bridge-moon"><PelgariaMark /></div>
           <div className="bridge-horizon" />
           <div className="bridge-structure">
             <span className="bridge-tower bridge-tower-left" />
@@ -160,7 +161,10 @@ export function BridgePage() {
       </section>
 
       <footer className="bridge-footer">
-        <div><strong>ПЕЛЬГАРИЯ</strong><span>Вымышленное государство в ролевой игре Minecraft</span></div>
+        <div className="bridge-footer-brand">
+          <PelgariaMark />
+          <div><strong>ПЕЛЬГАРИЯ</strong><span>Вымышленное государство в ролевой игре Minecraft</span></div>
+        </div>
         <div className="bridge-footer-signal"><i /><span>PG-BRIDGE · 2026 · КАНАЛ ОТКРЫТ</span></div>
       </footer>
     </main>
