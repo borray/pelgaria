@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { IconEdit, IconTrash, IconArrowLeft, IconPrinter } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconArrowLeft, IconPrinter, IconUser, IconFingerprint } from '@tabler/icons-react'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
@@ -8,7 +8,6 @@ import { useTimedUnlock } from '../hooks/useTimedUnlock'
 import type { Citizen, GeneratedDocument } from '../types'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
-import { Card } from '../components/ui/Card'
 import { Spinner } from '../components/ui/Spinner'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
@@ -158,155 +157,112 @@ export function CitizenDetailPage() {
   ]
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+    <div className="citizen-record-page">
+      <header className="record-commandbar">
         <Button variant="secondary" size="sm" onClick={() => navigate('/citizens')}>
           <IconArrowLeft size={14} />
-          Назад
+          К реестру
         </Button>
-        <div style={{ flex: 1 }} />
-        {canEdit && (
-          <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)}>
-            <IconEdit size={14} />
-            Редактировать
+        <div className="record-commandbar-context"><span>Карточка государственного реестра</span><i /></div>
+        <div className="record-commandbar-actions">
+          {canEdit && (
+            <Button variant="secondary" size="sm" onClick={() => setShowEditModal(true)}>
+              <IconEdit size={14} />
+              Изменить
+            </Button>
+          )}
+          <Button variant="primary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
+            <IconPrinter size={14} />
+            Сформировать досье
           </Button>
-        )}
-        <Button variant="secondary" size="sm" loading={pdfLoading} onClick={handleDownloadPdf}>
-          <IconPrinter size={14} />
-          Сформировать досье
-        </Button>
-        {canDelete && (
-          <ActionMenu items={[
-            { label: 'Удалить гражданина', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
-          ]} />
-        )}
-      </div>
+          {canDelete && (
+            <ActionMenu items={[
+              { label: 'Удалить гражданина', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
+            ]} />
+          )}
+        </div>
+      </header>
 
-      <Card style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
+      <section className="record-identity">
+        <div className="record-identity-primary">
+          <span className="record-avatar"><IconUser size={32} /></span>
           <div>
-            <div
-              style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '13px',
-                color: '#6B7280',
-                marginBottom: '4px',
-              }}
-            >
-              {citizen.reg_number}
-            </div>
-            <div style={{ fontSize: '22px', fontWeight: 600, color: '#18211D', marginBottom: '8px' }}>
-              {citizen.nickname}
-            </div>
-            <Badge status={citizen.status} />
-          </div>
-          <div
-            style={{
-              flex: 1,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '12px',
-            }}
-          >
-            <InfoRow label="Discord" value={citizen.discord_username ?? '—'} />
-            <InfoRow label="Роль / звание" value={citizen.role_title} />
-            <InfoRow label="Дата вступления" value={formatDate(citizen.joined_at)} />
-            {citizen.user && (
-              <InfoRow label="Аккаунт" value={citizen.user.login} />
-            )}
-            {citizen.note && (
-              <InfoRow label="Примечание" value={citizen.note} />
-            )}
+            <span className="record-eyebrow">Гражданин Пельгарии</span>
+            <h1>{citizen.nickname}</h1>
+            <div className="record-identity-status"><Badge status={citizen.status} /><span>{citizen.role_title}</span></div>
           </div>
         </div>
-      </Card>
+        <div className="record-facts">
+          <InfoRow label="Discord" value={citizen.discord_username ?? 'Не указан'} />
+          <InfoRow label="Дата вступления" value={formatDate(citizen.joined_at)} />
+          <InfoRow label="Учётная запись" value={citizen.user?.login ?? 'Не привязана'} />
+          <InfoRow label="Примечание" value={citizen.note ?? 'Нет служебных примечаний'} />
+        </div>
+        <aside className="record-code">
+          <header><IconFingerprint size={17} /><span>Идентификатор записи</span></header>
+          <RegistryMark code={citizen.reg_number} />
+          <small>Используйте номер для поиска и проверки связанных материалов</small>
+        </aside>
+      </section>
 
-      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #CDD5D1', marginBottom: '16px' }}>
-        {tabs.map((tab) => (
+      <nav className="record-tabs" aria-label="Разделы карточки гражданина">
+        {tabs.map((tab, index) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            style={{
-              padding: '10px 16px',
-              border: 'none',
-              borderBottom: activeTab === tab.key ? '2px solid #14715A' : '2px solid transparent',
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? '#14715A' : '#6B7280',
-              fontFamily: 'Inter, sans-serif',
-              marginBottom: '-1px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
+            className={activeTab === tab.key ? 'is-active' : ''}
           >
-            {tab.label}
-            {tab.count !== undefined && tab.count > 0 && (
-              <span
-                style={{
-                  background: activeTab === tab.key ? '#14715A' : '#CDD5D1',
-                  color: activeTab === tab.key ? '#FFFFFF' : '#6B7280',
-                  borderRadius: '10px',
-                  padding: '0 6px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                }}
-              >
-                {tab.count}
-              </span>
-            )}
+            <small>{String(index + 1).padStart(2, '0')}</small>
+            <span>{tab.label}</span>
+            {tab.count !== undefined && tab.count > 0 && <b>{tab.count}</b>}
           </button>
         ))}
-      </div>
+      </nav>
 
-      <div>
-        {activeTab === 'passport' && (
-          <PassportTab passports={citizen.passports ?? []} />
-        )}
-        {activeTab === 'documents' && (
-          generatedDocuments.length === 0
-            ? <EmptyState title="Прикрепленных документов нет" description="Сформируйте заявление или справку в Центре печати." />
-            : <Table
-                columns={[
-                  { key: 'number', header: 'Документ', render: (row: GeneratedDocument) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
-                  { key: 'registry_code', header: 'ШК', width: '210px', render: (row: GeneratedDocument) => <RegistryMark code={row.registry_code} compact /> },
-                  { key: 'created_at', header: 'Создан', width: '120px', render: (row: GeneratedDocument) => formatDate(row.created_at) },
-                  { key: 'print', header: '', width: '130px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
-                ]}
-                data={generatedDocuments}
-                keyExtractor={(row) => row.id}
-              />
-        )}
-        {activeTab === 'requests' && (
-          (citizen.service_requests?.length ?? 0) === 0
-            ? <EmptyState title="Обращений нет" description="Связанные заявления и поручения появятся здесь после регистрации в Приёмной." />
-            : <Table
-                columns={[
-                  { key: 'number', header: 'Обращение', render: (row) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
-                  { key: 'status', header: 'Статус', width: '150px', render: (row) => <Badge status={row.status} /> },
-                  { key: 'assignee', header: 'Ответственный', width: '150px', render: (row) => row.assignee?.login ?? 'Не назначен' },
-                  { key: 'created_at', header: 'Зарегистрировано', width: '140px', render: (row) => formatDate(row.created_at) },
-                  { key: 'print', header: '', width: '130px', render: (row) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/office/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
-                ]}
-                data={citizen.service_requests ?? []}
-                keyExtractor={(row) => row.id}
-              />
-        )}
-        {activeTab === 'cases' && (
-          <CasesTab cases={citizen.cases ?? []} />
-        )}
-        {activeTab === 'punishments' && (
-          <PunishmentsTab punishments={citizen.punishments ?? []} />
-        )}
-        {activeTab === 'taxes' && (
-          <TaxesTab charges={citizen.tax_charges ?? []} />
-        )}
-        {activeTab === 'buildings' && (
-          <BuildingsTab buildings={citizen.buildings ?? []} />
-        )}
-      </div>
+      <section className="record-content">
+        <header className="record-content-heading">
+          <div><span>Раздел карточки</span><h2>{tabs.find((tab) => tab.key === activeTab)?.label}</h2></div>
+          <small>Сведения обновляются из связанных реестров</small>
+        </header>
+        <div className="record-content-body">
+          {activeTab === 'passport' && (
+            <PassportTab passports={citizen.passports ?? []} />
+          )}
+          {activeTab === 'documents' && (
+            generatedDocuments.length === 0
+              ? <EmptyState title="Прикрепленных документов нет" description="Сформируйте заявление или справку в Центре обслуживания." />
+              : <Table
+                  columns={[
+                    { key: 'number', header: 'Документ', render: (row: GeneratedDocument) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
+                    { key: 'registry_code', header: 'ШК', width: '210px', render: (row: GeneratedDocument) => <RegistryMark code={row.registry_code} compact /> },
+                    { key: 'created_at', header: 'Создан', width: '120px', render: (row: GeneratedDocument) => formatDate(row.created_at) },
+                    { key: 'print', header: '', width: '130px', render: (row: GeneratedDocument) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/documents/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
+                  ]}
+                  data={generatedDocuments}
+                  keyExtractor={(row) => row.id}
+                />
+          )}
+          {activeTab === 'requests' && (
+            (citizen.service_requests?.length ?? 0) === 0
+              ? <EmptyState title="Обращений нет" description="Связанные заявления и поручения появятся здесь после регистрации в Центре обслуживания." />
+              : <Table
+                  columns={[
+                    { key: 'number', header: 'Обращение', render: (row) => <div><strong>{row.title}</strong><div className="table-secondary">{row.number}</div></div> },
+                    { key: 'status', header: 'Статус', width: '150px', render: (row) => <Badge status={row.status} /> },
+                    { key: 'assignee', header: 'Ответственный', width: '150px', render: (row) => row.assignee?.login ?? 'Не назначен' },
+                    { key: 'created_at', header: 'Зарегистрировано', width: '140px', render: (row) => formatDate(row.created_at) },
+                    { key: 'print', header: '', width: '130px', render: (row) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/office/${row.id}/pdf`)}><IconPrinter size={14} />Сформировать</Button> },
+                  ]}
+                  data={citizen.service_requests ?? []}
+                  keyExtractor={(row) => row.id}
+                />
+          )}
+          {activeTab === 'cases' && <CasesTab cases={citizen.cases ?? []} />}
+          {activeTab === 'punishments' && <PunishmentsTab punishments={citizen.punishments ?? []} />}
+          {activeTab === 'taxes' && <TaxesTab charges={citizen.tax_charges ?? []} />}
+          {activeTab === 'buildings' && <BuildingsTab buildings={citizen.buildings ?? []} />}
+        </div>
+      </section>
 
       <Modal
         open={showEditModal}
@@ -399,11 +355,9 @@ export function CitizenDetailPage() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>
-        {label}
-      </div>
-      <div style={{ fontSize: '14px', color: '#374151' }}>{value}</div>
+    <div className="record-fact">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   )
 }

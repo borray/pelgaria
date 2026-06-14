@@ -21,30 +21,38 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
 
   return (
     <div className="ui-table-shell">
-      <table className="ui-table">
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key} style={{ width: column.width }}>{column.header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr
-              key={keyExtractor(row)}
-              className={onRowClick ? 'is-clickable' : undefined}
-              onClick={() => onRowClick?.(row)}
-            >
+      <div className="ui-table-meta">
+        <span>Реестровая выборка</span>
+        <strong>{data.length}</strong>
+      </div>
+      <div className="ui-table-scroll">
+        <table className="ui-table">
+          <thead>
+            <tr>
+              <th className="ui-table-index">№</th>
               {columns.map((column) => (
-                <td key={column.key} data-label={column.header}>
-                  {column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? '')}
-                </td>
+                <th key={column.key} style={{ width: column.width }}>{column.header}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((row, index) => (
+              <tr
+                key={keyExtractor(row)}
+                className={onRowClick ? 'is-clickable' : undefined}
+                onClick={() => onRowClick?.(row)}
+              >
+                <td className="ui-table-index" data-label="№">{String(index + 1).padStart(2, '0')}</td>
+                {columns.map((column) => (
+                  <td key={column.key} data-label={column.header}>
+                    {column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? '')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

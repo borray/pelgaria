@@ -67,21 +67,27 @@ export function Modal({ open, onClose, title, description, children, footer, wid
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <header className="modal-header">
+        <aside className="modal-rail" aria-hidden="true">
           <span className="modal-symbol">
-            {destructive ? <IconAlertTriangle size={20} /> : <IconForms size={20} />}
+            {destructive ? <IconAlertTriangle size={21} /> : <IconForms size={21} />}
           </span>
-          <div className="modal-heading">
-            <span>{destructive ? 'Необратимое действие' : 'Рабочая форма'}</span>
-            <h2 id={titleId}>{title}</h2>
-            {description && <p>{description}</p>}
-          </div>
-          <button className="modal-close" onClick={onClose} aria-label="Закрыть">
-            <IconX size={19} />
-          </button>
-        </header>
-        <div className="modal-content">{children}</div>
-        {footer && <footer className="modal-footer">{footer}</footer>}
+          <div><strong>СОНАР</strong><small>{destructive ? 'Контроль действия' : 'Электронная форма'}</small></div>
+          <b>01</b>
+        </aside>
+        <div className="modal-workspace">
+          <header className="modal-header">
+            <div className="modal-heading">
+              <span>{destructive ? 'Необратимое действие' : 'Рабочая форма'}</span>
+              <h2 id={titleId}>{title}</h2>
+              {description && <p>{description}</p>}
+            </div>
+            <button className="modal-close" onClick={onClose} aria-label="Закрыть">
+              <IconX size={19} />
+            </button>
+          </header>
+          <div className="modal-content">{children}</div>
+          {footer && <footer className="modal-footer"><span>Проверьте данные перед подтверждением</span><div>{footer}</div></footer>}
+        </div>
       </section>
     </div>
   )

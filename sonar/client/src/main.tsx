@@ -7,6 +7,7 @@ import './styles/design-system.css'
 import './styles/renovation.css'
 import './styles/renovation-pages.css'
 import './styles/renovation-v3.css'
+import './styles/renovation-v4.css'
 import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

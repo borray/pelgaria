@@ -11,8 +11,15 @@ interface PageHeaderProps {
 export function PageHeader({ eyebrow, title, description, actions, meta }: PageHeaderProps) {
   return (
     <header className="workspace-heading">
+      <div className="workspace-heading-rail" aria-hidden="true">
+        <span>С</span>
+        <i />
+      </div>
       <div className="workspace-heading-copy">
-        {eyebrow && <span>{eyebrow}</span>}
+        <div className="workspace-heading-context">
+          <span>{eyebrow || 'Рабочее пространство'}</span>
+          <small>СОНАР / служебный контур</small>
+        </div>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
         {meta && <div className="workspace-heading-meta">{meta}</div>}
