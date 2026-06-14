@@ -1,0 +1,202 @@
+/* Final readability layer. It intentionally wins over older renovation cycles. */
+:root {
+  --sonar-caption-size: 11px;
+  --sonar-small-size: 12px;
+  --sonar-body-size: 14px;
+  --sonar-control-size: 13px;
+}
+
+.app-shell-v3 { font-size: var(--sonar-body-size); }
+.app-shell-v3 small { font-size: var(--sonar-caption-size) !important; line-height: 1.45; }
+.app-shell-v3 p { line-height: 1.55; }
+
+.app-shell-v3 :where(.ui-button, button:not(.topbar-icon-button):not(.mobile-menu-button)),
+.modal-backdrop :where(.ui-button, button),
+.command-backdrop button {
+  font-size: var(--sonar-small-size) !important;
+}
+.app-shell-v3 .ui-button,
+.modal-backdrop .ui-button { min-height: 40px; padding-inline: 15px; }
+.app-shell-v3 .ui-button-sm,
+.modal-backdrop .ui-button-sm { min-height: 36px; font-size: 12px !important; }
+
+.app-shell-v3 :where(input, textarea, select),
+.modal-backdrop :where(input, textarea, select),
+.command-backdrop input {
+  font-size: var(--sonar-control-size) !important;
+  line-height: 1.45;
+}
+.app-shell-v3 .ui-input,
+.app-shell-v3 .ui-select-trigger,
+.modal-backdrop .ui-input,
+.modal-backdrop .ui-select-trigger {
+  min-height: 44px;
+}
+.app-shell-v3 .ui-field > label,
+.app-shell-v3 .modal-field-label,
+.modal-backdrop .ui-field > label,
+.modal-backdrop .modal-field-label {
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+.app-shell-v3 .ui-field-error,
+.modal-backdrop .ui-field-error { font-size: 11px !important; }
+
+.app-shell-v3 .ui-table { font-size: 13px; }
+.app-shell-v3 .ui-table th {
+  padding-block: 14px;
+  font-size: 11px !important;
+  line-height: 1.3;
+}
+.app-shell-v3 .ui-table td {
+  height: 56px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.app-shell-v3 .ui-table-meta { font-size: 11px !important; }
+
+.app-shell-v3 .topbar-primary-nav a,
+.app-shell-v3 .command-launcher-v3 span,
+.topbar-sections-button,
+.topbar-messenger { font-size: 12px !important; }
+.app-shell-v3 .command-launcher-v3 kbd { font-size: 10px !important; }
+.app-shell-v3 .topbar-profile-copy strong { font-size: 13px; }
+.app-shell-v3 .topbar-profile-copy small,
+.app-shell-v3 .topbar-context span { font-size: 11px !important; }
+
+.navigation-hub-header > div > span { font-size: 10px !important; }
+.navigation-hub-header h2 { font-size: 26px; }
+.navigation-hub-search input { font-size: 13px !important; }
+.navigation-hub-group > header strong { font-size: 13px; }
+.navigation-hub-group > header span { font-size: 11px; line-height: 1.4; }
+.navigation-hub-group a strong { font-size: 13px; }
+.navigation-hub-group a small { font-size: 11px !important; }
+.navigation-hub footer { font-size: 10px; }
+
+.modal-heading > span { font-size: 10px !important; }
+.modal-heading h2 { font-size: 22px; }
+.modal-heading p { font-size: 13px; line-height: 1.55; }
+.modal-footer > span { font-size: 11px !important; }
+.modal-content { font-size: 14px; }
+
+.command-dialog-heading span,
+.command-dialog-footer,
+.command-results small { font-size: 11px !important; }
+.command-results strong { font-size: 13px; }
+.command-input kbd { font-size: 10px !important; }
+
+.app-shell-v3 :where(
+  .page-kicker,
+  .workspace-kicker,
+  .workspace-heading-context > span,
+  .operations-kicker,
+  .service-command-kicker,
+  .contact-kicker,
+  .record-kicker,
+  .profile-kicker,
+  .communications-kicker,
+  .verification-kicker
+) { font-size: 10px !important; line-height: 1.35; }
+
+.app-shell-v3 :where(
+  .workspace-heading p,
+  .workspace-empty p,
+  .operations-hero-main p,
+  .service-command-copy > p,
+  .contact-hero-copy p,
+  .contact-record-summary p,
+  .employee-profile p,
+  .record-summary p
+) { font-size: 13px !important; line-height: 1.6; }
+
+.app-shell-v3 :where(
+  .stat-card-label,
+  .dashboard-stat-label,
+  .operations-stat-label,
+  .contact-stat-label,
+  .record-meta dt,
+  .profile-meta dt,
+  .detail-label
+) { font-size: 11px !important; line-height: 1.4; }
+
+.app-shell-v3 :where(
+  .stat-card-value,
+  .dashboard-stat-value,
+  .operations-stat-value,
+  .contact-stat-value
+) { line-height: 1.1; }
+
+.app-shell-v3 :where(
+  .badge,
+  .ui-badge,
+  .status-badge,
+  .record-status,
+  .contact-status,
+  .operations-status
+) { min-height: 24px; font-size: 10px !important; }
+
+.renovation-launcher-copy small { font-size: 10px !important; }
+.renovation-launcher-copy strong { font-size: 12px !important; }
+.renovation-center { font-size: 14px; }
+.renovation-center-brand small,
+.renovation-center-state,
+.renovation-hero-copy > span,
+.renovation-module-grid article header small,
+.renovation-module-grid article footer,
+.renovation-release-log article > span { font-size: 10px !important; }
+.renovation-center-brand strong { font-size: 14px; }
+.renovation-hero-copy p,
+.renovation-module-grid article p,
+.renovation-next-list p,
+.renovation-archive-list p { font-size: 12px !important; line-height: 1.55; }
+.renovation-module-grid article > strong,
+.renovation-next-list strong,
+.renovation-archive-list strong { font-size: 13px; }
+.renovation-roadmap nav button span,
+.renovation-release-log strong { font-size: 12px; }
+
+.auth { font-size: 14px; }
+.auth label,
+.auth-field > span { font-size: 12px !important; }
+.auth :where(input, button) { font-size: 14px !important; }
+.auth-renovation-notice strong { font-size: 12px; }
+.auth-renovation-notice p { font-size: 11px; line-height: 1.55; }
+.auth-bridge-return { font-size: 11px; }
+.auth-environment,
+.auth-eyebrow { font-size: 11px; }
+.auth-capabilities b { font-size: 11px; }
+.auth-brief-foot { font-size: 10px; }
+.auth-panel-heading > span { font-size: 10px; }
+.auth-panel-heading p { font-size: 13px; }
+.auth-forgot { font-size: 12px; }
+
+@media (min-width: 1600px) {
+  :root {
+    --sonar-caption-size: 12px;
+    --sonar-small-size: 13px;
+    --sonar-body-size: 15px;
+    --sonar-control-size: 14px;
+  }
+  .app-main { padding-right: clamp(30px, 3vw, 60px); padding-left: clamp(30px, 3vw, 60px); }
+  .workspace-shell { max-width: 1720px; }
+  .app-shell-v3 .ui-table td { font-size: 14px; }
+  .modal-heading p { font-size: 14px; }
+  .auth-stage {
+    width: min(1180px, calc(100% - 80px));
+    min-height: 720px;
+  }
+  .auth-brief { min-height: 720px; padding: 48px 52px 34px; }
+  .auth-panel { padding: 44px 54px; }
+  .auth-panel-inner { max-width: 420px; }
+  .auth-field > div { height: 50px; }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --sonar-caption-size: 11px;
+    --sonar-small-size: 12px;
+    --sonar-body-size: 14px;
+    --sonar-control-size: 16px;
+  }
+  .app-shell-v3 .ui-table td { min-height: 48px; font-size: 13px; }
+}

@@ -22,6 +22,8 @@ import {
 type RenovationView = 'active' | 'next' | 'archive'
 
 const activeSystems = [
+  { title: 'Комфорт на Full HD', text: 'Текст, подписи, кнопки, формы, таблицы и модальные окна получили новый минимум читаемости для масштаба 100%.', Icon: IconSparkles, tag: 'Готово' },
+  { title: 'Новый облик PG-BRIDGE', text: 'Публичная страница Пельгарии стала полноценной витриной мира со статусом проекта, устройством игрового пространства и маршрутом подключения.', Icon: IconLayersIntersect, tag: 'Готово' },
   { title: 'Мост Пельгарии', text: 'Корень pg-bridge стал публичным порталом проекта. СОНАР отделён от внешнего сайта и открывается через служебный вход.', Icon: IconLayersIntersect, tag: 'Готово' },
   { title: 'Архив СОНАР · Контакт', text: 'Завершённые дела больше не превращаются в тупик: доступны полная карточка, история, материалы, продолжение многодневной работы и возобновление.', Icon: IconArchive, tag: 'Готово' },
   { title: 'СОНАР · Контакт', text: 'Прежний режим заменён обращениями игроков. Работа начинается без принтера, а заявки, документы и файлы собираются в едином рабочем пространстве.', Icon: IconNotebook, tag: 'Готово' },
@@ -49,6 +51,7 @@ const archived = [
 ]
 
 const releaseNotes = [
+  ['Цикл 09', 'Большая витрина PG-BRIDGE и системная читаемость на Full HD'],
   ['Цикл 08', 'Публичный Мост Пельгарии и разделение игроков с гражданством'],
   ['Цикл 07', 'Полноценный архив дел, возобновление работы и быстрый доступ к связи'],
   ['Цикл 06', 'СОНАР · Контакт, кабинет сотрудника и демонстрация операций'],
@@ -76,7 +79,7 @@ export function ReconstructionPanel() {
     <>
       <button className="renovation-launcher" type="button" onClick={() => setOpen(true)}>
         <span className="renovation-launcher-radar"><IconRadar size={18} /><i /></span>
-        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 08</strong></span>
+        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 09</strong></span>
         <span className="renovation-launcher-progress"><i /></span>
         <IconArrowUpRight size={15} />
       </button>
@@ -147,7 +150,7 @@ export function ReconstructionPanel() {
                 </main>
 
                 <aside className="renovation-release-log">
-                  <header><span>Журнал обновлений</span><strong>8 циклов</strong></header>
+                  <header><span>Журнал обновлений</span><strong>9 циклов</strong></header>
                   <div>
                     {releaseNotes.map(([cycle, title], index) => (
                       <article key={cycle} className={index === 0 ? 'is-current' : ''}>
@@ -164,7 +167,7 @@ export function ReconstructionPanel() {
             </div>
 
             <footer className="renovation-center-footer">
-              <span>14 июня 2026 · Minecraft Role Play</span>
+              <span>15 июня 2026 · Minecraft Role Play</span>
               <strong>СОНАР / Пельгария</strong>
             </footer>
           </section>

@@ -1,0 +1,282 @@
+.bridge-page {
+  --bridge-blue: #1459cc;
+  --bridge-blue-soft: #e9f2ff;
+  --bridge-deep: #04152f;
+  --bridge-ink: #0b1c37;
+  --bridge-muted: #61718a;
+  background: #f7faff;
+}
+
+.bridge-nav {
+  height: 94px;
+  padding-inline: clamp(28px, 5.4vw, 104px);
+}
+.bridge-wordmark { gap: 15px; }
+.bridge-wordmark > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: rgba(255,255,255,.07);
+  font-size: 12px;
+}
+.bridge-wordmark strong { font-size: 13px; letter-spacing: .15em; }
+.bridge-wordmark small { margin-top: 5px; font-size: 9px; }
+.bridge-nav-links { gap: 34px; }
+.bridge-nav-links a { font-size: 13px; }
+.bridge-nav-links .bridge-sonar-link {
+  min-height: 44px;
+  padding-inline: 17px;
+  border-radius: 12px;
+}
+
+.bridge-hero {
+  min-height: max(780px, 100dvh);
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: clamp(44px, 6vw, 110px);
+  padding: 150px clamp(34px, 8.5vw, 164px) 110px;
+  background:
+    radial-gradient(circle at 77% 24%, rgba(78,151,244,.2), transparent 25%),
+    linear-gradient(118deg, #041226 0%, #092857 49%, #1c61c2 100%);
+}
+.bridge-hero::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: 22%;
+  background: linear-gradient(to top, rgba(2,10,23,.55), transparent);
+  pointer-events: none;
+}
+.bridge-coordinate-strip {
+  position: absolute;
+  z-index: 3;
+  top: 112px;
+  right: clamp(34px, 5.4vw, 104px);
+  left: clamp(34px, 8.5vw, 164px);
+  display: flex;
+  justify-content: space-between;
+  color: rgba(221,237,255,.45);
+  font: 10px/1.2 Consolas, monospace;
+  letter-spacing: .12em;
+}
+.bridge-coordinate-strip span:nth-child(2) { margin-left: auto; margin-right: 44px; }
+.bridge-hero-copy { max-width: 920px; }
+.bridge-status {
+  padding: 9px 14px;
+  font-size: 11px;
+  letter-spacing: .1em;
+}
+.bridge-status i { width: 8px; height: 8px; }
+.bridge-overline { margin: 34px 0 16px; font-size: 11px; }
+.bridge-hero h1 {
+  font-size: clamp(55px, 5.7vw, 100px) !important;
+  line-height: .96;
+  letter-spacing: -.06em;
+}
+.bridge-intro {
+  max-width: 720px;
+  margin-top: 32px;
+  color: rgba(232,242,255,.75);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.bridge-actions { gap: 12px; margin-top: 38px; }
+.bridge-actions a {
+  min-height: 54px;
+  padding-inline: 22px;
+  border-radius: 13px;
+  font-size: 13px;
+}
+.bridge-primary-action { box-shadow: 0 15px 40px rgba(0,0,0,.18); }
+.bridge-secondary-action:hover { background: rgba(255,255,255,.11); }
+
+.bridge-signal {
+  margin-bottom: 60px;
+  padding: 23px;
+  border-radius: 19px;
+  background: rgba(4,19,43,.5);
+  box-shadow: 0 24px 70px rgba(0,9,27,.22);
+}
+.bridge-signal header { grid-template-columns: 24px 1fr auto; font-size: 10px; }
+.bridge-signal header b { font-size: 10px; }
+.bridge-signal-code { margin: 28px 0 17px; font-size: 34px; }
+.bridge-signal p { margin: 0; font-size: 13px; line-height: 1.65; }
+.bridge-signal footer { gap: 7px; margin-top: 23px; }
+.bridge-signal footer span { padding: 5px 8px; font-size: 9px; }
+.bridge-scroll-cue { bottom: 37px; left: clamp(34px, 8.5vw, 164px); font-size: 10px; }
+
+.bridge-moon {
+  width: 145px;
+  height: 145px;
+  box-shadow: 0 0 110px rgba(164,210,255,.54), inset -32px -12px 50px rgba(90,145,220,.2);
+}
+.bridge-structure { width: 65%; height: 47%; }
+.bridge-deck { height: 6px; }
+.bridge-tower { width: 12px; }
+
+.bridge-dispatch {
+  position: relative;
+  z-index: 4;
+  width: min(1500px, calc(100% - 68px));
+  min-height: 122px;
+  display: grid;
+  grid-template-columns: minmax(260px, .8fr) 1.7fr;
+  align-items: center;
+  gap: 40px;
+  margin: -39px auto 0;
+  padding: 25px 30px;
+  border: 1px solid #d9e4f2;
+  border-radius: 22px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 25px 70px rgba(25,67,119,.13);
+  backdrop-filter: blur(18px);
+}
+.bridge-dispatch-title { display: flex; align-items: center; gap: 15px; }
+.bridge-dispatch-title > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: var(--bridge-blue);
+  background: var(--bridge-blue-soft);
+}
+.bridge-dispatch-title small,
+.bridge-dispatch-title strong { display: block; }
+.bridge-dispatch-title small { color: #8290a4; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
+.bridge-dispatch-title strong { margin-top: 5px; font-size: 17px; }
+.bridge-dispatch dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; }
+.bridge-dispatch dl > div { padding: 3px 24px; border-left: 1px solid #e1e9f3; }
+.bridge-dispatch dt { color: #8491a4; font-size: 11px; }
+.bridge-dispatch dd { margin: 7px 0 0; font-size: 14px; font-weight: 750; }
+.bridge-dispatch dd i { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: #2c9b73; box-shadow: 0 0 0 4px rgba(44,155,115,.11); }
+
+.bridge-manifest,
+.bridge-systems,
+.bridge-arrival { padding-inline: clamp(30px, 8.5vw, 164px); }
+.bridge-manifest { padding-top: clamp(120px, 11vw, 185px); padding-bottom: clamp(95px, 9vw, 155px); }
+.bridge-manifest > header { grid-template-columns: 180px minmax(0, 1fr) minmax(340px, .62fr); gap: 48px; }
+.bridge-manifest > header > span,
+.bridge-arrival > div > span,
+.bridge-systems header span { font-size: 11px; }
+.bridge-manifest h2,
+.bridge-arrival h2,
+.bridge-systems h2 { font-size: clamp(40px, 4.2vw, 68px) !important; }
+.bridge-manifest > header p,
+.bridge-arrival > div > p,
+.bridge-systems header > p { font-size: 15px; line-height: 1.75; }
+.bridge-principles { margin-top: 90px; border-radius: 23px; }
+.bridge-principles article { min-height: 320px; padding: 34px; }
+.bridge-principles article > span { font-size: 11px; }
+.bridge-principles svg { width: 30px; height: 30px; margin: 42px 0 30px; }
+.bridge-principles strong { font-size: 22px; }
+.bridge-principles p { margin-top: 13px; font-size: 14px; line-height: 1.7; }
+
+.bridge-systems {
+  padding-top: clamp(90px, 9vw, 150px);
+  padding-bottom: clamp(95px, 10vw, 170px);
+  background: #eef4fc;
+}
+.bridge-systems > header {
+  display: grid;
+  grid-template-columns: 1.15fr .65fr;
+  align-items: end;
+  gap: 70px;
+}
+.bridge-systems h2 { margin: 16px 0 0; }
+.bridge-systems header > p { margin: 0 0 4px; color: var(--bridge-muted); }
+.bridge-system-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+  margin-top: 70px;
+}
+.bridge-system-grid article {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  padding: 29px;
+  border: 1px solid #d8e3f0;
+  border-radius: 20px;
+  background: rgba(255,255,255,.72);
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+.bridge-system-grid article:hover {
+  transform: translateY(-5px);
+  border-color: #b7cce8;
+  box-shadow: 0 22px 50px rgba(38,79,131,.09);
+}
+.bridge-system-grid article > span { color: #8594a9; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.bridge-system-grid svg { margin: 42px 0 30px; color: var(--bridge-blue); }
+.bridge-system-grid strong { font-size: 19px; line-height: 1.3; }
+.bridge-system-grid p { margin: 13px 0 25px; color: #6a7a91; font-size: 13px; line-height: 1.65; }
+.bridge-system-grid small { margin-top: auto; color: var(--bridge-blue); font-size: 11px; font-weight: 700; }
+.bridge-systems blockquote {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 800px);
+  gap: 38px;
+  margin: 85px 0 0;
+  padding: 39px 0 0;
+  border-top: 1px solid #cad8e8;
+}
+.bridge-systems blockquote span { color: var(--bridge-blue); font: 11px Consolas, monospace; }
+.bridge-systems blockquote p { margin: 0; color: #263c5d; font-size: clamp(22px, 2.2vw, 35px); font-weight: 570; line-height: 1.38; letter-spacing: -.025em; }
+
+.bridge-arrival {
+  grid-template-columns: minmax(0, .95fr) minmax(420px, .72fr);
+  gap: clamp(65px, 9vw, 145px);
+  padding-top: clamp(105px, 10vw, 165px);
+  padding-bottom: clamp(105px, 10vw, 165px);
+  background:
+    radial-gradient(circle at 80% 30%, rgba(34,103,206,.22), transparent 28%),
+    var(--bridge-deep);
+}
+.bridge-arrival h2 { margin: 19px 0 27px; }
+.bridge-arrival li { min-height: 105px; grid-template-columns: 52px 1fr; }
+.bridge-arrival li b { font-size: 11px; }
+.bridge-arrival li strong { font-size: 16px; }
+.bridge-arrival li small { margin-top: 8px; font-size: 12px; }
+.bridge-arrival-actions { gap: 11px; padding-top: 15px; }
+.bridge-arrival-actions button,
+.bridge-arrival-actions a { min-height: 50px; padding-inline: 18px; border-radius: 12px; font-size: 12px; }
+.bridge-footer { min-height: 132px; }
+.bridge-footer strong { font-size: 13px; }
+.bridge-footer div span,
+.bridge-footer > span { font-size: 11px; }
+.bridge-footer-signal { display: flex; align-items: center; gap: 10px; }
+.bridge-footer-signal i { width: 8px; height: 8px; border-radius: 50%; background: #2c9b73; }
+
+@media (max-width: 1120px) {
+  .bridge-coordinate-strip span:nth-child(2) { display: none; }
+  .bridge-dispatch { grid-template-columns: 1fr; gap: 22px; }
+  .bridge-manifest > header { grid-template-columns: 130px 1fr; }
+  .bridge-manifest > header p { grid-column: 2; }
+  .bridge-system-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .bridge-hero { grid-template-columns: minmax(0, 1fr); }
+  .bridge-hero-copy { min-width: 0; width: 100%; }
+  .bridge-nav-links > a:not(.bridge-sonar-link) { display: none; }
+  .bridge-coordinate-strip { display: none; }
+  .bridge-dispatch { width: calc(100% - 40px); }
+  .bridge-dispatch dl { grid-template-columns: 1fr; gap: 16px; }
+  .bridge-dispatch dl > div { padding: 0; border-left: 0; }
+  .bridge-systems > header { grid-template-columns: 1fr; gap: 25px; }
+  .bridge-systems blockquote { grid-template-columns: 1fr; gap: 18px; }
+}
+@media (max-width: 620px) {
+  .bridge-nav { height: 78px; }
+  .bridge-wordmark > span { width: 42px; height: 42px; border-radius: 13px; }
+  .bridge-wordmark strong { font-size: 11px; }
+  .bridge-wordmark small { font-size: 8px; }
+  .bridge-hero { min-height: 880px; padding: 128px 22px 100px; }
+  .bridge-hero h1 { font-size: 46px !important; }
+  .bridge-intro { font-size: 15px; }
+  .bridge-dispatch { margin-top: -28px; padding: 22px; border-radius: 17px; }
+  .bridge-manifest > header { grid-template-columns: 1fr; gap: 24px; }
+  .bridge-manifest > header p { grid-column: auto; }
+  .bridge-system-grid { grid-template-columns: 1fr; }
+  .bridge-system-grid article { min-height: 285px; }
+  .bridge-arrival { grid-template-columns: 1fr; }
+  .bridge-footer-signal { display: flex; }
+}
