@@ -14,29 +14,29 @@ export function PelgariaMark({ className, title }: PelgariaMarkProps) {
     >
       {title && <title>{title}</title>}
       <path
-        d="M113 356V226l43-34v164M399 356V226l-43-34v164"
+        d="M58 348h396M150 348V176M362 348V176M128 196h44M340 196h44"
         fill="none"
         stroke="currentColor"
-        strokeWidth="28"
+        strokeWidth="24"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M156 240c49-76 151-76 200 0M84 356h344"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="28"
-        strokeLinecap="round"
-      />
-      <path
-        d="M256 356V245"
+        d="M58 286Q104 176 150 176Q256 308 362 176Q408 176 454 286"
         fill="none"
         stroke="currentColor"
         strokeWidth="18"
         strokeLinecap="round"
       />
       <path
-        d="m256 130 14 25 25 14-25 14-14 25-14-25-25-14 25-14 14-25Z"
+        d="M92 238v110M122 190v158M194 223v125M226 269v79M286 269v79M318 223v125M390 190v158M420 238v110"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="11"
+        strokeLinecap="round"
+      />
+      <path
+        d="m422 92 11 20 20 11-20 11-11 20-11-20-20-11 20-11 11-20Z"
         fill="currentColor"
       />
     </svg>
