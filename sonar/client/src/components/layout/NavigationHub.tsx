@@ -41,7 +41,7 @@ const groups: HubGroup[] = [
     caption: 'Обслуживание и государственные реестры',
     items: [
       { to: '/office', label: 'СОНАР · Контакт', description: 'Обращения игроков, документы и материалы', icon: IconInbox, permission: 'office.view' },
-      { to: '/citizens', label: 'Граждане', description: 'Карточки граждан и учётные сведения', icon: IconUsers, permission: 'citizens.view' },
+      { to: '/citizens', label: 'Игроки', description: 'Игровые карточки, гражданство и учёт', icon: IconUsers, permission: 'citizens.view' },
       { to: '/passports', label: 'Паспорта', description: 'Выдача, статусы и проверка документов', icon: IconId, permission: 'passports.view' },
       { to: '/verify', label: 'Проверка подлинности', description: 'Поиск документа по номеру или ШК', icon: IconShieldCheck },
     ],

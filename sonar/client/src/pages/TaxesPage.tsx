@@ -252,7 +252,7 @@ export function TaxesPage() {
   const chargeColumns: TableColumn<TaxCharge>[] = [
     {
       key: 'citizen',
-      header: 'Гражданин',
+      header: 'Игрок',
       render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen?.nickname ?? '—'}</span>,
     },
     {
@@ -313,7 +313,7 @@ export function TaxesPage() {
   const summaryColumns: TableColumn<SummaryItem>[] = [
     {
       key: 'citizen',
-      header: 'Гражданин',
+      header: 'Игрок',
       render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen.nickname}</span>,
     },
     {
@@ -400,7 +400,7 @@ export function TaxesPage() {
           {summary.length > 0 && (
             <div style={{ marginTop: '24px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#18211D', fontFamily: 'Inter, sans-serif', marginBottom: '12px' }}>
-                Сводка по гражданам
+                Сводка по игрокам
               </h2>
               <Table
                 columns={summaryColumns}
@@ -465,7 +465,7 @@ export function TaxesPage() {
       >
         <form onSubmit={handleCharge} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Select
-            label="Гражданин *"
+            label="Игрок *"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
             placeholder="— Выберите —"
             value={chargeForm.citizen_id}

@@ -300,7 +300,7 @@ export function OfficePage({ serviceSessionId, embedded = false }: { serviceSess
         <div>
           <span className="page-kicker">СОНАР · Документооборот</span>
           <h1>{embedded ? 'Заявки обращения' : 'Приёмная'}</h1>
-          <p>{embedded ? 'Все заявки на этой странице автоматически связаны с текущим делом СОНАР-КОНТАКТ.' : 'Обращения граждан, заявления, жалобы и служебные поручения с контролем исполнения.'}</p>
+          <p>{embedded ? 'Все заявки на этой странице автоматически связаны с текущим делом СОНАР-КОНТАКТ.' : 'Обращения игроков, заявления, жалобы и служебные поручения с контролем исполнения.'}</p>
         </div>
         {canCreate && (
           <Button variant="primary" onClick={() => { setCreateError(null); setCreateOpen(true) }}>
@@ -327,7 +327,7 @@ export function OfficePage({ serviceSessionId, embedded = false }: { serviceSess
           <div className="office-toolbar">
             <label className="archive-search">
               <IconSearch size={16} />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Номер, ШК, тема, гражданин" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Номер, ШК, тема, игрок" />
             </label>
             <Select
               value={statusFilter}
@@ -377,7 +377,7 @@ export function OfficePage({ serviceSessionId, embedded = false }: { serviceSess
           <section className="form-section">
             <div className="form-section-heading"><span>02</span><div><strong>Заявитель</strong><small>Привязка к реестру необязательна</small></div></div>
             <div className="form-grid">
-              <Select label="Гражданин" searchable value={createForm.citizen_id} onChange={(event) => setCreateForm({ ...createForm, citizen_id: event.target.value })} placeholder="Не указан" options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />
+              <Select label="Игрок" searchable value={createForm.citizen_id} onChange={(event) => setCreateForm({ ...createForm, citizen_id: event.target.value })} placeholder="Не указан" options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />
               <Input label="Контакт или источник" value={createForm.contact} onChange={(event) => setCreateForm({ ...createForm, contact: event.target.value })} placeholder="Discord, ведомство, личный приём" />
             </div>
           </section>

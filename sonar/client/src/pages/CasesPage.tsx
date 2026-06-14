@@ -208,7 +208,7 @@ export function CasesPage() {
           <Select
             label="Обвиняемый *"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
-            placeholder="— Выберите гражданина —"
+            placeholder="— Выберите игрока —"
             value={form.accused_id}
             onChange={(e) => setForm({ ...form, accused_id: e.target.value })}
             searchable

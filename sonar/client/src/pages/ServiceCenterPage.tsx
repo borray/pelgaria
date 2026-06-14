@@ -350,7 +350,7 @@ export function ServiceCenterPage() {
             ))}
           </div>
           <div className="form-grid">
-            {channel !== 'INTERNAL' && <Select label="Игрок / гражданин" value={citizenId} onChange={(event) => setCitizenId(event.target.value)} placeholder="Можно выбрать позже" searchable options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />}
+            {channel !== 'INTERNAL' && <Select label="Игрок" value={citizenId} onChange={(event) => setCitizenId(event.target.value)} placeholder="Можно выбрать позже" searchable options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />}
             <Input label="Контакт или Discord" value={contact} onChange={(event) => setContact(event.target.value)} placeholder="@username или примечание" />
             <div className="span-2"><Input label="Что нужно сделать *" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Например: выдать паспорт или принять заявление" /></div>
           </div>

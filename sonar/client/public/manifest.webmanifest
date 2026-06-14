@@ -1,7 +1,7 @@
 {
-  "name": "СОНАР — служебный портал Пельгарии",
-  "short_name": "СОНАР",
-  "description": "Государственная информационная система СОНАР: реестры, документы, право и экономика Пельгарии.",
+  "name": "Мост Пельгарии",
+  "short_name": "Пельгария",
+  "description": "Публичный портал Minecraft Java RP-проекта Пельгария и вход в служебную систему СОНАР.",
   "lang": "ru",
   "dir": "ltr",
   "start_url": "/",
@@ -9,9 +9,9 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#f5f6f3",
-  "theme_color": "#14715a",
-  "categories": ["government", "productivity"],
+  "background_color": "#061936",
+  "theme_color": "#0b2d66",
+  "categories": ["games", "entertainment", "social"],
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }

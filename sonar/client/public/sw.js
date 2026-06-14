@@ -1,6 +1,6 @@
 // СОНАР service worker — network-first, чтобы всегда отдавать свежую версию,
 // а при офлайне откатываться на закэшированную оболочку приложения.
-const CACHE = 'sonar-shell-v1'
+const CACHE = 'pelgaria-bridge-shell-v2'
 
 self.addEventListener('install', () => {
   self.skipWaiting()

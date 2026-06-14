@@ -17,8 +17,8 @@ import { useAuthStore } from '../../store/auth'
 
 const destinations = [
   { label: 'Главная', hint: 'Оперативная сводка', path: '/', icon: IconLayoutDashboard },
-  { label: 'Граждане', hint: 'Государственный реестр', path: '/citizens', icon: IconUsers, permission: 'citizens.view' },
-  { label: 'Паспорта', hint: 'Документы граждан', path: '/passports', icon: IconId, permission: 'passports.view' },
+  { label: 'Игроки', hint: 'Игровой реестр и гражданство', path: '/citizens', icon: IconUsers, permission: 'citizens.view' },
+  { label: 'Паспорта', hint: 'Документы гражданства', path: '/passports', icon: IconId, permission: 'passports.view' },
   { label: 'Законодательство', hint: 'Законы и указы', path: '/laws', icon: IconScale, permission: 'laws.view' },
   { label: 'Судебные дела', hint: 'Правопорядок', path: '/cases', icon: IconGavel, permission: 'cases.view' },
   { label: 'Казна', hint: 'Финансовые операции', path: '/treasury', icon: IconBuildingBank, permission: 'treasury.view' },

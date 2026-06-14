@@ -65,14 +65,14 @@ export function DashboardPage() {
 
   const metrics = data?.metrics
   const summaries = [
-    { label: 'Граждан в реестре', value: formatNumber(metrics?.citizens ?? null), to: '/citizens', permission: 'citizens.view' },
+    { label: 'Игроков в реестре', value: formatNumber(metrics?.citizens ?? null), to: '/citizens', permission: 'citizens.view' },
     { label: 'Дел в работе', value: formatNumber(metrics?.active_cases ?? null), to: '/cases', permission: 'cases.view' },
     { label: 'Баланс казны', value: `${formatNumber(metrics?.treasury_balance ?? null)} у.е.`, to: '/treasury', permission: 'treasury.view' },
     { label: 'Объектов РЕЛИКТ', value: formatNumber(metrics?.active_buildings ?? null), to: '/buildings', permission: 'relict.view' },
   ].filter((item) => hasPermission(item.permission))
 
   const quickLinks = [
-    { to: '/citizens', label: 'Реестр граждан', description: 'Карточки и учётные сведения', icon: IconUsers, permission: 'citizens.view' },
+    { to: '/citizens', label: 'Реестр игроков', description: 'Карточки, паспорта и гражданство', icon: IconUsers, permission: 'citizens.view' },
     { to: '/office', label: 'СОНАР · Контакт', description: 'Обращения игроков и документы', icon: IconInbox, permission: 'office.view' },
     { to: '/passports', label: 'Паспорта', description: 'Выдача и проверка документов', icon: IconId, permission: 'passports.view' },
     { to: '/laws', label: 'Законодательство', description: 'Законы, указы и архив', icon: IconScale, permission: 'laws.view' },
@@ -122,7 +122,7 @@ export function DashboardPage() {
           {hasPermission('office.view') && (
             <Link to="/office" className="operations-primary-action">
               <IconPlayerPlay size={18} />
-              <span><strong>Начать обслуживание</strong><small>Открыть новое обращение</small></span>
+              <span><strong>Начать обслуживание</strong><small>Открыть новое обращение игрока</small></span>
               <IconArrowRight size={17} />
             </Link>
           )}
@@ -130,7 +130,7 @@ export function DashboardPage() {
         <aside className="operations-hero-side">
           <div className="operations-date"><IconCalendar size={17} /><span>{today}</span></div>
           <div className="operations-hero-metrics">
-            <div><span>В работе</span><strong>{formatNumber(metrics?.office_active ?? null)}</strong><small>обращений в работе</small></div>
+            <div><span>В работе</span><strong>{formatNumber(metrics?.office_active ?? null)}</strong><small>обращений игроков</small></div>
             <div><span>Правовая база</span><strong>{formatNumber(metrics?.active_laws ?? null)}</strong><small>действующих актов</small></div>
           </div>
           <div className="operations-integrity"><IconCircleCheck size={16} /><span>Реестры синхронизированы</span></div>

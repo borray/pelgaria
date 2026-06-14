@@ -22,6 +22,7 @@ import {
 type RenovationView = 'active' | 'next' | 'archive'
 
 const activeSystems = [
+  { title: 'Мост Пельгарии', text: 'Корень pg-bridge стал публичным порталом проекта. СОНАР отделён от внешнего сайта и открывается через служебный вход.', Icon: IconLayersIntersect, tag: 'Готово' },
   { title: 'Архив СОНАР · Контакт', text: 'Завершённые дела больше не превращаются в тупик: доступны полная карточка, история, материалы, продолжение многодневной работы и возобновление.', Icon: IconArchive, tag: 'Готово' },
   { title: 'СОНАР · Контакт', text: 'Прежний режим заменён обращениями игроков. Работа начинается без принтера, а заявки, документы и файлы собираются в едином рабочем пространстве.', Icon: IconNotebook, tag: 'Готово' },
   { title: 'Кабинет сотрудника', text: 'Профиль полностью пересобран: идентичность, полномочия, безопасность, Discord и оформление разделены по понятным рабочим зонам.', Icon: IconUserCog, tag: 'Готово' },
@@ -33,7 +34,7 @@ const activeSystems = [
   { title: 'Государственные реестры', text: 'Общие таблицы получили служебный каркас, нумерацию строк и адаптивное карточное представление.', Icon: IconChecklist, tag: 'Готово' },
   { title: 'Электронные формы', text: 'Модальные окна пересобраны в единую систему с контекстной панелью и контролем подтверждения.', Icon: IconFileCheck, tag: 'Готово' },
   { title: 'Печатный контур', text: 'Проверка станции, облегчённые ЧБ-макеты, ШК, QR и формирование документов.', Icon: IconPrinter, tag: 'Работает' },
-  { title: 'Карточки записей', text: 'Началась полная замена старых детальных страниц. Первой пересобрана карточка гражданина.', Icon: IconProgressCheck, tag: 'В работе' },
+  { title: 'Карточки игроков', text: 'Игровой реестр отделён от гражданства: игрок становится гражданином после выдачи действующего паспорта.', Icon: IconProgressCheck, tag: 'Готово' },
 ]
 
 const nextStages = [
@@ -48,6 +49,7 @@ const archived = [
 ]
 
 const releaseNotes = [
+  ['Цикл 08', 'Публичный Мост Пельгарии и разделение игроков с гражданством'],
   ['Цикл 07', 'Полноценный архив дел, возобновление работы и быстрый доступ к связи'],
   ['Цикл 06', 'СОНАР · Контакт, кабинет сотрудника и демонстрация операций'],
   ['Цикл 05', 'Служебная связь, подлинность и операции формирования PDF'],
@@ -74,7 +76,7 @@ export function ReconstructionPanel() {
     <>
       <button className="renovation-launcher" type="button" onClick={() => setOpen(true)}>
         <span className="renovation-launcher-radar"><IconRadar size={18} /><i /></span>
-        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 07</strong></span>
+        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 08</strong></span>
         <span className="renovation-launcher-progress"><i /></span>
         <IconArrowUpRight size={15} />
       </button>
@@ -145,7 +147,7 @@ export function ReconstructionPanel() {
                 </main>
 
                 <aside className="renovation-release-log">
-                  <header><span>Журнал обновлений</span><strong>7 циклов</strong></header>
+                  <header><span>Журнал обновлений</span><strong>8 циклов</strong></header>
                   <div>
                     {releaseNotes.map(([cycle, title], index) => (
                       <article key={cycle} className={index === 0 ? 'is-current' : ''}>

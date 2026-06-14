@@ -190,7 +190,7 @@ export function ProfilePage() {
               {loginError && <div className="form-error">{loginError}</div>}
               {loginSuccess && <div className="form-success">Логин изменён</div>}
               <div className="employee-setting-row"><div><small>Служебная роль</small><strong>{user.role.name}</strong><span>Роль определяет набор доступных реестров и операций.</span></div><i style={{ background: user.role.color }} /></div>
-              <div className="employee-setting-row"><div><small>Игровая карточка</small><strong>{user.citizen?.nickname ?? 'Не привязана'}</strong><span>{user.citizen?.reg_number ?? 'Администратор может связать учётную запись с гражданином.'}</span></div>{user.citizen && <Link to={`/citizens/${user.citizen.id}`}>Открыть</Link>}</div>
+              <div className="employee-setting-row"><div><small>Игровая карточка</small><strong>{user.citizen?.nickname ?? 'Не привязана'}</strong><span>{user.citizen?.reg_number ?? 'Администратор может связать учётную запись с игроком.'}</span></div>{user.citizen && <Link to={`/citizens/${user.citizen.id}`}>Открыть</Link>}</div>
             </section>
           )}
 

@@ -11,7 +11,7 @@ import {
   IconForms,
   IconDatabase,
 } from '@tabler/icons-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
 import { useAuthStore } from '../store/auth'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
@@ -60,6 +60,7 @@ export function LoginPage() {
 
   return (
     <main className="auth auth-renovated">
+      <Link to="/" className="auth-bridge-return">← Мост Пельгарии</Link>
       <div className="auth-theme-toggle"><ThemeToggle compact /></div>
       <section className="auth-stage">
         <aside className="auth-brief">
@@ -71,7 +72,7 @@ export function LoginPage() {
           <div className="auth-brief-copy">
             <span className="auth-eyebrow">Единая государственная система</span>
             <h1>Работа с государством<br />в одном контуре.</h1>
-            <p>Реестры, обслуживание граждан, законодательство и печатные документы без перехода между разрозненными системами.</p>
+            <p>Реестры игроков, государственное обслуживание, законодательство и печатные документы без перехода между разрозненными системами.</p>
           </div>
           <div className="auth-capabilities">
             <span><IconDatabase size={17} /><b>Единые реестры</b></span>

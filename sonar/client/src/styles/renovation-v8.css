@@ -136,3 +136,5 @@
   .contact-request-summary, .contact-channel-grid { grid-template-columns: 1fr; }
   .contact-complete-banner { grid-template-columns: 40px 1fr; }.contact-complete-banner .ui-button { grid-column: 1 / -1; }
 }
+.citizenship-state { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border: 1px solid var(--line); border-radius: 99px; color: var(--quiet); background: var(--surface-subtle); font-size: 7px; font-weight: 700; }
+.citizenship-state.is-citizen { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--accent-faint); }

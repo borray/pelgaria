@@ -141,7 +141,7 @@ export function CitizenDetailPage() {
   if (!citizen) {
     return (
       <div style={{ textAlign: 'center', padding: '60px', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>
-        Гражданин не найден
+        Игрок не найден
       </div>
     )
   }
@@ -155,6 +155,7 @@ export function CitizenDetailPage() {
     { key: 'taxes', label: 'Налоги', count: citizen.tax_charges?.length },
     { key: 'buildings', label: 'Постройки', count: citizen.buildings?.length },
   ]
+  const hasActivePassport = citizen.passports?.some((passport) => passport.status === 'VALID') ?? false
 
   return (
     <div className="citizen-record-page">
@@ -177,7 +178,7 @@ export function CitizenDetailPage() {
           </Button>
           {canDelete && (
             <ActionMenu items={[
-              { label: 'Удалить гражданина', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
+              { label: 'Удалить игрока', icon: <IconTrash size={15} />, danger: true, onClick: () => setShowDeleteModal(true) },
             ]} />
           )}
         </div>
@@ -187,9 +188,9 @@ export function CitizenDetailPage() {
         <div className="record-identity-primary">
           <span className="record-avatar"><IconUser size={32} /></span>
           <div>
-            <span className="record-eyebrow">Гражданин Пельгарии</span>
+            <span className="record-eyebrow">{hasActivePassport ? 'Гражданин Пельгарии' : 'Игрок Пельгарии'}</span>
             <h1>{citizen.nickname}</h1>
-            <div className="record-identity-status"><Badge status={citizen.status} /><span>{citizen.role_title}</span></div>
+            <div className="record-identity-status"><Badge status={citizen.status} /><span>{citizen.role_title}</span><b className={hasActivePassport ? 'citizenship-state is-citizen' : 'citizenship-state'}>{hasActivePassport ? 'Гражданство подтверждено' : 'Паспорт не выдан'}</b></div>
           </div>
         </div>
         <div className="record-facts">
@@ -205,7 +206,7 @@ export function CitizenDetailPage() {
         </aside>
       </section>
 
-      <nav className="record-tabs" aria-label="Разделы карточки гражданина">
+      <nav className="record-tabs" aria-label="Разделы карточки игрока">
         {tabs.map((tab, index) => (
           <button
             key={tab.key}
@@ -226,7 +227,7 @@ export function CitizenDetailPage() {
         </header>
         <div className="record-content-body">
           {activeTab === 'passport' && (
-            <PassportTab passports={citizen.passports ?? []} />
+            <PassportTab passports={citizen.passports ?? []} onIssue={() => navigate('/passports')} />
           )}
           {activeTab === 'documents' && (
             generatedDocuments.length === 0
@@ -267,7 +268,7 @@ export function CitizenDetailPage() {
       <Modal
         open={showEditModal}
         onClose={() => { setShowEditModal(false); setEditError(null) }}
-        title="Редактировать гражданина"
+        title="Редактировать игрока"
         footer={
           <>
             <Button variant="secondary" onClick={() => { setShowEditModal(false); setEditError(null) }}>
@@ -331,7 +332,7 @@ export function CitizenDetailPage() {
       <Modal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Удалить гражданина"
+        title="Удалить игрока"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
@@ -344,7 +345,7 @@ export function CitizenDetailPage() {
         }
       >
         <p style={{ margin: 0, fontSize: '14px', color: '#374151' }}>
-          Вы уверены, что хотите удалить гражданина{' '}
+          Вы уверены, что хотите удалить игрока{' '}
           <strong>{citizen.nickname}</strong> ({citizen.reg_number})?
           Это действие нельзя отменить.
         </p>
@@ -362,7 +363,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function PassportTab({ passports }: { passports: NonNullable<Citizen['passports']> }) {
+function PassportTab({ passports, onIssue }: { passports: NonNullable<Citizen['passports']>; onIssue: () => void }) {
   const columns: TableColumn<(typeof passports)[number]>[] = [
     {
       key: 'number',
@@ -391,7 +392,7 @@ function PassportTab({ passports }: { passports: NonNullable<Citizen['passports'
     },
   ]
 
-  if (passports.length === 0) return <EmptyState title="Паспорта не найдены" />
+  if (passports.length === 0) return <EmptyState title="Игрок пока не является гражданином" description="Выдайте паспорт, чтобы оформить гражданство Пельгарии." action={<Button variant="primary" size="sm" onClick={onIssue}>Перейти к выдаче паспорта</Button>} />
   return <Table columns={columns} data={passports} keyExtractor={(r) => r.id} />
 }
 

@@ -234,7 +234,7 @@ export function PrintCenterPage({ serviceSessionId, embedded = false }: { servic
   const columns: TableColumn<GeneratedDocument>[] = [
     { key: 'number', header: 'Документ', width: '170px', render: (row) => <div><strong>{row.number}</strong><div className="table-secondary">{row.title}</div></div> },
     { key: 'registry_code', header: 'ШК', width: '210px', render: (row) => <RegistryMark code={row.registry_code} compact /> },
-    { key: 'citizen', header: 'Гражданин', render: (row) => row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки' },
+    { key: 'citizen', header: 'Игрок', render: (row) => row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки' },
     { key: 'link', header: 'Прикрепление', width: '150px', render: (row) => <span className={row.linked_entity_id ? 'link-status is-linked' : 'link-status'}><IconLink size={13} />{row.linked_entity_id ? row.linked_entity_type : 'Не прикреплен'}</span> },
     { key: 'created_at', header: 'Создан', width: '120px', render: (row) => formatDate(row.created_at) },
     { key: 'actions', header: '', width: '180px', render: (row) => (
@@ -341,7 +341,7 @@ export function PrintCenterPage({ serviceSessionId, embedded = false }: { servic
       <section className="print-archive">
         <div className="section-heading">
           <div><span>Журнал операций</span><h2>Архив печати</h2></div>
-          <div className="archive-search"><IconSearch size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Номер, ШК, название или гражданин" /></div>
+          <div className="archive-search"><IconSearch size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Номер, ШК, название или игрок" /></div>
         </div>
         {!loading && documents.length === 0
           ? <EmptyState title="Документы не найдены" description="Выберите форму из каталога и сформируйте первый документ." />
@@ -361,8 +361,8 @@ export function PrintCenterPage({ serviceSessionId, embedded = false }: { servic
             <section className="form-section">
               <div className="form-section-heading"><span>01</span><div><strong>Получатель и привязка</strong><small>Документ можно прикрепить к реестровой записи</small></div></div>
               <div className="form-grid">
-                <Select label="Гражданин" searchable options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))} value={citizenId} onChange={(e) => { setCitizenId(e.target.value); if (linkType === 'CITIZEN') setLinkId(e.target.value) }} placeholder="Без гражданина" />
-                <Select label="Тип привязки" options={[{ value: 'CITIZEN', label: 'Гражданин' }, { value: 'BUILDING', label: 'Объект РЕЛИКТ' }]} value={linkType} onChange={(e) => { setLinkType(e.target.value); setLinkId('') }} />
+                <Select label="Игрок" searchable options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))} value={citizenId} onChange={(e) => { setCitizenId(e.target.value); if (linkType === 'CITIZEN') setLinkId(e.target.value) }} placeholder="Без игрока" />
+                <Select label="Тип привязки" options={[{ value: 'CITIZEN', label: 'Игрок' }, { value: 'BUILDING', label: 'Объект РЕЛИКТ' }]} value={linkType} onChange={(e) => { setLinkType(e.target.value); setLinkId('') }} />
                 <div className="span-2">
                   <Select label="Прикрепить к записи" searchable options={(linkType === 'BUILDING' ? buildings.map((b) => ({ value: b.id, label: `${b.name} (${b.reg_number})` })) : citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` })))} value={linkId} onChange={(e) => {
                     setLinkId(e.target.value)

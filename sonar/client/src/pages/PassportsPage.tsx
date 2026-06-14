@@ -90,7 +90,7 @@ export function PassportsPage() {
   const handleIssue = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedCitizenId) {
-      setIssueError('Выберите гражданина')
+      setIssueError('Выберите игрока')
       return
     }
     setIssueLoading(true)
@@ -259,7 +259,7 @@ export function PassportsPage() {
   return (
     <div className="registry-page">
       <PageHeader
-        eyebrow="Документы граждан"
+        eyebrow="Оформление гражданства"
         title="Паспорта"
         description="Выдача, проверка статуса и формирование печатных экземпляров удостоверений личности."
         actions={canIssue ? (
@@ -322,8 +322,8 @@ export function PassportsPage() {
         <form onSubmit={handleIssue} className="form-section-stack">
           <section className="form-section">
             <div className="form-section-heading"><span>01</span><div><strong>Получатель документа</strong><small>Проверьте реестровую запись перед выдачей</small></div></div>
-            <Select label="Гражданин *" options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))} placeholder="— Найдите гражданина —" value={selectedCitizenId} onChange={(e) => setSelectedCitizenId(e.target.value)} searchable />
-            {selectedCitizenId && <div className="document-preview"><RegistryMark code={citizens.find((c) => c.id === selectedCitizenId)?.reg_number} compact /><span>Паспорт будет связан с выбранной записью гражданина</span></div>}
+            <Select label="Игрок *" options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))} placeholder="— Найдите игрока —" value={selectedCitizenId} onChange={(e) => setSelectedCitizenId(e.target.value)} searchable />
+            {selectedCitizenId && <div className="document-preview"><RegistryMark code={citizens.find((c) => c.id === selectedCitizenId)?.reg_number} compact /><span>Выдача действующего паспорта оформит гражданство выбранного игрока</span></div>}
           </section>
           <section className="form-section">
             <div className="form-section-heading"><span>02</span><div><strong>Срок и реквизиты</strong><small>Номер паспорта и ШК создаются автоматически</small></div></div>

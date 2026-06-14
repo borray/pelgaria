@@ -202,7 +202,7 @@ export function AccountsPage() {
     },
     {
       key: 'citizen',
-      header: 'Гражданин',
+      header: 'Игровая карточка',
       render: (row) => (
         <span style={{ fontSize: '13px', color: '#6B7280' }}>
           {row.citizen ? `${row.citizen.nickname} (${row.citizen.reg_number})` : '—'}
@@ -255,7 +255,7 @@ export function AccountsPage() {
       <PageHeader
         eyebrow="Администрирование"
         title="Учётные записи"
-        description="Доступ сотрудников, роли, связь с гражданами и контроль состояния аккаунтов."
+        description="Доступ сотрудников, роли, связь с игровыми карточками и контроль состояния аккаунтов."
         actions={canManage ? (
           <Button variant="primary" onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateForm({ login: '', password: '', role_id: roles[0]?.id ?? '', citizen_id: '' }) }}>
             <IconPlus size={16} />Создать аккаунт
@@ -287,7 +287,7 @@ export function AccountsPage() {
             onChange={(e) => setCreateForm({ ...createForm, role_id: e.target.value })}
           />
           <Select
-            label="Гражданин"
+            label="Игрок"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
             placeholder="— Не привязан —"
             value={createForm.citizen_id}
@@ -309,7 +309,7 @@ export function AccountsPage() {
             onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
           />
           <Select
-            label="Гражданин"
+            label="Игрок"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
             placeholder="— Не привязан —"
             value={editForm.citizen_id}
@@ -333,7 +333,7 @@ export function AccountsPage() {
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         title="Удалить аккаунт"
-        description="Аккаунт и все сессии будут уничтожены. Гражданин и реестровые данные не затрагиваются."
+        description="Аккаунт и все сессии будут уничтожены. Игровая карточка и реестровые данные не затрагиваются."
         footer={
           <>
             <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button>

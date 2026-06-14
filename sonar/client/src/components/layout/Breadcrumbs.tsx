@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { IconChevronRight } from '@tabler/icons-react'
 
 const PATH_LABELS: Record<string, string> = {
-  office: 'СОНАР · Контакт', dashboard: 'Обзор',
-  sessions: 'Обращение',
+  office: 'СОНАР · Контакт',
+  sessions: 'Рабочая сессия',
   citizens: 'Игроки', passports: 'Паспорта', laws: 'Законодательство', cases: 'Дела',
   punishments: 'Наказания', taxes: 'Налоги', treasury: 'Казна', buildings: 'РЕЛИКТ',
   chat: 'Чат', accounts: 'Аккаунты',
@@ -18,7 +18,7 @@ export function Breadcrumbs() {
 
   return (
     <nav className="app-breadcrumbs" aria-label="Путь к странице">
-      <Link to="/dashboard" className="breadcrumb-home">СОНАР</Link>
+      <Link to="/" className="breadcrumb-home">СОНАР</Link>
       {segments.map((segment, index) => {
         const path = `/${segments.slice(0, index + 1).join('/')}`
         const current = index === segments.length - 1

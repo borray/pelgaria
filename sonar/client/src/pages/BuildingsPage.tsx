@@ -263,12 +263,12 @@ export function BuildingsPage() {
           <Select label="Тип *" options={TYPE_OPTIONS.slice(1)} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} />
           <Select
             label="Владелец *"
-            placeholder="— Выберите гражданина —"
+            placeholder="— Выберите игрока —"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
             value={form.owner_id}
             onChange={(e) => setForm({ ...form, owner_id: e.target.value })}
             searchable
-            searchPlaceholder="Поиск гражданина..."
+            searchPlaceholder="Поиск игрока..."
           />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
             <Input label="X" type="number" value={form.coord_x} onChange={(e) => setForm({ ...form, coord_x: e.target.value })} />

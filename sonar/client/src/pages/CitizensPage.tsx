@@ -48,7 +48,7 @@ export function CitizensPage() {
   const [form, setForm] = useState<CreateCitizenForm>({
     nickname: '',
     discord_username: '',
-    role_title: 'Гражданин',
+    role_title: 'Игрок',
     status: 'ACTIVE',
     note: '',
   })
@@ -86,13 +86,13 @@ export function CitizensPage() {
       await apiClient.post('/citizens', {
         nickname: form.nickname.trim(),
         discord_username: form.discord_username.trim() || null,
-        role_title: form.role_title || 'Гражданин',
+        role_title: form.role_title || 'Игрок',
         status: form.status || 'ACTIVE',
         note: form.note.trim() || null,
       })
       setShowCreateModal(false)
-      setForm({ nickname: '', discord_username: '', role_title: 'Гражданин', status: 'ACTIVE', note: '' })
-      toast.success('Гражданин добавлен')
+      setForm({ nickname: '', discord_username: '', role_title: 'Игрок', status: 'ACTIVE', note: '' })
+      toast.success('Игрок добавлен')
       fetchCitizens()
     } catch (err: unknown) {
       const msg =
@@ -150,9 +150,9 @@ export function CitizensPage() {
   return (
     <div className="registry-page">
       <PageHeader
-        eyebrow="Государственный реестр"
+        eyebrow="Игровой реестр"
         title="Игроки"
-        description="Единая база жителей Пельгарии, их статусов, ролей и связанных государственных записей."
+        description="Все участники проекта Пельгария. Паспорт переводит игровую запись в статус гражданина."
         actions={canCreate ? (
           <Button
             variant="primary"
@@ -160,7 +160,7 @@ export function CitizensPage() {
             size="md"
           >
             <IconPlus size={16} />
-            Добавить гражданина
+            Добавить игрока
           </Button>
         ) : undefined}
       />
@@ -190,13 +190,13 @@ export function CitizensPage() {
             description={
               search || statusFilter
                 ? 'Попробуйте изменить параметры поиска'
-                : 'Добавьте первого гражданина'
+                : 'Добавьте первого игрока'
             }
             action={
               canCreate ? (
                 <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
                   <IconPlus size={14} />
-                  Добавить гражданина
+                  Добавить игрока
                 </Button>
               ) : undefined
             }
@@ -212,16 +212,16 @@ export function CitizensPage() {
         />
       )}
 
-      {!loading && <div className="registry-footer"><span>Реестр граждан</span><span>Показано: {citizens.length}</span></div>}
+      {!loading && <div className="registry-footer"><span>Реестр игроков</span><span>Показано: {citizens.length}</span></div>}
 
       <Modal
         open={showCreateModal}
         onClose={() => {
           setShowCreateModal(false)
           setCreateError(null)
-          setForm({ nickname: '', discord_username: '', role_title: 'Гражданин', status: 'ACTIVE', note: '' })
+          setForm({ nickname: '', discord_username: '', role_title: 'Игрок', status: 'ACTIVE', note: '' })
         }}
-        title="Добавить гражданина"
+        title="Добавить игрока"
         footer={
           <>
             <Button

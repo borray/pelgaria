@@ -28,7 +28,7 @@ export function Topbar({ onNavigationClick, navigationOpen }: { onNavigationClic
   return (
     <header className="app-topbar">
       <div className="topbar-leading">
-        <Link to="/dashboard" aria-label="Обзор СОНАР" className="topbar-brand-link">
+        <Link to="/dashboard" aria-label="Главная СОНАР" className="topbar-brand-link">
           <SonarBrand size="sm" />
         </Link>
         <nav className="topbar-primary-nav" aria-label="Основные разделы">

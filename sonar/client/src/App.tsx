@@ -1,38 +1,36 @@
-import React, { useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import React, { Suspense, useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/auth'
-import { Layout } from './components/layout/Layout'
-import { LandingPage } from './pages/LandingPage'
-import { LoginPage } from './pages/LoginPage'
-import { ChangePasswordPage } from './pages/ChangePasswordPage'
-import { DiscordCallbackPage } from './pages/DiscordCallbackPage'
-import { Spinner } from './components/ui/Spinner'
 import apiClient from './api/client'
 
-// Страницы загружаются по требованию — меньше начальный бандл и быстрее первый рендер
-const named = <T extends Record<string, unknown>, K extends keyof T>(loader: () => Promise<T>, key: K) =>
-  lazy(() => loader().then((m) => ({ default: m[key] as React.ComponentType })))
+const lazyPage = (loader: () => Promise<Record<string, React.ComponentType>>, name: string) =>
+  React.lazy(() => loader().then((module) => ({ default: module[name] })))
 
-const DashboardPage = named(() => import('./pages/DashboardPage'), 'DashboardPage')
-const CitizensPage = named(() => import('./pages/CitizensPage'), 'CitizensPage')
-const CitizenDetailPage = named(() => import('./pages/CitizenDetailPage'), 'CitizenDetailPage')
-const PassportsPage = named(() => import('./pages/PassportsPage'), 'PassportsPage')
-const LawsPage = named(() => import('./pages/LawsPage'), 'LawsPage')
-const LawDetailPage = named(() => import('./pages/LawDetailPage'), 'LawDetailPage')
-const CasesPage = named(() => import('./pages/CasesPage'), 'CasesPage')
-const CaseDetailPage = named(() => import('./pages/CaseDetailPage'), 'CaseDetailPage')
-const PunishmentsPage = named(() => import('./pages/PunishmentsPage'), 'PunishmentsPage')
-const TaxesPage = named(() => import('./pages/TaxesPage'), 'TaxesPage')
-const TreasuryPage = named(() => import('./pages/TreasuryPage'), 'TreasuryPage')
-const BuildingsPage = named(() => import('./pages/BuildingsPage'), 'BuildingsPage')
-const BuildingDetailPage = named(() => import('./pages/BuildingDetailPage'), 'BuildingDetailPage')
-const ChatPage = named(() => import('./pages/ChatPage'), 'ChatPage')
-const AccountsPage = named(() => import('./pages/AccountsPage'), 'AccountsPage')
-const RolesPage = named(() => import('./pages/RolesPage'), 'RolesPage')
-const ProfilePage = named(() => import('./pages/ProfilePage'), 'ProfilePage')
-const VerificationPage = named(() => import('./pages/VerificationPage'), 'VerificationPage')
-const ServiceCenterPage = named(() => import('./pages/ServiceCenterPage'), 'ServiceCenterPage')
-const ServiceSessionPage = named(() => import('./pages/ServiceSessionPage'), 'ServiceSessionPage')
+const Layout = lazyPage(() => import('./components/layout/Layout'), 'Layout')
+const BridgePage = lazyPage(() => import('./pages/BridgePage'), 'BridgePage')
+const LoginPage = lazyPage(() => import('./pages/LoginPage'), 'LoginPage')
+const ChangePasswordPage = lazyPage(() => import('./pages/ChangePasswordPage'), 'ChangePasswordPage')
+const CitizensPage = lazyPage(() => import('./pages/CitizensPage'), 'CitizensPage')
+const CitizenDetailPage = lazyPage(() => import('./pages/CitizenDetailPage'), 'CitizenDetailPage')
+const PassportsPage = lazyPage(() => import('./pages/PassportsPage'), 'PassportsPage')
+const LawsPage = lazyPage(() => import('./pages/LawsPage'), 'LawsPage')
+const LawDetailPage = lazyPage(() => import('./pages/LawDetailPage'), 'LawDetailPage')
+const CasesPage = lazyPage(() => import('./pages/CasesPage'), 'CasesPage')
+const CaseDetailPage = lazyPage(() => import('./pages/CaseDetailPage'), 'CaseDetailPage')
+const PunishmentsPage = lazyPage(() => import('./pages/PunishmentsPage'), 'PunishmentsPage')
+const TaxesPage = lazyPage(() => import('./pages/TaxesPage'), 'TaxesPage')
+const TreasuryPage = lazyPage(() => import('./pages/TreasuryPage'), 'TreasuryPage')
+const BuildingsPage = lazyPage(() => import('./pages/BuildingsPage'), 'BuildingsPage')
+const BuildingDetailPage = lazyPage(() => import('./pages/BuildingDetailPage'), 'BuildingDetailPage')
+const ChatPage = lazyPage(() => import('./pages/ChatPage'), 'ChatPage')
+const AccountsPage = lazyPage(() => import('./pages/AccountsPage'), 'AccountsPage')
+const RolesPage = lazyPage(() => import('./pages/RolesPage'), 'RolesPage')
+const ProfilePage = lazyPage(() => import('./pages/ProfilePage'), 'ProfilePage')
+const DiscordCallbackPage = lazyPage(() => import('./pages/DiscordCallbackPage'), 'DiscordCallbackPage')
+const DashboardPage = lazyPage(() => import('./pages/DashboardPage'), 'DashboardPage')
+const VerificationPage = lazyPage(() => import('./pages/VerificationPage'), 'VerificationPage')
+const ServiceCenterPage = lazyPage(() => import('./pages/ServiceCenterPage'), 'ServiceCenterPage')
+const ServiceSessionPage = lazyPage(() => import('./pages/ServiceSessionPage'), 'ServiceSessionPage')
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -45,11 +43,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function RouteFallback() {
-  return <div className="load-state" style={{ minHeight: '60vh' }}><Spinner /></div>
-}
-
 export default function App() {
+  const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
 
@@ -60,47 +55,51 @@ export default function App() {
       .catch(() => undefined)
   }, [setUser, user?.id])
 
-  return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        {/* Публичный лендинг «Мост Пельгарии» на корне домена */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/change-password" element={<ChangePasswordPage />} />
-        <Route path="/discord-callback" element={<DiscordCallbackPage />} />
-        {/* Система СОНАР — служебный контур */}
-        <Route
-          element={
-            <PrivateRoute>
-              <Layout />
-            </PrivateRoute>
-          }
-        >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/citizens" element={<CitizensPage />} />
-          <Route path="/citizens/:id" element={<CitizenDetailPage />} />
-          <Route path="/passports" element={<PassportsPage />} />
-          <Route path="/laws" element={<LawsPage />} />
-          <Route path="/laws/:id" element={<LawDetailPage />} />
-          <Route path="/cases" element={<CasesPage />} />
-          <Route path="/cases/:id" element={<CaseDetailPage />} />
-          <Route path="/punishments" element={<PunishmentsPage />} />
-          <Route path="/taxes" element={<TaxesPage />} />
-          <Route path="/treasury" element={<TreasuryPage />} />
-          <Route path="/buildings" element={<BuildingsPage />} />
-          <Route path="/buildings/:id" element={<BuildingDetailPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/accounts" element={<AccountsPage />} />
-          <Route path="/roles/*" element={<RolesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/print-center" element={<Navigate to="/office?tab=print" replace />} />
-          <Route path="/verify" element={<VerificationPage />} />
-          <Route path="/office" element={<ServiceCenterPage />} />
-          <Route path="/office/sessions/:id" element={<ServiceSessionPage />} />
-          <Route path="/service-center" element={<Navigate to="/office" replace />} />
-          <Route path="*" element={<Navigate to="/citizens" replace />} />
-        </Route>
-      </Routes>
-    </Suspense>
-  )
+  useEffect(() => {
+    document.title = location.pathname === '/'
+      ? 'Мост Пельгарии — Minecraft Java RP'
+      : location.pathname === '/login'
+        ? 'СОНАР — служебный вход'
+        : 'СОНАР — государственная система Пельгарии'
+  }, [location.pathname])
+
+  return <Suspense fallback={<div className="route-loading"><span /></div>}>
+    <Routes>
+      <Route path="/" element={<BridgePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route path="/discord-callback" element={<DiscordCallbackPage />} />
+      <Route
+        element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="citizens" element={<CitizensPage />} />
+        <Route path="citizens/:id" element={<CitizenDetailPage />} />
+        <Route path="passports" element={<PassportsPage />} />
+        <Route path="laws" element={<LawsPage />} />
+        <Route path="laws/:id" element={<LawDetailPage />} />
+        <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:id" element={<CaseDetailPage />} />
+        <Route path="punishments" element={<PunishmentsPage />} />
+        <Route path="taxes" element={<TaxesPage />} />
+        <Route path="treasury" element={<TreasuryPage />} />
+        <Route path="buildings" element={<BuildingsPage />} />
+        <Route path="buildings/:id" element={<BuildingDetailPage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="accounts" element={<AccountsPage />} />
+        <Route path="roles/*" element={<RolesPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="print-center" element={<Navigate to="/office?tab=print" replace />} />
+        <Route path="verify" element={<VerificationPage />} />
+        <Route path="office" element={<ServiceCenterPage />} />
+        <Route path="office/sessions/:id" element={<ServiceSessionPage />} />
+        <Route path="service-center" element={<Navigate to="/office" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
+  </Suspense>
 }

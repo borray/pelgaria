@@ -124,7 +124,7 @@ export function PunishmentsPage() {
   const handleIssue = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.citizen_id || !form.reason.trim()) {
-      setIssueError('Гражданин и причина обязательны')
+      setIssueError('Игрок и причина обязательны')
       return
     }
     setIssueLoading(true)
@@ -168,7 +168,7 @@ export function PunishmentsPage() {
     },
     {
       key: 'citizen',
-      header: 'Гражданин',
+      header: 'Игрок',
       render: (row) => <span style={{ fontWeight: 500, color: '#18211D' }}>{row.citizen?.nickname ?? '—'}</span>,
     },
     {
@@ -246,7 +246,7 @@ export function PunishmentsPage() {
       <PageHeader
         eyebrow="Правопорядок"
         title="Наказания"
-        description="Постановления, ограничения, штрафы и история применения мер к гражданам."
+        description="Постановления, ограничения, штрафы и история применения мер к игрокам."
         actions={canIssue ? (
           <Button variant="primary" onClick={openIssueModal}>
             <IconPlus size={16} />
@@ -256,7 +256,7 @@ export function PunishmentsPage() {
       />
 
       <RegistryToolbar summary={!loading ? `${punishments.length} записей` : 'Обновление'}>
-        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер, ШК или причина..." />
+        <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Игрок, номер, ШК или причина..." />
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '180px' }} />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '180px' }} />
       </RegistryToolbar>
@@ -291,9 +291,9 @@ export function PunishmentsPage() {
       >
         <form onSubmit={handleIssue} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Select
-            label="Гражданин *"
+            label="Игрок *"
             options={citizens.map((c) => ({ value: c.id, label: `${c.nickname} (${c.reg_number})` }))}
-            placeholder="— Выберите гражданина —"
+            placeholder="— Выберите игрока —"
             value={form.citizen_id}
             onChange={(e) => setForm({ ...form, citizen_id: e.target.value })}
             searchable
@@ -355,7 +355,7 @@ export function PunishmentsPage() {
         }
       >
         <div className="danger-confirm" style={{ marginBottom: '14px' }}>
-          Запись <strong>{deleteTarget?.number}</strong> о наказании гражданина <strong>{deleteTarget?.citizen?.nickname}</strong> будет уничтожена навсегда.
+          Запись <strong>{deleteTarget?.number}</strong> о наказании игрока <strong>{deleteTarget?.citizen?.nickname}</strong> будет уничтожена навсегда.
         </div>
         <Input
           label={`Введите номер «${deleteTarget?.number ?? ''}» для подтверждения`}

@@ -17,7 +17,7 @@ export function DiscordCallbackPage() {
       try {
         const user = JSON.parse(decodeURIComponent(userParam)) as User
         setTokens(accessToken, refreshToken, user)
-        navigate('/', { replace: true })
+        navigate('/dashboard', { replace: true })
         return
       } catch {
         // Redirect below.

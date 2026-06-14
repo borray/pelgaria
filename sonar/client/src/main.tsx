@@ -12,7 +12,7 @@ import './styles/renovation-v5.css'
 import './styles/renovation-v6.css'
 import './styles/renovation-v7.css'
 import './styles/renovation-v8.css'
-import './styles/landing.css'
+import './styles/bridge.css'
 import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
