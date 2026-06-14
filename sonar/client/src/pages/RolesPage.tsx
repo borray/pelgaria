@@ -9,6 +9,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const ALL_PERMISSIONS: { group: string; items: { key: Permission; label: string }[] }[] = [
   {
@@ -137,29 +138,30 @@ function RolesList() {
   if (loading) return <div className="load-state"><Spinner /><span>Загрузка…</span></div>
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Роли</h1>
-        {canManage && (
+    <div className="roles-page">
+      <PageHeader
+        eyebrow="Управление доступом"
+        title="Роли и полномочия"
+        description="Наборы разрешений, определяющие доступ сотрудников к разделам и операциям СОНАР."
+        actions={canManage ? (
           <Button variant="primary" onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateForm({ name: '', color: '#6B7280' }) }}>
             <IconPlus size={16} />Создать роль
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {roles.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
           <EmptyState title="Роли не найдены" description="Создайте первую роль" action={canManage ? <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}><IconPlus size={14} />Создать</Button> : undefined} />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+        <div className="role-grid">
           {roles.map((role) => (
             <div
+              className="role-card"
               key={role.id}
               onClick={() => navigate(`/roles/${role.id}`)}
-              style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px', padding: '16px 20px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.1s', borderLeft: `4px solid ${role.color}` }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = role.color }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#CDD5D1'; (e.currentTarget as HTMLDivElement).style.borderLeftColor = role.color }}
+              style={{ '--role-color': role.color } as React.CSSProperties}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: role.color, flexShrink: 0 }} />

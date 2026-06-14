@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader, RegistryToolbar } from '../components/ui/PageHeader'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -152,23 +153,23 @@ export function CasesPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
-          Судебные дела
-        </h1>
-        {canCreate && (
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="Правопорядок"
+        title="Судебные дела"
+        description="Производства, участники, основания и история рассмотрения дел в едином реестре."
+        actions={canCreate ? (
           <Button variant="primary" onClick={openCreateModal}>
             <IconPlus size={16} />
             Возбудить дело
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <RegistryToolbar summary={!loading ? `${cases.length} дел` : 'Обновление'}>
         <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Дело, обвиняемый, номер или ШК..." />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '200px' }} />
-      </div>
+      </RegistryToolbar>
 
       {!loading && cases.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -188,9 +189,7 @@ export function CasesPage() {
         />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего: ${cases.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Судебный реестр</span><span>Показано: {cases.length}</span></div>}
 
       <Modal
         open={showCreateModal}

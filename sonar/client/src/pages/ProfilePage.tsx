@@ -18,6 +18,7 @@ import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 import { formatDateTime } from '../utils/formatters'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function ProfilePage() {
   const { user, setUser, setTokens } = useAuthStore()
@@ -130,13 +131,11 @@ export function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <div className="page-heading">
-        <div>
-          <span className="page-kicker">СОНАР · Учётная запись</span>
-          <h1>Профиль</h1>
-          <p>Управление учётной записью, привязкой Discord и безопасностью.</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Учётная запись"
+        title="Профиль сотрудника"
+        description="Персональные данные, оформление, привязка Discord и параметры безопасности."
+      />
 
       {/* Шапка профиля */}
       <div className="profile-hero">

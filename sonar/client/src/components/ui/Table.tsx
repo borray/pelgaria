@@ -37,7 +37,7 @@ export function Table<T>({ columns, data, onRowClick, keyExtractor, loading }: T
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((column) => (
-                <td key={column.key}>
+                <td key={column.key} data-label={column.header}>
                   {column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? '')}
                 </td>
               ))}

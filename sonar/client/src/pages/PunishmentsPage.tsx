@@ -16,6 +16,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdfPost } from '../utils/pdf'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader, RegistryToolbar } from '../components/ui/PageHeader'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -241,24 +242,24 @@ export function PunishmentsPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
-          Наказания
-        </h1>
-        {canIssue && (
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="Правопорядок"
+        title="Наказания"
+        description="Постановления, ограничения, штрафы и история применения мер к гражданам."
+        actions={canIssue ? (
           <Button variant="primary" onClick={openIssueModal}>
             <IconPlus size={16} />
             Выдать наказание
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <RegistryToolbar summary={!loading ? `${punishments.length} записей` : 'Обновление'}>
         <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер, ШК или причина..." />
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '180px' }} />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '180px' }} />
-      </div>
+      </RegistryToolbar>
 
       {!loading && punishments.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -273,9 +274,7 @@ export function PunishmentsPage() {
         />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего: ${punishments.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Реестр мер</span><span>Показано: {punishments.length}</span></div>}
 
       <Modal
         open={showIssueModal}

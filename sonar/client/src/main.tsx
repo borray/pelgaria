@@ -5,6 +5,7 @@ import App from './App'
 import './styles/animations.css'
 import './styles/design-system.css'
 import './styles/renovation.css'
+import './styles/renovation-pages.css'
 import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

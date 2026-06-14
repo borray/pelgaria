@@ -13,6 +13,7 @@ import { formatDate, formatAmount } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { useAuthStore } from '../store/auth'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const CHARGE_STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -337,10 +338,12 @@ export function TaxesPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Налоги</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
+    <div className="taxes-page">
+      <PageHeader
+        eyebrow="Государственные финансы"
+        title="Налоги"
+        description="Налоговые периоды, начисления, задолженности и подтверждение поступлений."
+        actions={<>
           {tab === 'periods' && canCharge && (
             <Button variant="primary" size="sm" onClick={() => { setShowCreatePeriodModal(true); setPeriodError(null) }}>
               <IconPlus size={14} />Создать период
@@ -356,8 +359,8 @@ export function TaxesPage() {
               </Button>
             </>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="page-tabs" role="tablist">
         {(['periods', 'charges'] as const).map((t) => (

@@ -15,8 +15,11 @@ import {
   IconLayoutDashboard,
   IconShieldCheck,
   IconInbox,
+  IconChevronLeft,
+  IconChevronRight,
 } from '@tabler/icons-react'
 import { useAuthStore } from '../../store/auth'
+import { useLayoutStore } from '../../store/layout'
 
 interface NavItem {
   to: string
@@ -33,6 +36,8 @@ interface NavSection {
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { hasPermission } = useAuthStore()
+  const collapsed = useLayoutStore((state) => state.sidebarCollapsed)
+  const toggleSidebar = useLayoutStore((state) => state.toggleSidebar)
 
   const sections: NavSection[] = [
     {
@@ -166,13 +171,22 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         onClick={onClose}
         aria-label="Закрыть меню"
       />
-      <nav className={`app-sidebar${open ? ' is-open' : ''}`} aria-label="Основная навигация">
+      <nav className={`app-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label="Основная навигация">
       <div className="sidebar-caption">
         <span className="sidebar-caption-mark">СП</span>
-        <div>
+        <div className="sidebar-caption-copy">
           <strong>Служебный портал</strong>
           <span>Персональный доступ</span>
         </div>
+        <button
+          type="button"
+          className="sidebar-collapse-button"
+          onClick={toggleSidebar}
+          title={collapsed ? 'Развернуть навигацию' : 'Свернуть навигацию'}
+          aria-label={collapsed ? 'Развернуть навигацию' : 'Свернуть навигацию'}
+        >
+          {collapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+        </button>
       </div>
       {sections.map((section) => {
         const visibleItems = section.items.filter(
@@ -192,9 +206,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                 end={item.to === '/'}
                 onClick={onClose}
                 className={({ isActive }) => `sidebar-link${isActive ? ' is-active' : ''}`}
+                title={collapsed ? item.label : undefined}
               >
                 <span className="sidebar-link-icon">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="sidebar-link-label">{item.label}</span>
                 <span className="sidebar-link-indicator" />
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
@@ -218,7 +233,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       })}
       <div className="sidebar-disclaimer">
         <i />
-        <div><strong>СОНАР online</strong><span>Защищённый игровой контур</span></div>
+        <div className="sidebar-disclaimer-copy"><strong>СОНАР online</strong><span>Защищённый игровой контур</span></div>
       </div>
       </nav>
     </>

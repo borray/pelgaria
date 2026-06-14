@@ -1,11 +1,21 @@
-import { IconLogout, IconMenu2, IconUserCircle, IconCircleCheck } from '@tabler/icons-react'
+import {
+  IconCircleCheck,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+  IconLogout,
+  IconMenu2,
+  IconUserCircle,
+} from '@tabler/icons-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { SonarBrand } from '../brand/SonarBrand'
+import { useLayoutStore } from '../../store/layout'
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const collapsed = useLayoutStore((state) => state.sidebarCollapsed)
+  const toggleSidebar = useLayoutStore((state) => state.toggleSidebar)
   const handleLogout = () => {
     logout()
     navigate('/login')
@@ -20,6 +30,15 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
           <SonarBrand size="sm" />
         </Link>
+        <button
+          type="button"
+          className="topbar-sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label={collapsed ? 'Развернуть боковую панель' : 'Свернуть боковую панель'}
+          title={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
+        >
+          {collapsed ? <IconLayoutSidebarLeftExpand size={18} /> : <IconLayoutSidebarLeftCollapse size={18} />}
+        </button>
         <span className="topbar-divider" />
         <div className="topbar-context">
           <strong>Рабочая среда</strong>

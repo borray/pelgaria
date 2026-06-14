@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { printPdf } from '../utils/pdf'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader, RegistryToolbar } from '../components/ui/PageHeader'
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Все типы' },
@@ -195,12 +196,12 @@ export function BuildingsPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
-          РЕЛИКТ — Реестр объектов
-        </h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="РЕЛИКТ"
+        title="Реестр объектов"
+        description="Государственный учёт построек, владельцев, координат и технических паспортов."
+        actions={<>
           <Button variant="secondary" loading={pdfLoading} onClick={handleDownloadRegistryPdf}>
             <IconPrinter size={16} />
             Сформировать реестр
@@ -211,22 +212,22 @@ export function BuildingsPage() {
               Зарегистрировать объект
             </Button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '320px' }}>
-          <IconSearch size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+      <RegistryToolbar summary={!loading ? `${buildings.length} объектов` : 'Обновление'}>
+        <div className="registry-search-shell">
+          <IconSearch size={16} />
           <input
+            className="registry-search"
             placeholder="Поиск..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', height: '36px', padding: '0 10px 0 34px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', background: '#FFFFFF', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
         <Select options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: '160px' }} />
         <Select options={STATUS_OPTIONS} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '180px' }} />
-      </div>
+      </RegistryToolbar>
 
       {!loading && buildings.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -242,9 +243,7 @@ export function BuildingsPage() {
         />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего: ${buildings.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Реестр РЕЛИКТ</span><span>Показано: {buildings.length}</span></div>}
 
       <Modal
         open={showCreateModal}

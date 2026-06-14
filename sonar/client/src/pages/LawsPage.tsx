@@ -21,6 +21,7 @@ import { Modal } from '../components/ui/Modal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const LAW_TYPES = [
   { value: 'LAW', label: 'Закон' },
@@ -185,14 +186,12 @@ export function LawsPage() {
 
   return (
     <div className="laws-hub">
-      <div className="page-heading">
-        <div>
-          <span className="page-kicker">СОНАР · Правовая система</span>
-          <h1>Законодательство</h1>
-          <p>Конституция, нормативные акты, редакции, изменения и архив правовых документов.</p>
-        </div>
-        {canCreate && <Button variant="primary" onClick={() => openCreate()}><IconPlus size={16} /> Новый акт</Button>}
-      </div>
+      <PageHeader
+        eyebrow="Правовая система"
+        title="Законодательство"
+        description="Конституция, нормативные акты, редакции, изменения и архив правовых документов."
+        actions={canCreate ? <Button variant="primary" onClick={() => openCreate()}><IconPlus size={16} /> Новый акт</Button> : undefined}
+      />
 
       <section className={`constitution-card${overview?.constitution ? '' : ' is-empty'}`}>
         <div className="constitution-symbol"><IconBook2 size={28} /></div>

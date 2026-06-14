@@ -12,6 +12,7 @@ import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { useAuthStore } from '../store/auth'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function TreasuryPage() {
   const canEdit = usePermission('treasury.edit')
@@ -188,10 +189,12 @@ export function TreasuryPage() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Казна</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
+    <div className="treasury-page">
+      <PageHeader
+        eyebrow="Государственные финансы"
+        title="Казна"
+        description="Баланс, движение средств и формирование финансовой отчётности Пельгарии."
+        actions={<>
           <Button variant="secondary" onClick={() => { setPdfFrom(''); setPdfTo(''); setShowPdfModal(true) }}>
             <IconPrinter size={16} />
             Сформировать отчёт
@@ -208,25 +211,23 @@ export function TreasuryPage() {
               </Button>
             </>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
-      <div style={{ background: '#18211D', borderRadius: '8px', padding: '32px 36px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="treasury-balance">
         <div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
+          <div className="treasury-balance-label">
             Текущий баланс
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '40px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em' }}>
-            {(treasury?.balance ?? 0).toLocaleString('ru-RU')} <span style={{ fontSize: '20px', opacity: 0.6 }}>у.е.</span>
+          <div className="treasury-balance-value">
+            {(treasury?.balance ?? 0).toLocaleString('ru-RU')} <span>у.е.</span>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+        <div className="treasury-balance-side">
+          <div>
             Транзакций
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '24px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-            {total}
-          </div>
+          <strong>{total}</strong>
         </div>
       </div>
 

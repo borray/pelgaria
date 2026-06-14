@@ -12,6 +12,7 @@ import {
 import apiClient from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
+import { PageHeader } from '../components/ui/PageHeader'
 import { formatDate } from '../utils/formatters'
 
 interface VerifyResult {
@@ -57,13 +58,11 @@ export function VerificationPage() {
 
   return (
     <div className="verify-shell">
-      <div className="page-heading">
-        <div>
-          <span className="page-kicker">СОНАР · Контроль подлинности</span>
-          <h1>Проверка документа</h1>
-          <p>Введите номер или контрольный ШК с бумаги, чтобы убедиться, что документ зарегистрирован в системе.</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Контроль подлинности"
+        title="Проверка документа"
+        description="Введите номер или контрольный ШК с бумаги, чтобы убедиться, что документ зарегистрирован в системе."
+      />
 
       <div className="verify-search">
         <input

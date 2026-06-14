@@ -14,6 +14,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { useToast } from '../components/ui/Toast'
 import { formatDate } from '../utils/formatters'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader, RegistryToolbar } from '../components/ui/PageHeader'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -147,27 +148,12 @@ export function CitizensPage() {
   ]
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '20px',
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: '20px',
-            fontWeight: 600,
-            color: '#18211D',
-            fontFamily: 'Inter, sans-serif',
-          }}
-        >
-          Реестр граждан
-        </h1>
-        {canCreate && (
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="Государственный реестр"
+        title="Граждане"
+        description="Единая база жителей Пельгарии, их статусов, ролей и связанных государственных записей."
+        actions={canCreate ? (
           <Button
             variant="primary"
             onClick={() => setShowCreateModal(true)}
@@ -176,45 +162,17 @@ export function CitizensPage() {
             <IconPlus size={16} />
             Добавить гражданина
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '12px',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '320px' }}>
-          <IconSearch
-            size={16}
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#9CA3AF',
-            }}
-          />
+      <RegistryToolbar summary={!loading ? `${citizens.length} записей` : 'Обновление'}>
+        <div className="registry-search-shell">
+          <IconSearch size={16} />
           <input
+            className="registry-search"
             placeholder="Поиск по нику, Discord, номеру..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              height: '36px',
-              padding: '0 10px 0 34px',
-              border: '1px solid #CDD5D1',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontFamily: 'Inter, sans-serif',
-              color: '#1F2937',
-              background: '#FFFFFF',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
           />
         </div>
         <Select
@@ -223,7 +181,7 @@ export function CitizensPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{ width: '180px' }}
         />
-      </div>
+      </RegistryToolbar>
 
       {!loading && citizens.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -254,9 +212,7 @@ export function CitizensPage() {
         />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего записей: ${citizens.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Реестр граждан</span><span>Показано: {citizens.length}</span></div>}
 
       <Modal
         open={showCreateModal}

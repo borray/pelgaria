@@ -14,6 +14,7 @@ import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { EmptyState } from '../components/ui/EmptyState'
 import { formatDateTime } from '../utils/formatters'
+import { PageHeader } from '../components/ui/PageHeader'
 
 interface CreateForm {
   login: string
@@ -250,15 +251,17 @@ export function AccountsPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>Аккаунты</h1>
-        {canManage && (
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="Администрирование"
+        title="Учётные записи"
+        description="Доступ сотрудников, роли, связь с гражданами и контроль состояния аккаунтов."
+        actions={canManage ? (
           <Button variant="primary" onClick={() => { setShowCreateModal(true); setCreateError(null); setCreateForm({ login: '', password: '', role_id: roles[0]?.id ?? '', citizen_id: '' }) }}>
             <IconPlus size={16} />Создать аккаунт
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {!loading && users.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -268,9 +271,7 @@ export function AccountsPage() {
         <Table columns={columns} data={users} keyExtractor={(row) => row.id} loading={loading} />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего: ${users.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Системные аккаунты</span><span>Всего: {users.length}</span></div>}
 
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Создать аккаунт"
         footer={<><Button variant="secondary" onClick={() => setShowCreateModal(false)}>Отмена</Button><Button variant="primary" loading={createLoading} onClick={handleCreate}>Создать</Button></>}

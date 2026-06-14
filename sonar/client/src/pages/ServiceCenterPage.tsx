@@ -36,6 +36,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
+import { PageHeader } from '../components/ui/PageHeader'
 
 type CenterTab = 'sessions' | 'registry' | 'station'
 
@@ -218,14 +219,12 @@ export function ServiceCenterPage() {
 
   return (
     <div className="service-center-page">
-      <div className="page-heading">
-        <div>
-          <span className="page-kicker">СОНАР · Единое рабочее место</span>
-          <h1>Центр обслуживания</h1>
-          <p>Здесь начинается обслуживание. После запуска система открывает отдельное рабочее пространство сессии.</p>
-        </div>
-        <Button variant="primary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={16} />Начать сессию</Button>
-      </div>
+      <PageHeader
+        eyebrow="Единое рабочее место"
+        title="Центр обслуживания"
+        description="Запускайте полноценные сессии и ведите обращения, документы, сканы и печатные формы в одном рабочем пространстве."
+        actions={<Button variant="primary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={16} />Начать сессию</Button>}
+      />
 
       <div className={`printer-readiness ${readiness.ready ? 'is-ready' : 'is-warning'}`}>
         <span>{readiness.ready ? <IconCheck size={18} /> : <IconAlertTriangle size={18} />}</span>

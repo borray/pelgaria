@@ -15,6 +15,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { formatDate } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
 import { RegistryMark } from '../components/ui/RegistryMark'
+import { PageHeader, RegistryToolbar } from '../components/ui/PageHeader'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -256,20 +257,20 @@ export function PassportsPage() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#18211D', letterSpacing: '-0.02em', fontFamily: 'Inter, sans-serif' }}>
-          Паспорта
-        </h1>
-        {canIssue && (
+    <div className="registry-page">
+      <PageHeader
+        eyebrow="Документы граждан"
+        title="Паспорта"
+        description="Выдача, проверка статуса и формирование печатных экземпляров удостоверений личности."
+        actions={canIssue ? (
           <Button variant="primary" onClick={openIssueModal}>
             <IconPlus size={16} />
             Выдать паспорт
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <RegistryToolbar summary={!loading ? `${passports.length} документов` : 'Обновление'}>
         <input className="registry-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гражданин, номер или ШК..." />
         <Select
           options={STATUS_OPTIONS}
@@ -277,7 +278,7 @@ export function PassportsPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{ width: '200px' }}
         />
-      </div>
+      </RegistryToolbar>
 
       {!loading && passports.length === 0 ? (
         <div style={{ background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px' }}>
@@ -303,9 +304,7 @@ export function PassportsPage() {
         />
       )}
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
-        {!loading && `Всего: ${passports.length}`}
-      </div>
+      {!loading && <div className="registry-footer"><span>Паспортный реестр</span><span>Показано: {passports.length}</span></div>}
 
       <Modal
         open={showIssueModal}
