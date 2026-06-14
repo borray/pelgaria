@@ -1,5 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { IconSend, IconPaperclip, IconPlus } from '@tabler/icons-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  IconCheck,
+  IconFile,
+  IconMessageCircle,
+  IconPaperclip,
+  IconPlus,
+  IconSearch,
+  IconSend,
+  IconShieldLock,
+  IconUsers,
+  IconWifi,
+} from '@tabler/icons-react'
 import { io, Socket } from 'socket.io-client'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/auth'
@@ -11,6 +22,7 @@ import { Modal } from '../components/ui/Modal'
 
 let socket: Socket | null = null
 type ChatUser = Pick<User, 'id' | 'login' | 'discord_username' | 'discord_avatar'>
+type ConversationParticipant = NonNullable<ChatConversation['participants']>[number] & { user?: ChatUser }
 
 function getSocket(token: string): Socket {
   if (!socket || !socket.connected) {
@@ -22,53 +34,59 @@ function getSocket(token: string): Socket {
   return socket
 }
 
+function initials(value: string): string {
+  return value.trim().slice(0, 2).toUpperCase() || 'СН'
+}
+
 export function ChatPage() {
   const { user, accessToken } = useAuthStore()
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [body, setBody] = useState('')
+  const [query, setQuery] = useState('')
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [users, setUsers] = useState<ChatUser[]>([])
   const [showNewConvModal, setShowNewConvModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const socketRef = useRef<Socket | null>(null)
+  const activeConvIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    activeConvIdRef.current = activeConvId
+  }, [activeConvId])
 
   const fetchConversations = useCallback(async () => {
     try {
       const res = await apiClient.get<ChatConversation[]>('/chat/conversations')
       setConversations(res.data)
-    } catch { setConversations([]) }
+    } catch {
+      setConversations([])
+    }
   }, [])
 
   useEffect(() => {
     fetchConversations()
-    apiClient.get<ChatUser[]>('/chat/users').then((r) => setUsers(r.data)).catch(() => {})
+    apiClient.get<ChatUser[]>('/chat/users').then((response) => setUsers(response.data)).catch(() => {})
 
     if (user && accessToken) {
-      const sock = getSocket(accessToken)
-      socketRef.current = sock
+      const currentSocket = getSocket(accessToken)
+      socketRef.current = currentSocket
 
-      sock.on('new_message', (message: ChatMessage) => {
-        setMessages((prev) => {
-          if (prev.find((m) => m.id === message.id)) return prev
-          return [...prev, message]
-        })
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === message.conversation_id
-              ? { ...c, messages: [message] }
-              : c
-          )
-        )
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-      })
-
-      sock.on('messages_read', () => {
-        // refresh read state if needed
+      currentSocket.on('new_message', (message: ChatMessage) => {
+        if (message.conversation_id === activeConvIdRef.current) {
+          setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message])
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+        }
+        setConversations((current) => current.map((conversation) =>
+          conversation.id === message.conversation_id
+            ? { ...conversation, messages: [message] }
+            : conversation
+        ))
       })
     }
 
@@ -78,13 +96,46 @@ export function ChatPage() {
     }
   }, [user, accessToken, fetchConversations])
 
-  const selectConversation = async (convId: string) => {
-    setActiveConvId(convId)
+  const getConvName = useCallback((conversation: ChatConversation): string => {
+    if (conversation.type === 'GENERAL') return 'Общий служебный канал'
+    const other = (conversation.participants as ConversationParticipant[] | undefined)
+      ?.find((participant) => participant.user_id !== user?.id)
+    return other?.user?.login ?? 'Личная беседа'
+  }, [user?.id])
+
+  const getLastMessage = (conversation: ChatConversation): string => {
+    const last = conversation.messages?.[0]
+    if (!last) return 'Сообщений пока нет'
+    const sender = last.sender?.login ?? 'Сотрудник'
+    const content = last.body?.trim() || 'Прикреплён файл'
+    return `${sender}: ${content.slice(0, 52)}${content.length > 52 ? '…' : ''}`
+  }
+
+  const isUnread = (conversation: ChatConversation): boolean => {
+    const last = conversation.messages?.[0]
+    if (!last || !user) return false
+    return !last.read_by.includes(user.id) && last.sender_id !== user.id
+  }
+
+  const filteredConversations = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return conversations
+    return conversations.filter((conversation) =>
+      getConvName(conversation).toLowerCase().includes(normalized)
+      || getLastMessage(conversation).toLowerCase().includes(normalized)
+    )
+  }, [conversations, getConvName, query])
+
+  const activeConversation = conversations.find((conversation) => conversation.id === activeConvId)
+  const activeParticipants = (activeConversation?.participants as ConversationParticipant[] | undefined) ?? []
+
+  const selectConversation = async (conversationId: string) => {
+    setActiveConvId(conversationId)
     setMessagesLoading(true)
     try {
-      const res = await apiClient.get<ChatMessage[]>(`/chat/conversations/${convId}/messages`)
-      setMessages(res.data)
-      socketRef.current?.emit('join_conversation', convId)
+      const response = await apiClient.get<ChatMessage[]>(`/chat/conversations/${conversationId}/messages`)
+      setMessages(response.data)
+      socketRef.current?.emit('join_conversation', conversationId)
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch {
       setMessages([])
@@ -93,36 +144,42 @@ export function ChatPage() {
     }
   }
 
-  const handleSend = async (e?: React.FormEvent) => {
-    e?.preventDefault()
+  const handleSend = async (event?: React.FormEvent) => {
+    event?.preventDefault()
     if (!body.trim() || !activeConvId || sending) return
-    const msgBody = body.trim()
+    const messageBody = body.trim()
     setBody('')
     setSending(true)
     try {
-      await apiClient.post(`/chat/conversations/${activeConvId}/messages`, { body: msgBody })
-    } catch { setBody(msgBody) }
-    finally { setSending(false) }
+      await apiClient.post(`/chat/conversations/${activeConvId}/messages`, { body: messageBody })
+    } catch {
+      setBody(messageBody)
+    } finally {
+      setSending(false)
+    }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
       handleSend()
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
     if (!files || !activeConvId) return
     const formData = new FormData()
-    Array.from(files).forEach((f) => formData.append('files', f))
+    Array.from(files).forEach((file) => formData.append('files', file))
+    setUploading(true)
     try {
       await apiClient.post(`/chat/conversations/${activeConvId}/attachments`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-    } catch { alert('Ошибка загрузки файла') }
-    finally {
+    } catch {
+      window.alert('Не удалось загрузить вложение')
+    } finally {
+      setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
@@ -130,182 +187,179 @@ export function ChatPage() {
   const handleCreateConversation = async (type: 'GENERAL' | 'DIRECT') => {
     try {
       const payload = type === 'DIRECT' ? { type, user_id: selectedUserId } : { type }
-      const res = await apiClient.post<ChatConversation>('/chat/conversations', payload)
+      const response = await apiClient.post<ChatConversation>('/chat/conversations', payload)
       setShowNewConvModal(false)
       setSelectedUserId('')
-      fetchConversations()
-      selectConversation(res.data.id)
-    } catch { alert('Ошибка создания беседы') }
-  }
-
-  const activeConv = conversations.find((c) => c.id === activeConvId)
-
-  const getConvName = (conv: ChatConversation): string => {
-    if (conv.type === 'GENERAL') return 'Общий чат'
-    const other = conv.participants?.find((p) => p.user_id !== user?.id)
-    if (other) {
-      const otherUser = (other as typeof other & { user?: { login: string } }).user
-      if (otherUser) return otherUser.login
+      await fetchConversations()
+      await selectConversation(response.data.id)
+    } catch {
+      window.alert('Не удалось создать беседу')
     }
-    return 'Личная беседа'
-  }
-
-  const getLastMsg = (conv: ChatConversation): string => {
-    const last = conv.messages?.[0]
-    if (!last) return 'Нет сообщений'
-    const s = (last.sender as { login: string } | undefined)?.login ?? '?'
-    return `${s}: ${last.body?.slice(0, 40) ?? '[файл]'}${(last.body?.length ?? 0) > 40 ? '…' : ''}`
-  }
-
-  const isUnread = (conv: ChatConversation): boolean => {
-    const last = conv.messages?.[0]
-    if (!last || !user) return false
-    const readBy = last.read_by as string[]
-    return !readBy.includes(user.id) && last.sender_id !== user.id
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 100px)', background: '#FFFFFF', border: '1px solid #DFE4E1', borderRadius: '12px', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
-      {/* Left panel */}
-      <div style={{ width: '260px', borderRight: '0.5px solid #CDD5D1', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #CDD5D1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#18211D' }}>Чат</span>
-          <button
-            onClick={() => setShowNewConvModal(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center', padding: '2px' }}
-            title="Новая беседа"
-          >
-            <IconPlus size={16} />
-          </button>
+    <div className="communications-page">
+      <header className="communications-heading">
+        <div>
+          <span>Защищённый контур</span>
+          <h1>Служебная связь</h1>
+          <p>Сообщения, рабочие файлы и быстрые диалоги сотрудников в одном пространстве.</p>
         </div>
-        <div style={{ overflowY: 'auto', flex: 1 }}>
-          {conversations.length === 0 && (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '13px' }}>Нет бесед</div>
-          )}
-          {conversations.map((conv) => {
-            const unread = isUnread(conv)
-            const isActive = conv.id === activeConvId
-            return (
-              <div
-                key={conv.id}
-                onClick={() => selectConversation(conv.id)}
-                style={{
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  background: isActive ? '#EFF6FF' : 'transparent',
-                  borderBottom: '0.5px solid #F3F4F6',
-                  transition: 'background 0.1s',
-                }}
-                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = '#F8F9FB' }}
-                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
-              >
-                <div style={{ fontSize: '13px', fontWeight: unread || isActive ? 600 : 400, color: '#18211D', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {getConvName(conv)}
-                </div>
-                <div style={{ fontSize: '12px', color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {getLastMsg(conv)}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+        <div className="communications-status"><IconWifi size={16} /><span><strong>СОНАР online</strong><small>Соединение защищено</small></span></div>
+      </header>
 
-      {/* Right panel */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {!activeConvId ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '14px' }}>
-            Выберите беседу
+      <section className="communications-workspace">
+        <aside className="communications-inbox">
+          <header>
+            <div><span>Входящие</span><strong>{conversations.length} бесед</strong></div>
+            <button type="button" onClick={() => setShowNewConvModal(true)} aria-label="Новая беседа"><IconPlus size={18} /></button>
+          </header>
+          <label className="communications-search">
+            <IconSearch size={16} />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти беседу" />
+          </label>
+          <div className="communications-list">
+            {filteredConversations.length === 0 && (
+              <div className="communications-list-empty"><IconMessageCircle size={24} /><strong>Бесед не найдено</strong><span>Создайте новую или измените запрос.</span></div>
+            )}
+            {filteredConversations.map((conversation) => {
+              const name = getConvName(conversation)
+              const unread = isUnread(conversation)
+              return (
+                <button
+                  type="button"
+                  key={conversation.id}
+                  className={`communications-thread${conversation.id === activeConvId ? ' is-active' : ''}`}
+                  onClick={() => selectConversation(conversation.id)}
+                >
+                  <span className={conversation.type === 'GENERAL' ? 'is-channel' : ''}>
+                    {conversation.type === 'GENERAL' ? <IconUsers size={18} /> : initials(name)}
+                  </span>
+                  <div><strong>{name}</strong><small>{getLastMessage(conversation)}</small></div>
+                  {unread && <i />}
+                </button>
+              )
+            })}
           </div>
-        ) : (
-          <>
-            <div style={{ padding: '12px 20px', borderBottom: '0.5px solid #CDD5D1', background: '#F8F9FB' }}>
-              <span style={{ fontSize: '15px', fontWeight: 600, color: '#18211D' }}>
-                {activeConv ? getConvName(activeConv) : ''}
-              </span>
-            </div>
+        </aside>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {messagesLoading && <div style={{ textAlign: 'center', color: '#9CA3AF', fontSize: '13px' }}>Загрузка...</div>}
-              {messages.map((msg) => {
-                const isOwn = msg.sender_id === user?.id
-                return (
-                  <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '3px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: isOwn ? '#14715A' : '#374151' }}>
-                        {msg.sender?.login ?? '?'}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{formatDateTime(msg.created_at)}</span>
-                    </div>
-                    {msg.body && (
-                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: '8px', background: isOwn ? '#14715A' : '#F3F4F6', color: isOwn ? '#FFFFFF' : '#1F2937', fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {msg.body}
-                      </div>
-                    )}
-                    {msg.attachments?.map((att) => (
-                      <div key={att.id} style={{ marginTop: '4px' }}>
-                        {att.mime_type.startsWith('image/') ? (
-                          <img src={att.url} alt={att.original_name} style={{ maxWidth: '240px', maxHeight: '180px', borderRadius: '4px', border: '0.5px solid #CDD5D1', cursor: 'pointer' }} onClick={() => window.open(att.url, '_blank')} />
-                        ) : (
-                          <a href={att.url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: '#F3F4F6', borderRadius: '4px', fontSize: '13px', color: '#14715A', textDecoration: 'none', border: '0.5px solid #CDD5D1' }}>
-                            📎 {att.original_name}
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-              <div ref={bottomRef} />
+        <main className="communications-conversation">
+          {!activeConversation ? (
+            <div className="communications-welcome">
+              <span><IconMessageCircle size={31} /></span>
+              <small>Служебная связь СОНАР</small>
+              <h2>Выберите рабочую беседу</h2>
+              <p>Здесь появится история сообщений, вложения и сведения об участниках защищённого канала.</p>
+              <Button variant="primary" onClick={() => setShowNewConvModal(true)}><IconPlus size={16} />Новая беседа</Button>
             </div>
+          ) : (
+            <>
+              <header className="communications-conversation-head">
+                <span className="communications-avatar">{activeConversation.type === 'GENERAL' ? <IconUsers size={20} /> : initials(getConvName(activeConversation))}</span>
+                <div><strong>{getConvName(activeConversation)}</strong><small><i /> Защищённая служебная беседа</small></div>
+                <span className="communications-encryption"><IconShieldLock size={15} /> Внутренний контур</span>
+              </header>
 
-            <div style={{ borderTop: '0.5px solid #CDD5D1', padding: '12px 16px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{ background: 'none', border: '1px solid #CDD5D1', borderRadius: '4px', cursor: 'pointer', color: '#6B7280', padding: '6px', display: 'flex', alignItems: 'center', flexShrink: 0, height: '36px', width: '36px', justifyContent: 'center' }}
-                title="Прикрепить файл"
-              >
-                <IconPaperclip size={16} />
-              </button>
-              <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={handleFileUpload} />
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Сообщение... (Enter — отправить, Shift+Enter — новая строка)"
-                rows={1}
-                style={{ flex: 1, resize: 'none', padding: '8px 10px', border: '1px solid #CDD5D1', borderRadius: '4px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#1F2937', outline: 'none', maxHeight: '120px', overflow: 'auto' }}
-                onInput={(e) => {
-                  const ta = e.currentTarget
-                  ta.style.height = 'auto'
-                  ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`
-                }}
-              />
-              <Button variant="primary" size="sm" onClick={() => handleSend()} loading={sending} disabled={!body.trim()} style={{ height: '36px', flexShrink: 0 }}>
-                <IconSend size={14} />
-              </Button>
+              <div className="communications-messages">
+                {messagesLoading && <div className="communications-loading"><i /><span>Загружаем историю</span></div>}
+                {!messagesLoading && messages.length === 0 && (
+                  <div className="communications-day-zero"><span>Беседа создана</span><p>Отправьте первое служебное сообщение.</p></div>
+                )}
+                {messages.map((message) => {
+                  const isOwn = message.sender_id === user?.id
+                  return (
+                    <article key={message.id} className={`communications-message${isOwn ? ' is-own' : ''}`}>
+                      {!isOwn && <span className="communications-message-avatar">{initials(message.sender?.login ?? '?')}</span>}
+                      <div>
+                        <header><strong>{isOwn ? 'Вы' : message.sender?.login ?? 'Сотрудник'}</strong><time>{formatDateTime(message.created_at)}</time></header>
+                        {message.body && <p>{message.body}</p>}
+                        {message.attachments?.map((attachment) => (
+                          attachment.mime_type.startsWith('image/') ? (
+                            <button className="communications-image" type="button" key={attachment.id} onClick={() => window.open(attachment.url, '_blank')}>
+                              <img src={attachment.url} alt={attachment.original_name} />
+                              <span>{attachment.original_name}</span>
+                            </button>
+                          ) : (
+                            <a className="communications-file" key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer">
+                              <IconFile size={18} /><span><strong>{attachment.original_name}</strong><small>Открыть вложение</small></span>
+                            </a>
+                          )
+                        ))}
+                        {isOwn && <footer><IconCheck size={13} /> Доставлено</footer>}
+                      </div>
+                    </article>
+                  )
+                })}
+                <div ref={bottomRef} />
+              </div>
+
+              <form className="communications-composer" onSubmit={handleSend}>
+                <input ref={fileInputRef} type="file" multiple hidden onChange={handleFileUpload} />
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Прикрепить файл"><IconPaperclip size={19} /></button>
+                <label>
+                  <textarea
+                    value={body}
+                    onChange={(event) => setBody(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Напишите служебное сообщение"
+                    rows={1}
+                    onInput={(event) => {
+                      const textarea = event.currentTarget
+                      textarea.style.height = 'auto'
+                      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+                    }}
+                  />
+                  <small>Enter — отправить · Shift+Enter — новая строка</small>
+                </label>
+                <button className="communications-send" type="submit" disabled={!body.trim() || sending} aria-label="Отправить"><IconSend size={18} /></button>
+              </form>
+            </>
+          )}
+        </main>
+
+        {activeConversation && (
+          <aside className="communications-context">
+            <div className="communications-context-seal"><IconShieldLock size={24} /></div>
+            <span>Параметры канала</span>
+            <h3>{activeConversation.type === 'GENERAL' ? 'Общий доступ' : 'Личный диалог'}</h3>
+            <p>Переписка доступна только участникам этого служебного контура.</p>
+            <dl>
+              <div><dt>Шифрование</dt><dd><i /> Активно</dd></div>
+              <div><dt>Вложения</dt><dd>до 20 МБ</dd></div>
+              <div><dt>Участники</dt><dd>{activeParticipants.length}</dd></div>
+            </dl>
+            <div className="communications-participants">
+              <strong>Участники</strong>
+              {activeParticipants.slice(0, 6).map((participant) => (
+                <div key={participant.id}><span>{initials(participant.user?.login ?? '?')}</span><b>{participant.user?.login ?? 'Сотрудник'}</b></div>
+              ))}
             </div>
-          </>
+          </aside>
         )}
-      </div>
+      </section>
 
       <Modal
         open={showNewConvModal}
         onClose={() => setShowNewConvModal(false)}
         title="Новая служебная беседа"
-        description="Создайте общий канал или защищённый диалог с сотрудником."
-        width={520}
+        description="Откройте общий канал или личный защищённый диалог."
+        width={560}
         footer={<Button variant="secondary" onClick={() => setShowNewConvModal(false)}>Закрыть</Button>}
       >
-        <div className="form-section-stack">
-          <section className="form-section">
-            <div className="form-section-heading"><span>Канал</span><div><strong>Общая служебная связь</strong><small>Доступна участникам общего канала</small></div></div>
-            <Button variant="secondary" onClick={() => handleCreateConversation('GENERAL')}>Открыть общий чат</Button>
-          </section>
-          <section className="form-section">
-            <div className="form-section-heading"><span>Диалог</span><div><strong>Личная беседа</strong><small>Выберите одного получателя</small></div></div>
-            <Select options={users.filter((u) => u.id !== user?.id).map((u) => ({ value: u.id, label: u.login }))} placeholder="— Выберите пользователя —" value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} searchable />
-            <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')} style={{ marginTop: 12 }}>Начать беседу</Button>
+        <div className="communications-new-options">
+          <button type="button" onClick={() => handleCreateConversation('GENERAL')}>
+            <span><IconUsers size={21} /></span><div><strong>Общий служебный канал</strong><small>Единое пространство для сотрудников</small></div>
+          </button>
+          <section>
+            <div><span><IconShieldLock size={21} /></span><div><strong>Личный диалог</strong><small>Выберите одного получателя</small></div></div>
+            <Select
+              options={users.filter((item) => item.id !== user?.id).map((item) => ({ value: item.id, label: item.login }))}
+              placeholder="Выберите сотрудника"
+              value={selectedUserId}
+              onChange={(event) => setSelectedUserId(event.target.value)}
+              searchable
+            />
+            <Button variant="primary" disabled={!selectedUserId} onClick={() => handleCreateConversation('DIRECT')}>Начать диалог</Button>
           </section>
         </div>
       </Modal>

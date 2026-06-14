@@ -39,7 +39,7 @@
 .renovation-launcher-copy small { color: #789c92; font-size: 7px; letter-spacing: .08em; text-transform: uppercase; }
 .renovation-launcher-copy strong { margin-top: 4px; color: #eaf8f4; font-size: 9.5px; }
 .renovation-launcher-progress { width: 30px; height: 4px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
-.renovation-launcher-progress i { width: 68%; height: 100%; display: block; border-radius: inherit; background: #65d3b6; }
+.renovation-launcher-progress i { width: 76%; height: 100%; display: block; border-radius: inherit; background: #65d3b6; }
 .renovation-launcher > svg { color: #668b81; }
 @keyframes renovationPulse { from { opacity: 1; transform: scale(.4); } to { opacity: 0; transform: scale(3); } }
 
