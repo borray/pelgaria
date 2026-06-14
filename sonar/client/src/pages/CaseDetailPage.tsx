@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { IconArrowLeft, IconPrinter, IconTrash } from '@tabler/icons-react'
+import { IconArrowLeft, IconGavel, IconPrinter, IconScale, IconTrash, IconUser } from '@tabler/icons-react'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import apiClient from '../api/client'
 import { usePermission } from '../hooks/usePermission'
@@ -155,29 +155,16 @@ export function CaseDetailPage() {
   }
 
   return (
-    <div>
-      <button
-        onClick={() => navigate('/cases')}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontFamily: 'Inter, sans-serif', marginBottom: '20px', padding: '4px 0' }}
-      >
-        <IconArrowLeft size={16} /> Судебные дела
-      </button>
-
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, color: '#26342E' }}>{caseData.number}</span>
-            <Badge status={caseData.status} />
-            {caseData.outcome && <Badge status={caseData.outcome} />}
-          </div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#18211D', fontFamily: 'Inter, sans-serif' }}>
-            Дело против: {caseData.accused?.nickname ?? '—'}
-          </h1>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+    <div className="case-record-page">
+      <header className="record-commandbar">
+        <Button variant="secondary" size="sm" onClick={() => navigate('/cases')}>
+          <IconArrowLeft size={14} /> К реестру дел
+        </Button>
+        <div className="record-commandbar-context"><span>Судебное производство</span><i /></div>
+        <div className="record-commandbar-actions">
           {canManage && caseData.status === 'OPENED' && (
             <Button variant="secondary" size="sm" onClick={handleSetInProgress}>
-              В проц��ссе
+              Начать производство
             </Button>
           )}
           {canManage && (
@@ -202,65 +189,47 @@ export function CaseDetailPage() {
             ]} />
           )}
         </div>
+      </header>
+
+      <section className="case-identity">
+        <div className="case-identity-symbol"><IconGavel size={32} /></div>
+        <div className="case-identity-copy">
+          <span>Судебное дело · {caseData.number}</span>
+          <h1>Государство против {caseData.accused?.nickname ?? 'неустановленного лица'}</h1>
+          <div><Badge status={caseData.status} />{caseData.outcome && <Badge status={caseData.outcome} />}</div>
+        </div>
+        <div className="case-identity-number"><small>Номер производства</small><strong>{caseData.number}</strong><span>СОНАР / Правосудие</span></div>
+      </section>
+
+      <div className="case-record-layout">
+        <section className="case-material">
+          <header><span>Материалы производства</span><h2>Содержание дела</h2></header>
+          <div className="case-description">
+            <span>Описание обстоятельств</span>
+            <p>{caseData.description || 'Описание обстоятельств не указано.'}</p>
+          </div>
+          {caseData.verdict_note && (
+            <div className="case-verdict-note">
+              <span>Резолютивная часть</span>
+              <p>{caseData.verdict_note}</p>
+            </div>
+          )}
+        </section>
+
+        <aside className="case-facts-panel">
+          <header><span>Реквизиты дела</span><IconScale size={18} /></header>
+          <div>
+            <article><IconUser size={16} /><span>Обвиняемый</span>{caseData.accused ? <Link to={`/citizens/${caseData.accused.id}`}>{caseData.accused.nickname}</Link> : <strong>Не указан</strong>}</article>
+            <article><IconScale size={16} /><span>Правовое основание</span><strong>{caseData.law ? `${caseData.law.number}: ${caseData.law.title}` : 'Не указано'}</strong></article>
+            <article><IconGavel size={16} /><span>Судья</span><strong>{caseData.judge?.login ?? 'Не назначен'}</strong></article>
+            <article><span className="case-fact-index">01</span><span>Открыто</span><strong>{formatDate(caseData.opened_at)}</strong></article>
+            {caseData.closed_at && <article><span className="case-fact-index">02</span><span>Закрыто</span><strong>{formatDate(caseData.closed_at)}</strong></article>}
+            {caseData.verdict_type && <article><IconGavel size={16} /><span>Приговор</span><strong><Badge status={caseData.verdict_type} />{caseData.verdict_amount ? ` · ${caseData.verdict_amount} у.е.` : ''}</strong></article>}
+          </div>
+        </aside>
       </div>
 
-      <div style={{ display: 'grid', gap: '16px' }}>
-        <Card style={{ padding: '20px 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-            <div>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Обвиняемый</div>
-              {caseData.accused ? (
-                <Link to={`/citizens/${caseData.accused.id}`} style={{ fontSize: '14px', color: '#14715A', fontWeight: 500, textDecoration: 'none' }}>
-                  {caseData.accused.nickname}
-                </Link>
-              ) : <span style={{ fontSize: '14px', color: '#374151' }}>—</span>}
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Статья</div>
-              <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>
-                {caseData.law ? `${caseData.law.number}: ${caseData.law.title}` : '—'}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Судья</div>
-              <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>{caseData.judge?.login ?? 'Не назначен'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Дата открытия</div>
-              <div style={{ fontSize: '14px', color: '#374151' }}>{formatDate(caseData.opened_at)}</div>
-            </div>
-            {caseData.closed_at && (
-              <div>
-                <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Дата закрытия</div>
-                <div style={{ fontSize: '14px', color: '#374151' }}>{formatDate(caseData.closed_at)}</div>
-              </div>
-            )}
-            {caseData.verdict_type && (
-              <div>
-                <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Приговор</div>
-                <div style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>
-                  <Badge status={caseData.verdict_type} />
-                  {caseData.verdict_amount && (
-                    <span style={{ marginLeft: '8px', fontFamily: 'JetBrains Mono, monospace' }}>{caseData.verdict_amount} у.е.</span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-          {caseData.description && (
-            <div style={{ marginTop: '20px', borderTop: '1px solid #E5E7EB', paddingTop: '16px' }}>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Описание</div>
-              <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.7', whiteSpace: 'pre-wrap', margin: 0 }}>{caseData.description}</p>
-            </div>
-          )}
-          {caseData.verdict_note && (
-            <div style={{ marginTop: '12px' }}>
-              <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Примечание к приговору</div>
-              <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.7', margin: 0 }}>{caseData.verdict_note}</p>
-            </div>
-          )}
-        </Card>
-
+      <div className="case-related">
         {caseData.punishments && caseData.punishments.length > 0 && (
           <Card style={{ padding: '20px 24px' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '12px' }}>

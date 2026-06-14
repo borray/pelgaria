@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  IconArrowRight,
   IconBuilding,
   IconBuildingBank,
   IconGavel,
@@ -61,6 +62,10 @@ export function CommandPalette() {
   return (
     <div className="command-backdrop" onClick={() => setOpen(false)}>
       <div className="command-dialog" onClick={(event) => event.stopPropagation()}>
+        <header className="command-dialog-heading">
+          <div><span>Командный поиск</span><strong>Куда перейти?</strong></div>
+          <small>Разделы и рабочие пространства</small>
+        </header>
         <div className="command-input">
           <IconSearch size={19} />
           <input
@@ -85,11 +90,13 @@ export function CommandPalette() {
               >
                 <span><Icon size={18} /></span>
                 <div><strong>{item.label}</strong><small>{item.hint}</small></div>
+                <IconArrowRight size={15} />
               </button>
             )
           })}
           {items.length === 0 && <div className="command-empty">Раздел не найден</div>}
         </div>
+        <footer className="command-dialog-footer"><span>Выберите раздел</span><span><kbd>Esc</kbd> закрыть</span></footer>
       </div>
     </div>
   )

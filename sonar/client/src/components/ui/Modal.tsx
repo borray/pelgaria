@@ -24,8 +24,6 @@ export function Modal({ open, onClose, title, description, children, footer, wid
   useEffect(() => {
     if (!open) return
     const previousActiveElement = document.activeElement as HTMLElement | null
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
 
     const focusFrame = window.requestAnimationFrame(() => {
       const dialog = dialogRef.current
@@ -46,7 +44,6 @@ export function Modal({ open, onClose, title, description, children, footer, wid
     document.addEventListener('keydown', onKeyDown)
     return () => {
       window.cancelAnimationFrame(focusFrame)
-      document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', onKeyDown)
       previousActiveElement?.focus()
     }

@@ -9,6 +9,81 @@ a:active {
 }
 .auth-forgot:hover { text-decoration: none !important; }
 
+/* Document scrolling after the sidebar architecture was removed */
+html, body, #root { min-height: 100%; height: auto; overflow-x: hidden; overflow-y: auto; }
+.app-shell-v3 { min-height: 100dvh; height: auto; overflow: visible; }
+.app-shell-v3 .app-workspace { min-height: calc(100dvh - 76px); flex: none; overflow: visible; }
+.app-shell-v3 .app-main { min-height: calc(100dvh - 76px); overflow: visible; }
+
+/* Command search is a deliberate floating console, not a grey strip */
+.command-backdrop {
+  align-items: flex-start;
+  padding: 92px 20px 24px;
+  background: rgba(5, 15, 12, .4);
+  backdrop-filter: blur(7px) saturate(.8);
+}
+.command-dialog {
+  max-width: 680px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: 0 32px 100px rgba(4, 18, 13, .3);
+}
+.command-dialog-heading {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 19px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px),
+    var(--surface);
+  background-size: 28px 28px;
+}
+.command-dialog-heading span, .command-dialog-heading strong { display: block; }
+.command-dialog-heading span { color: var(--accent); font-size: 7.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.command-dialog-heading strong { margin-top: 5px; color: var(--ink-strong); font-size: 16px; letter-spacing: -.02em; }
+.command-dialog-heading > small { color: var(--quiet); font-size: 8px; text-transform: uppercase; letter-spacing: .05em; }
+.command-input {
+  height: 62px;
+  margin: 12px 12px 5px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 10px;
+  color: var(--accent);
+  background: var(--surface-subtle);
+}
+.command-input:focus-within { border-color: var(--accent) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent); }
+.command-input input { font-size: 13px; }
+.command-results { max-height: 390px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 7px 12px 12px; }
+.command-results button {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  gap: 10px;
+  border: 1px solid transparent;
+}
+.command-results button:hover { border-color: var(--line); background: var(--accent-faint); }
+.command-results button > svg { color: var(--quiet); }
+.command-empty { grid-column: 1 / -1; }
+.command-dialog-footer {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  border-top: 1px solid var(--line);
+  color: var(--quiet);
+  background: var(--surface-subtle);
+  font-size: 7.5px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.command-dialog-footer kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); font: 8px Consolas, monospace; }
+
 /* Workspace masthead */
 .workspace-heading {
   position: relative;
@@ -313,6 +388,10 @@ a:active {
 .record-content-body > .ui-table-shell { border-radius: 9px; }
 
 @media (max-width: 720px) {
+  .app-shell-v3 .app-workspace, .app-shell-v3 .app-main { min-height: calc(100dvh - 64px); }
+  .command-backdrop { padding: 64px 0 0; }
+  .command-dialog { max-width: none; min-height: calc(100dvh - 64px); border: 0; border-radius: 0; box-shadow: none; }
+  .command-results { grid-template-columns: 1fr; }
   .workspace-heading { min-height: 0; grid-template-columns: 34px minmax(0, 1fr); padding: 19px 16px 19px 12px; }
   .workspace-heading-actions { grid-column: 1 / -1; width: 100%; padding: 8px 0 0 46px; }
   .workspace-heading-context small { display: none; }
