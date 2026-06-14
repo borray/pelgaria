@@ -168,8 +168,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       />
       <nav className={`app-sidebar${open ? ' is-open' : ''}`} aria-label="Основная навигация">
       <div className="sidebar-caption">
-        <strong>Рабочие разделы</strong>
-        <span>Доступ определяется вашей ролью</span>
+        <span className="sidebar-caption-mark">СП</span>
+        <div>
+          <strong>Служебный портал</strong>
+          <span>Персональный доступ</span>
+        </div>
       </div>
       {sections.map((section) => {
         const visibleItems = section.items.filter(
@@ -192,6 +195,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               >
                 <span className="sidebar-link-icon">{item.icon}</span>
                 <span>{item.label}</span>
+                <span className="sidebar-link-indicator" />
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
                     style={{
@@ -213,8 +217,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         )
       })}
       <div className="sidebar-disclaimer">
-        <strong>Пельгария</strong>
-        <span>Игровой служебный портал Minecraft RP</span>
+        <i />
+        <div><strong>СОНАР online</strong><span>Защищённый игровой контур</span></div>
       </div>
       </nav>
     </>

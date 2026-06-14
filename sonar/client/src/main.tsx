@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './styles/animations.css'
 import './styles/design-system.css'
+import './styles/renovation.css'
 import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

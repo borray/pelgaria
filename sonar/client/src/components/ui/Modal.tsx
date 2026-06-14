@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { IconAlertTriangle, IconForms, IconX } from '@tabler/icons-react'
 
 interface ModalProps {
   open: boolean
@@ -68,8 +68,11 @@ export function Modal({ open, onClose, title, description, children, footer, wid
         tabIndex={-1}
       >
         <header className="modal-header">
+          <span className="modal-symbol">
+            {destructive ? <IconAlertTriangle size={20} /> : <IconForms size={20} />}
+          </span>
           <div className="modal-heading">
-            <span>{destructive ? 'Требуется подтверждение' : 'Служебная операция'}</span>
+            <span>{destructive ? 'Необратимое действие' : 'Рабочая форма'}</span>
             <h2 id={titleId}>{title}</h2>
             {description && <p>{description}</p>}
           </div>

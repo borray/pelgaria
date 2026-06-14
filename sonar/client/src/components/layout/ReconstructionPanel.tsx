@@ -61,8 +61,8 @@ export function ReconstructionPanel() {
             <div className="reconstruction-release">
               <div>
                 <span>Текущий этап</span>
-                <strong>Рабочие пространства обслуживания и тёмная тема</strong>
-                <p>Обновлено 10 июня 2026 года</p>
+                <strong>Полная реновация интерфейса СОНАР</strong>
+                <p>Цикл начат 14 июня 2026 года</p>
               </div>
               <IconProgressCheck size={24} />
             </div>

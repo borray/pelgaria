@@ -1,4 +1,4 @@
-import { IconLogout, IconMenu2, IconUserCircle } from '@tabler/icons-react'
+import { IconLogout, IconMenu2, IconUserCircle, IconCircleCheck } from '@tabler/icons-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { SonarBrand } from '../brand/SonarBrand'
@@ -22,12 +22,13 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         </Link>
         <span className="topbar-divider" />
         <div className="topbar-context">
-          <strong>Служебный портал</strong>
-          <span>Вымышленное государство · Minecraft RP</span>
+          <strong>Рабочая среда</strong>
+          <span><i /> Контур доступен</span>
         </div>
       </div>
       {user && (
         <div className="topbar-user-area">
+          <span className="topbar-sync"><IconCircleCheck size={15} /> Данные синхронизированы</span>
           <Link to="/profile" className="topbar-profile">
             <span className="topbar-avatar">
               {user.discord_avatar ? <img src={user.discord_avatar} alt="" /> : <IconUserCircle size={22} />}
