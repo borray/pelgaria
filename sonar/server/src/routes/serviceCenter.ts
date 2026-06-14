@@ -261,7 +261,7 @@ router.get('/sessions/:id', requireAuth, requirePermission('office.view'), async
     include: sessionInclude,
   })
   if (!session) {
-    res.status(404).json({ error: 'Сессия не найдена' })
+    res.status(404).json({ error: 'Обращение не найдено' })
     return
   }
   res.json(session)
@@ -301,7 +301,7 @@ router.post(
       const session = await prisma.serviceSession.findUnique({ where: { id: req.params.id as string } })
       if (!session) {
         files.forEach(removeUploadedFile)
-        res.status(404).json({ error: 'Сессия не найдена' })
+        res.status(404).json({ error: 'Обращение не найдено' })
         return
       }
       const attachments = await prisma.$transaction(files.map((file) =>
@@ -397,7 +397,7 @@ router.delete('/sessions/:id', requireAuth, requireHeadOfState, async (req: Requ
     include: { attachments: true },
   })
   if (!session) {
-    res.status(404).json({ error: 'Сессия не найдена' })
+    res.status(404).json({ error: 'Обращение не найдено' })
     return
   }
   await prisma.$transaction([
@@ -477,7 +477,7 @@ router.get('/sessions/:id/offline-form.pdf', requireAuth, requirePermission('off
       include: { citizen: true, operator: { select: { login: true } } },
     })
     if (!session) {
-      res.status(404).json({ error: 'Сессия не найдена' })
+      res.status(404).json({ error: 'Обращение не найдено' })
       return
     }
     const labels = ['Фамилия, имя / игровой ник', 'Discord', 'Предмет обращения', 'Содержание заявления', 'Перечень приложений', 'Дата', 'Подпись']

@@ -122,7 +122,7 @@ export function DashboardPage() {
           {hasPermission('office.view') && (
             <Link to="/office" className="operations-primary-action">
               <IconPlayerPlay size={18} />
-              <span><strong>Начать обслуживание</strong><small>Открыть новую рабочую сессию</small></span>
+              <span><strong>Начать обслуживание</strong><small>Открыть новое обращение</small></span>
               <IconArrowRight size={17} />
             </Link>
           )}
@@ -130,7 +130,7 @@ export function DashboardPage() {
         <aside className="operations-hero-side">
           <div className="operations-date"><IconCalendar size={17} /><span>{today}</span></div>
           <div className="operations-hero-metrics">
-            <div><span>В работе</span><strong>{formatNumber(metrics?.office_active ?? null)}</strong><small>сессий обслуживания</small></div>
+            <div><span>В работе</span><strong>{formatNumber(metrics?.office_active ?? null)}</strong><small>обращений в работе</small></div>
             <div><span>Правовая база</span><strong>{formatNumber(metrics?.active_laws ?? null)}</strong><small>действующих актов</small></div>
           </div>
           <div className="operations-integrity"><IconCircleCheck size={16} /><span>Реестры синхронизированы</span></div>
