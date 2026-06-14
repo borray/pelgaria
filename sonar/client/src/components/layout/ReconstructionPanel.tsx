@@ -22,7 +22,7 @@ import {
 type RenovationView = 'active' | 'next' | 'archive'
 
 const activeSystems = [
-  { title: 'Знак Пельгарии', text: 'Проект получил ясный силуэт подвесного моста и северной звезды. Он встроен в публичную витрину, вкладку браузера и устанавливаемое приложение.', Icon: IconSparkles, tag: 'Готово' },
+  { title: 'Знак Пельгарии', text: 'Проект получил собственный модульный символ из 13 равных элементов. Он встроен в публичную витрину, вкладку браузера и устанавливаемое приложение.', Icon: IconSparkles, tag: 'Готово' },
   { title: 'Комфорт на Full HD', text: 'Текст, подписи, кнопки, формы, таблицы и модальные окна получили новый минимум читаемости для масштаба 100%.', Icon: IconSparkles, tag: 'Готово' },
   { title: 'Новый облик PG-BRIDGE', text: 'Публичная страница Пельгарии стала полноценной витриной мира со статусом проекта, устройством игрового пространства и маршрутом подключения.', Icon: IconLayersIntersect, tag: 'Готово' },
   { title: 'Мост Пельгарии', text: 'Корень pg-bridge стал публичным порталом проекта. СОНАР отделён от внешнего сайта и открывается через служебный вход.', Icon: IconLayersIntersect, tag: 'Готово' },
@@ -52,6 +52,7 @@ const archived = [
 ]
 
 const releaseNotes = [
+  ['Цикл 11', 'Новый модульный знак Пельгарии во всех точках проекта'],
   ['Цикл 10', 'Фирменный знак Пельгарии и единая иконка проекта'],
   ['Цикл 09', 'Большая витрина PG-BRIDGE и системная читаемость на Full HD'],
   ['Цикл 08', 'Публичный Мост Пельгарии и разделение игроков с гражданством'],
@@ -81,7 +82,7 @@ export function ReconstructionPanel() {
     <>
       <button className="renovation-launcher" type="button" onClick={() => setOpen(true)}>
         <span className="renovation-launcher-radar"><IconRadar size={18} /><i /></span>
-        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 10</strong></span>
+        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 11</strong></span>
         <span className="renovation-launcher-progress"><i /></span>
         <IconArrowUpRight size={15} />
       </button>
@@ -152,7 +153,7 @@ export function ReconstructionPanel() {
                 </main>
 
                 <aside className="renovation-release-log">
-                  <header><span>Журнал обновлений</span><strong>10 циклов</strong></header>
+                  <header><span>Журнал обновлений</span><strong>11 циклов</strong></header>
                   <div>
                     {releaseNotes.map(([cycle, title], index) => (
                       <article key={cycle} className={index === 0 ? 'is-current' : ''}>

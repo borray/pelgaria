@@ -1,11 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 300">
   <rect width="1080" height="300" rx="40" fill="#061936"/>
-  <g transform="translate(12 12) scale(.54)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M58 348h396M150 348V176M362 348V176M128 196h44M340 196h44" stroke-width="24"/>
-    <path d="M58 286Q104 176 150 176Q256 308 362 176Q408 176 454 286" stroke="#9bd2ff" stroke-width="18"/>
-    <path d="M92 238v110M122 190v158M194 223v125M226 269v79M286 269v79M318 223v125M390 190v158M420 238v110" stroke-width="11"/>
-    <path d="m422 92 11 20 20 11-20 11-11 20-11-20-20-11 20-11 11-20Z" fill="#9bd2ff" stroke="none"/>
-  </g>
-  <text x="330" y="138" fill="#fff" font-family="Arial, sans-serif" font-size="86" font-weight="700" letter-spacing="8">ПЕЛЬГАРИЯ</text>
-  <text x="336" y="202" fill="#9bd2ff" font-family="Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="12">PELGARIA PROJECT</text>
+  <path d="M124 50H164V90H204V130H244V170H204V210H164V250H124V210H84V170H44V130H84V90H124Z" fill="#fff"/>
+  <text x="306" y="138" fill="#fff" font-family="Arial, sans-serif" font-size="86" font-weight="700" letter-spacing="8">ПЕЛЬГАРИЯ</text>
+  <text x="312" y="202" fill="#9bd2ff" font-family="Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="12">PELGARIA PROJECT</text>
 </svg>
