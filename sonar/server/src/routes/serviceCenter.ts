@@ -347,16 +347,27 @@ router.post('/attachments/:id/analyze', requireAuth, requirePermission('office.m
 })
 
 router.patch('/attachments/:id', requireAuth, requirePermission('office.manage'), async (req: Request, res: Response) => {
-  const attachment = await prisma.serviceAttachment.update({
-    where: { id: req.params.id as string },
-    data: {
-      ...(typeof req.body.ocr_text === 'string' ? { ocr_text: req.body.ocr_text, ocr_status: 'VERIFIED' } : {}),
-      ...(typeof req.body.extracted_data === 'object' && req.body.extracted_data
-        ? { extracted_data: req.body.extracted_data as Prisma.InputJsonValue, ocr_status: 'VERIFIED' }
-        : {}),
-    },
-  })
-  res.json(attachment)
+  try {
+    const id = req.params.id as string
+    const existing = await prisma.serviceAttachment.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Файл не найден' })
+      return
+    }
+    const attachment = await prisma.serviceAttachment.update({
+      where: { id },
+      data: {
+        ...(typeof req.body.ocr_text === 'string' ? { ocr_text: req.body.ocr_text, ocr_status: 'VERIFIED' } : {}),
+        ...(typeof req.body.extracted_data === 'object' && req.body.extracted_data
+          ? { extracted_data: req.body.extracted_data as Prisma.InputJsonValue, ocr_status: 'VERIFIED' }
+          : {}),
+      },
+    })
+    res.json(attachment)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Не удалось обновить вложение' })
+  }
 })
 
 router.delete('/attachments/:id', requireAuth, requireHeadOfState, async (req: Request, res: Response) => {
