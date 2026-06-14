@@ -5,11 +5,13 @@ import {
   IconArchive,
   IconCheck,
   IconClipboardText,
+  IconDatabase,
   IconFileText,
   IconInnerShadowTop,
   IconPlayerPlay,
   IconPrinter,
   IconScan,
+  IconSettings,
   IconTrash,
   IconUpload,
   IconUser,
@@ -36,7 +38,6 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
-import { PageHeader } from '../components/ui/PageHeader'
 
 type CenterTab = 'sessions' | 'registry' | 'station'
 
@@ -218,40 +219,61 @@ export function ServiceCenterPage() {
     isHeadOfState ? <ActionMenu items={[{ label: 'Удалить запись', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget({ kind, id, title }) }]} /> : null
 
   return (
-    <div className="service-center-page">
-      <PageHeader
-        eyebrow="Единое рабочее место"
-        title="Центр обслуживания"
-        description="Запускайте полноценные сессии и ведите обращения, документы, сканы и печатные формы в одном рабочем пространстве."
-        actions={<Button variant="primary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={16} />Начать сессию</Button>}
-      />
-
-      <div className={`printer-readiness ${readiness.ready ? 'is-ready' : 'is-warning'}`}>
-        <span>{readiness.ready ? <IconCheck size={18} /> : <IconAlertTriangle size={18} />}</span>
-        <div>
-          <strong>{readiness.ready ? 'Ваша станция печати проверена' : 'Ваша проверка станции печати просрочена'}</strong>
-          <small>{readiness.ready && readiness.valid_until ? `Действует до ${formatDateTime(readiness.valid_until)}` : 'Проверка индивидуальна для текущей учётной записи.'}</small>
+    <div className="service-center-page service-center-v3">
+      <section className="service-command">
+        <div className="service-command-copy">
+          <span className="service-command-kicker">Единое рабочее место сотрудника</span>
+          <h1>Центр обслуживания</h1>
+          <p>Одна среда для приёма граждан, внутренних операций, печатных форм и полного архива материалов.</p>
+          <Button variant="primary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={17} />Начать новую сессию</Button>
         </div>
-        <button type="button" onClick={() => setTab('station')}>Открыть проверку</button>
-      </div>
+        <div className={`service-station-card ${readiness.ready ? 'is-ready' : 'is-warning'}`}>
+          <header>
+            <span>{readiness.ready ? <IconCheck size={19} /> : <IconAlertTriangle size={19} />}</span>
+            <div><small>Персональная станция печати</small><strong>{readiness.ready ? 'Готова к работе' : 'Требуется проверка'}</strong></div>
+          </header>
+          <p>{readiness.ready && readiness.valid_until ? `Допуск действует до ${formatDateTime(readiness.valid_until)}` : 'Проверка закрепляется за текущей учётной записью и действует 24 часа.'}</p>
+          <button type="button" onClick={() => setTab('station')}>Перейти к диагностике</button>
+        </div>
+      </section>
 
-      <div className="page-tabs">
-        {([['sessions', 'Сессии'], ['registry', 'Единый реестр'], ['station', 'Моя станция печати']] as Array<[CenterTab, string]>).map(([value, label]) => (
-          <button key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>
-        ))}
-      </div>
+      <nav className="service-workspaces" aria-label="Рабочие области центра обслуживания">
+        <button type="button" className={tab === 'sessions' ? 'is-active' : ''} onClick={() => setTab('sessions')}>
+          <span><IconPlayerPlay size={19} /></span>
+          <div><strong>Рабочие сессии</strong><small>Очередь и активные операции</small></div>
+          <b>{sessions.length}</b>
+        </button>
+        <button type="button" className={tab === 'registry' ? 'is-active' : ''} onClick={() => setTab('registry')}>
+          <span><IconDatabase size={19} /></span>
+          <div><strong>Архив материалов</strong><small>Документы, обращения и сканы</small></div>
+          <b>{registry.documents.length + registry.requests.length + registry.attachments.length || '—'}</b>
+        </button>
+        <button type="button" className={tab === 'station' ? 'is-active' : ''} onClick={() => setTab('station')}>
+          <span><IconSettings size={19} /></span>
+          <div><strong>Печатная станция</strong><small>Пробный лист и оценка качества</small></div>
+          <b>{readiness.ready ? 'OK' : '!'}</b>
+        </button>
+      </nav>
 
       {tab === 'sessions' && <>
-        <div className="office-stats">
-          <div><IconPlayerPlay size={20} /><span>Активные<strong>{stats.active}</strong></span></div>
-          <div><IconScan size={20} /><span>На сверке<strong>{stats.offlineReview}</strong></span></div>
-          <div><IconClipboardText size={20} /><span>Сегодня<strong>{stats.today}</strong></span></div>
-          <div><IconArchive size={20} /><span>Всего сессий<strong>{sessions.length}</strong></span></div>
+        <div className="service-session-layout">
+          <section className="office-register service-session-register">
+            <div className="section-heading">
+              <div><span className="section-counter">Журнал операций</span><h2>Сессии обслуживания</h2><p>Откройте строку, чтобы вернуться в полноценное рабочее пространство сессии.</p></div>
+              <Button variant="secondary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={15} />Новая сессия</Button>
+            </div>
+            <Table columns={sessionColumns} data={sessions} keyExtractor={(row) => row.id} loading={loading} onRowClick={(row) => navigate(`/office/sessions/${row.id}`)} />
+          </section>
+          <aside className="service-session-summary">
+            <header><span>Смена сегодня</span><strong>{stats.today}</strong><small>открыто сессий</small></header>
+            <div>
+              <span><IconPlayerPlay size={17} /><small>В работе</small><strong>{stats.active}</strong></span>
+              <span><IconScan size={17} /><small>На сверке</small><strong>{stats.offlineReview}</strong></span>
+              <span><IconArchive size={17} /><small>Всего</small><strong>{sessions.length}</strong></span>
+            </div>
+            <footer><IconClipboardText size={17} /><span>Все документы и приложения сохраняются внутри соответствующей сессии.</span></footer>
+          </aside>
         </div>
-        <section className="office-register">
-          <div className="section-heading"><div><h2>Журнал обслуживания</h2><p>Откройте сессию, чтобы продолжить работу с её документами и материалами.</p></div></div>
-          <Table columns={sessionColumns} data={sessions} keyExtractor={(row) => row.id} loading={loading} onRowClick={(row) => navigate(`/office/sessions/${row.id}`)} />
-        </section>
       </>}
 
       {tab === 'registry' && <section className="office-register">

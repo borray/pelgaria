@@ -50,9 +50,9 @@ export function CommandPalette() {
 
   if (!open) {
     return (
-      <button className="command-launcher" onClick={() => setOpen(true)} title="Быстрый переход">
+      <button className="command-launcher command-launcher-v3" onClick={() => setOpen(true)} title="Поиск и быстрый переход">
         <IconSearch size={16} />
-        <span>Быстрый переход</span>
+        <span>Найти раздел</span>
         <kbd>Ctrl K</kbd>
       </button>
     )

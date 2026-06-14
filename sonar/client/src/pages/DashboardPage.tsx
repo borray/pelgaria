@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  IconActivity,
   IconAlertCircle,
   IconArrowRight,
   IconBuilding,
   IconBuildingBank,
+  IconCalendar,
+  IconCircleCheck,
   IconGavel,
   IconId,
   IconInbox,
+  IconPlayerPlay,
   IconScale,
   IconUsers,
 } from '@tabler/icons-react'
@@ -106,45 +110,84 @@ export function DashboardPage() {
   ].slice(0, 7)
 
   const hasDebt = (metrics?.unpaid_taxes_count ?? 0) > 0
+  const today = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <div>
-          <span className="page-kicker">Рабочий стол</span>
+    <div className="dashboard dashboard-v3">
+      <section className="operations-hero">
+        <div className="operations-hero-main">
+          <span className="operations-status"><i /> Система доступна</span>
           <h1>{greeting}, {user?.login}</h1>
-          <p>Краткая сводка и последние изменения в государственных реестрах.</p>
-        </div>
-        <div className="dashboard-date">
-          <span>{new Intl.DateTimeFormat('ru-RU', { weekday: 'long' }).format(new Date())}</span>
-          <strong>{new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(new Date())}</strong>
-        </div>
-      </header>
-
-      <section className="dashboard-summary" aria-label="Основные показатели">
-        {loading
-          ? [0, 1, 2, 3].map((item) => <div className="summary-item skeleton" key={item} />)
-          : summaries.map((item) => (
-            <Link to={item.to} className="summary-item" key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
+          <p>Рабочая смена собрана в одном экране: обслуживание, контрольные показатели и последние изменения.</p>
+          {hasPermission('office.view') && (
+            <Link to="/office" className="operations-primary-action">
+              <IconPlayerPlay size={18} />
+              <span><strong>Начать обслуживание</strong><small>Открыть новую рабочую сессию</small></span>
               <IconArrowRight size={17} />
             </Link>
-          ))}
+          )}
+        </div>
+        <aside className="operations-hero-side">
+          <div className="operations-date"><IconCalendar size={17} /><span>{today}</span></div>
+          <div className="operations-hero-metrics">
+            <div><span>В работе</span><strong>{formatNumber(metrics?.office_active ?? null)}</strong><small>сессий обслуживания</small></div>
+            <div><span>Правовая база</span><strong>{formatNumber(metrics?.active_laws ?? null)}</strong><small>действующих актов</small></div>
+          </div>
+          <div className="operations-integrity"><IconCircleCheck size={16} /><span>Реестры синхронизированы</span></div>
+        </aside>
       </section>
 
-      <div className="dashboard-layout">
-        <section className="dashboard-section activity-section">
-          <header className="dashboard-section-header">
-            <div><span>Обновления</span><h2>Последние события</h2></div>
-            <span className="system-status"><i /> Данные актуальны</span>
+      <section className="attention-board">
+        <header>
+          <div><span>Контроль смены</span><h2>Требует внимания</h2></div>
+          <small>Показатели обновляются автоматически</small>
+        </header>
+        <div className="attention-board-grid">
+          {hasPermission('office.view') && (
+            <Link to="/office" className={(metrics?.office_overdue ?? 0) > 0 ? 'is-critical' : ''}>
+              <span className="attention-index">01</span>
+              <IconInbox size={19} />
+              <div><strong>{formatNumber(metrics?.office_overdue ?? 0)}</strong><span>просроченных обращений</span></div>
+              <IconArrowRight size={16} />
+            </Link>
+          )}
+          {hasPermission('taxes.view') && (
+            <Link to="/taxes" className={hasDebt ? 'is-critical' : ''}>
+              <span className="attention-index">02</span>
+              <IconAlertCircle size={19} />
+              <div><strong>{formatNumber(metrics?.unpaid_taxes_count ?? 0)}</strong><span>неоплаченных начислений</span></div>
+              <IconArrowRight size={16} />
+            </Link>
+          )}
+          {hasPermission('cases.view') && (
+            <Link to="/cases">
+              <span className="attention-index">03</span>
+              <IconGavel size={19} />
+              <div><strong>{formatNumber(metrics?.active_cases ?? 0)}</strong><span>судебных дел в работе</span></div>
+              <IconArrowRight size={16} />
+            </Link>
+          )}
+          <div className="attention-ok">
+            <span className="attention-index">04</span>
+            <IconActivity size={19} />
+            <div><strong>Штатно</strong><span>состояние систем</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div className="operations-layout">
+        <section className="operations-feed">
+          <header className="operations-section-title">
+            <div><span>Журнал системы</span><h2>Последние изменения</h2></div>
+            <span className="operations-live"><i /> LIVE</span>
           </header>
-          <div className="activity-list">
-            {events.map((event) => {
+          <div className="operations-timeline">
+            {events.map((event, index) => {
               const Icon = event.icon
               return (
-                <Link to={event.to} className="activity-item" key={event.key}>
-                  <span className="activity-marker"><Icon size={17} /></span>
+                <Link to={event.to} className="operations-event" key={event.key}>
+                  <span className="operations-event-time">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="operations-event-icon"><Icon size={17} /></span>
                   <span><strong>{event.title}</strong><small>{event.meta}</small></span>
                   <IconArrowRight size={16} />
                 </Link>
@@ -154,50 +197,31 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <aside className="dashboard-aside">
-          <section className="dashboard-section quick-section">
-            <header className="dashboard-section-header"><div><span>Быстрый доступ</span><h2>Основные операции</h2></div></header>
-            <div className="quick-list">
-              {quickLinks.map((item) => {
+        <aside className="operations-side">
+          <section className="operations-launcher">
+            <header className="operations-section-title"><div><span>Запуск задачи</span><h2>Рабочие пространства</h2></div></header>
+            <div>
+              {quickLinks.map((item, index) => {
                 const Icon = item.icon
                 return (
                   <Link to={item.to} key={item.to}>
+                    <small>{String(index + 1).padStart(2, '0')}</small>
                     <span><Icon size={18} /></span>
-                    <div><strong>{item.label}</strong><small>{item.description}</small></div>
-                    <IconArrowRight size={16} />
+                    <div><strong>{item.label}</strong><p>{item.description}</p></div>
+                    <IconArrowRight size={15} />
                   </Link>
                 )
               })}
             </div>
           </section>
 
-          {hasPermission('taxes.view') && (
-            <Link to="/taxes" className={`attention-card${hasDebt ? ' has-alert' : ''}`}>
-              <IconAlertCircle size={20} />
-              <div>
-                <span>Контроль начислений</span>
-                <strong>{hasDebt ? `${formatNumber(metrics?.unpaid_taxes_count ?? 0)} требуют оплаты` : 'Просроченных начислений нет'}</strong>
-                <small>{hasDebt ? `Общая сумма: ${formatNumber(metrics?.unpaid_taxes_amount ?? 0)} у.е.` : 'Проверка выполнена автоматически'}</small>
-              </div>
-              <IconArrowRight size={16} />
-            </Link>
-          )}
-
-          {hasPermission('office.view') && (
-            <Link to="/office" className={`attention-card${(metrics?.office_overdue ?? 0) > 0 ? ' has-alert' : ''}`}>
-              <IconInbox size={20} />
-              <div>
-                <span>Контроль обращений</span>
-                <strong>{(metrics?.office_overdue ?? 0) > 0 ? `${formatNumber(metrics?.office_overdue ?? 0)} просрочено` : 'Просроченных обращений нет'}</strong>
-                <small>{formatNumber(metrics?.office_active ?? 0)} сейчас в работе</small>
-              </div>
-              <IconArrowRight size={16} />
-            </Link>
-          )}
-
-          <section className="system-note">
-            <IconBuilding size={19} />
-            <div><strong>СОНАР работает штатно</strong><span>{formatNumber(metrics?.active_laws ?? null)} действующих законов в системе</span></div>
+          <section className="registry-pulse">
+            <header><span>Масштаб системы</span><IconBuilding size={18} /></header>
+            <div>
+              {loading ? <div className="skeleton" /> : summaries.map((item) => (
+                <Link to={item.to} key={item.label}><span>{item.label}</span><strong>{item.value}</strong></Link>
+              ))}
+            </div>
           </section>
         </aside>
       </div>

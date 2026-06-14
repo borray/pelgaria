@@ -1,53 +1,58 @@
 import {
-  IconCircleCheck,
-  IconLayoutSidebarLeftCollapse,
-  IconLayoutSidebarLeftExpand,
+  IconApps,
+  IconChevronDown,
   IconLogout,
-  IconMenu2,
   IconUserCircle,
 } from '@tabler/icons-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { SonarBrand } from '../brand/SonarBrand'
-import { useLayoutStore } from '../../store/layout'
+import { CommandPalette } from './CommandPalette'
 
-export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
-  const { user, logout } = useAuthStore()
+export function Topbar({ onNavigationClick, navigationOpen }: { onNavigationClick: () => void; navigationOpen: boolean }) {
+  const { user, logout, hasPermission } = useAuthStore()
   const navigate = useNavigate()
-  const collapsed = useLayoutStore((state) => state.sidebarCollapsed)
-  const toggleSidebar = useLayoutStore((state) => state.toggleSidebar)
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
+  const primaryNavigation = [
+    { to: '/', label: 'Обзор' },
+    { to: '/office', label: 'Обслуживание', permission: 'office.view' },
+    { to: '/citizens', label: 'Граждане', permission: 'citizens.view' },
+    { to: '/laws', label: 'Право', permission: 'laws.view' },
+  ].filter((item) => !item.permission || hasPermission(item.permission))
+
   return (
     <header className="app-topbar">
       <div className="topbar-leading">
-        <button className="mobile-menu-button" onClick={onMenuClick} aria-label="Открыть меню">
-          <IconMenu2 size={20} />
-        </button>
         <Link to="/" aria-label="Главная СОНАР" className="topbar-brand-link">
           <SonarBrand size="sm" />
         </Link>
+        <nav className="topbar-primary-nav" aria-label="Основные разделы">
+          {primaryNavigation.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'is-active' : ''}>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+      <div className="topbar-tools">
+        <CommandPalette />
         <button
           type="button"
-          className="topbar-sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label={collapsed ? 'Развернуть боковую панель' : 'Свернуть боковую панель'}
-          title={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
+          className={`topbar-sections-button${navigationOpen ? ' is-active' : ''}`}
+          onClick={onNavigationClick}
+          aria-expanded={navigationOpen}
         >
-          {collapsed ? <IconLayoutSidebarLeftExpand size={18} /> : <IconLayoutSidebarLeftCollapse size={18} />}
+          <IconApps size={18} />
+          <span>Все разделы</span>
+          <IconChevronDown size={14} />
         </button>
-        <span className="topbar-divider" />
-        <div className="topbar-context">
-          <strong>Рабочая среда</strong>
-          <span><i /> Контур доступен</span>
-        </div>
       </div>
       {user && (
         <div className="topbar-user-area">
-          <span className="topbar-sync"><IconCircleCheck size={15} /> Данные синхронизированы</span>
           <Link to="/profile" className="topbar-profile">
             <span className="topbar-avatar">
               {user.discord_avatar ? <img src={user.discord_avatar} alt="" /> : <IconUserCircle size={22} />}
