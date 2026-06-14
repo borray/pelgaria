@@ -18,9 +18,10 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html, body, #root { min-height: 100%; }
+html, body, #root { width: 100%; height: 100%; min-height: 100%; }
 body {
   margin: 0;
+  overflow: hidden;
   color: var(--ink);
   background: #f5f6f3;
   -webkit-font-smoothing: antialiased;
@@ -36,7 +37,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 ::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 8px; background: #c8cfcb; background-clip: padding-box; }
 
 /* Application frame */
-.app-shell { height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #f5f6f3; }
+.app-shell { height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: #f5f6f3; }
 .app-workspace { min-height: 0; display: flex; flex: 1; overflow: hidden; }
 .app-main { min-width: 0; flex: 1; overflow: auto; padding: 30px 38px 50px; }
 .app-main > * { max-width: 1480px; margin-right: auto; margin-left: auto; }
