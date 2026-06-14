@@ -50,7 +50,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         },
         {
           to: '/office',
-          label: 'Центр обслуживания',
+          label: 'Контакт',
           icon: <IconInbox size={16} />,
           permission: 'office.view',
         },

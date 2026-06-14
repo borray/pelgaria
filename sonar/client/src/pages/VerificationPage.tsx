@@ -83,7 +83,10 @@ export function VerificationPage() {
     setError(null)
     setResult(null)
     try {
-      const response = await apiClient.get<VerifyResult>(`/verify/${encodeURIComponent(value)}`)
+      const [response] = await Promise.all([
+        apiClient.get<VerifyResult>(`/verify/${encodeURIComponent(value)}`),
+        new Promise((resolve) => window.setTimeout(resolve, 5000)),
+      ])
       setResult(response.data)
       saveHistory(value, response.data)
     } catch (requestError: unknown) {

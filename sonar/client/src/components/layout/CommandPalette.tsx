@@ -24,7 +24,7 @@ const destinations = [
   { label: 'Казна', hint: 'Финансовые операции', path: '/treasury', icon: IconBuildingBank, permission: 'treasury.view' },
   { label: 'РЕЛИКТ', hint: 'Реестр объектов', path: '/buildings', icon: IconBuilding, permission: 'relict.view' },
   { label: 'Чат', hint: 'Защищённая связь', path: '/chat', icon: IconMessageCircle, permission: 'chat.send' },
-  { label: 'Центр обслуживания', hint: 'Сессии, обращения, формы и единый реестр', path: '/office', icon: IconInbox, permission: 'office.view' },
+  { label: 'СОНАР · Контакт', hint: 'Обращения игроков, документы и материалы', path: '/office', icon: IconInbox, permission: 'office.view' },
 ]
 
 export function CommandPalette() {

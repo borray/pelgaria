@@ -40,7 +40,7 @@ const groups: HubGroup[] = [
     title: 'Работа с людьми',
     caption: 'Обслуживание и государственные реестры',
     items: [
-      { to: '/office', label: 'Центр обслуживания', description: 'Сессии, заявления, документы и сканы', icon: IconInbox, permission: 'office.view' },
+      { to: '/office', label: 'СОНАР · Контакт', description: 'Обращения игроков, документы и материалы', icon: IconInbox, permission: 'office.view' },
       { to: '/citizens', label: 'Граждане', description: 'Карточки граждан и учётные сведения', icon: IconUsers, permission: 'citizens.view' },
       { to: '/passports', label: 'Паспорта', description: 'Выдача, статусы и проверка документов', icon: IconId, permission: 'passports.view' },
       { to: '/verify', label: 'Проверка подлинности', description: 'Поиск документа по номеру или ШК', icon: IconShieldCheck },

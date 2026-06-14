@@ -8,26 +8,29 @@ import {
   IconFileCheck,
   IconLayersIntersect,
   IconMessageCircle,
+  IconNotebook,
   IconPrinter,
+  IconUserCog,
   IconProgressCheck,
   IconRadar,
   IconScan,
   IconShieldCheck,
   IconSparkles,
-  IconUserCheck,
   IconX,
 } from '@tabler/icons-react'
 
 type RenovationView = 'active' | 'next' | 'archive'
 
 const activeSystems = [
+  { title: 'СОНАР · Контакт', text: 'Старые сессии заменены обращениями игроков. Работа начинается без принтера, а заявки, документы и файлы собираются в едином рабочем пространстве.', Icon: IconNotebook, tag: 'Готово' },
+  { title: 'Кабинет сотрудника', text: 'Профиль полностью пересобран: идентичность, полномочия, безопасность, Discord и оформление разделены по понятным рабочим зонам.', Icon: IconUserCog, tag: 'Готово' },
+  { title: 'Демонстрация операций', text: 'Этап сверки подлинности показывается не менее 5 секунд, а анимация формирования PDF — не менее 7 секунд.', Icon: IconProgressCheck, tag: 'Готово' },
   { title: 'Служебная связь', text: 'Чат превращён в коммуникационный центр: поиск бесед, защищённые диалоги, участники, вложения и новая лента сообщений.', Icon: IconMessageCircle, tag: 'Готово' },
   { title: 'Контроль подлинности', text: 'Проверка документа стала пошаговой операцией с электронным заключением и локальной историей последних сверок.', Icon: IconShieldCheck, tag: 'Готово' },
   { title: 'Формирование PDF', text: 'Ожидание документа получило отдельный анимированный экран с этапами подготовки и понятным состоянием ошибки.', Icon: IconPrinter, tag: 'Готово' },
   { title: 'Новая архитектура', text: 'Сайдбар удалён. Рабочие пространства доступны через верхний контур и навигационный центр.', Icon: IconLayersIntersect, tag: 'Готово' },
   { title: 'Государственные реестры', text: 'Общие таблицы получили служебный каркас, нумерацию строк и адаптивное карточное представление.', Icon: IconChecklist, tag: 'Готово' },
   { title: 'Электронные формы', text: 'Модальные окна пересобраны в единую систему с контекстной панелью и контролем подтверждения.', Icon: IconFileCheck, tag: 'Готово' },
-  { title: 'Центр обслуживания', text: 'Сессии, обращения, документы, сканы и персональная станция печати объединены в одном месте.', Icon: IconUserCheck, tag: 'Работает' },
   { title: 'Печатный контур', text: 'Проверка станции, облегчённые ЧБ-макеты, ШК, QR и формирование документов.', Icon: IconPrinter, tag: 'Работает' },
   { title: 'Карточки записей', text: 'Началась полная замена старых детальных страниц. Первой пересобрана карточка гражданина.', Icon: IconProgressCheck, tag: 'В работе' },
 ]
@@ -44,6 +47,7 @@ const archived = [
 ]
 
 const releaseNotes = [
+  ['Цикл 06', 'СОНАР · Контакт, кабинет сотрудника и демонстрация операций'],
   ['Цикл 05', 'Служебная связь, подлинность и операции формирования PDF'],
   ['Цикл 04', 'Реестры, формы и карточка гражданина'],
   ['Цикл 03', 'Новая навигация и операционная главная'],
@@ -68,7 +72,7 @@ export function ReconstructionPanel() {
     <>
       <button className="renovation-launcher" type="button" onClick={() => setOpen(true)}>
         <span className="renovation-launcher-radar"><IconRadar size={18} /><i /></span>
-        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 05</strong></span>
+        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 06</strong></span>
         <span className="renovation-launcher-progress"><i /></span>
         <IconArrowUpRight size={15} />
       </button>
@@ -99,7 +103,7 @@ export function ReconstructionPanel() {
                   </div>
                 </div>
                 <div className="renovation-progress-orbit">
-                  <div><strong>76</strong><span>%</span><small>текущего этапа</small></div>
+                  <div><strong>84</strong><span>%</span><small>текущего этапа</small></div>
                   <i /><i /><i />
                 </div>
               </section>
@@ -139,7 +143,7 @@ export function ReconstructionPanel() {
                 </main>
 
                 <aside className="renovation-release-log">
-                  <header><span>Журнал обновлений</span><strong>5 циклов</strong></header>
+                  <header><span>Журнал обновлений</span><strong>6 циклов</strong></header>
                   <div>
                     {releaseNotes.map(([cycle, title], index) => (
                       <article key={cycle} className={index === 0 ? 'is-current' : ''}>
@@ -149,7 +153,7 @@ export function ReconstructionPanel() {
                   </div>
                   <footer>
                     <IconProgressCheck size={20} />
-                    <div><strong>Следующее обновление</strong><span>Карточки дел, законов и системные формы</span></div>
+                    <div><strong>Следующее обновление</strong><span>Карточки законов, дел и связанные реестры</span></div>
                   </footer>
                 </aside>
               </div>

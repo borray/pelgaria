@@ -234,26 +234,19 @@ router.post('/sessions', requireAuth, requirePermission('office.create'), async 
     return
   }
 
-  const check = await latestPrinterCheck(req.user!.id, req.user!.login)
-  const bypass = req.body.printer_check_bypassed === true
-  if (!check && !bypass) {
-    res.status(428).json({ error: 'Перед началом сессии требуется проверка станции печати', code: 'PRINTER_CHECK_REQUIRED' })
-    return
-  }
-
   const session = await prisma.$transaction(async (tx) => {
-    const number = await nextDocumentNumber(tx, 'SERVICE_SESSION', 'СЕСС')
+    const number = await nextDocumentNumber(tx, 'SERVICE_SESSION', 'КОНТ')
     return tx.serviceSession.create({
       data: {
         number,
-        registry_code: registryCode('СЕСС', number),
+        registry_code: registryCode('КОНТ', number),
         mode,
         subject,
         contact: typeof req.body.contact === 'string' ? req.body.contact.trim() || null : null,
         citizen_id: req.body.citizen_id || null,
         operator_id: req.user!.id,
-        printer_check_id: check?.id ?? null,
-        printer_check_bypassed: !check && bypass,
+        printer_check_id: null,
+        printer_check_bypassed: false,
         data: typeof req.body.data === 'object' && req.body.data ? req.body.data as Prisma.InputJsonValue : {},
       },
       include: sessionInclude,

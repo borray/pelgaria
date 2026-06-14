@@ -10,6 +10,7 @@ import './styles/renovation-v3.css'
 import './styles/renovation-v4.css'
 import './styles/renovation-v5.css'
 import './styles/renovation-v6.css'
+import './styles/renovation-v7.css'
 import { ToastProvider } from './components/ui/Toast'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

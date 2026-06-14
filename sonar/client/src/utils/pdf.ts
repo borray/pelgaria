@@ -149,7 +149,10 @@ async function openPdf(responsePromise: Promise<Response>): Promise<void> {
   `
 
   try {
-    const response = await responsePromise
+    const [response] = await Promise.all([
+      responsePromise,
+      new Promise<void>((resolve) => window.setTimeout(resolve, 7000)),
+    ])
     if (!response.ok) throw new Error(await readError(response))
 
     const contentType = response.headers.get('content-type') ?? ''

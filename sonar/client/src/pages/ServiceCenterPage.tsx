@@ -1,51 +1,40 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  IconAlertTriangle,
   IconArchive,
+  IconArrowRight,
+  IconBrandDiscord,
   IconCheck,
   IconClipboardText,
-  IconDatabase,
+  IconClock,
+  IconDeviceGamepad2,
   IconFileText,
-  IconInnerShadowTop,
-  IconPlayerPlay,
-  IconPrinter,
-  IconScan,
+  IconForms,
+  IconInbox,
+  IconPlus,
+  IconSearch,
   IconSettings,
+  IconSparkles,
   IconTrash,
-  IconUpload,
   IconUser,
+  IconUsers,
 } from '@tabler/icons-react'
 import apiClient from '../api/client'
-import type {
-  Citizen,
-  GeneratedDocument,
-  PrinterTestSheet,
-  ServiceAttachment,
-  ServiceRequest,
-  ServiceSession,
-  ServiceSessionMode,
-} from '../types'
+import type { Citizen, GeneratedDocument, ServiceAttachment, ServiceRequest, ServiceSession, ServiceSessionMode } from '../types'
 import { useAuthStore } from '../store/auth'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
-import { Table, type TableColumn } from '../components/ui/Table'
-import { RegistryMark } from '../components/ui/RegistryMark'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
+import { PrintCenterPage } from './PrintCenterPage'
 
-type CenterTab = 'sessions' | 'registry' | 'station'
-
-interface Readiness {
-  ready: boolean
-  check: PrinterTestSheet | null
-  valid_until: string | null
-}
+type ContactTab = 'queue' | 'materials' | 'print'
+type ContactChannel = 'GAME' | 'DISCORD' | 'FORM' | 'INTERNAL'
 
 interface RegistryData {
   documents: Array<GeneratedDocument & { service_session?: Pick<ServiceSession, 'id' | 'number'> | null }>
@@ -53,289 +42,269 @@ interface RegistryData {
   attachments: Array<ServiceAttachment & { session: Pick<ServiceSession, 'id' | 'number' | 'subject'> }>
 }
 
-const MODES: Array<{ value: ServiceSessionMode; title: string; text: string; icon: typeof IconUser }> = [
-  { value: 'ONLINE', title: 'Онлайн-обслуживание', text: 'Сотрудник заполняет обращения и документы непосредственно в СОНАР.', icon: IconUser },
-  { value: 'OFFLINE', title: 'Офлайн-обслуживание', text: 'Печатные бланки, сканы, распознавание и обязательная сверка.', icon: IconScan },
-  { value: 'INTERNAL', title: 'Внутренняя операция', text: 'Служебные поручения, справки и документы без внешнего заявителя.', icon: IconInnerShadowTop },
+const channels: Array<{ value: ContactChannel; title: string; text: string; icon: typeof IconUser; mode: ServiceSessionMode }> = [
+  { value: 'GAME', title: 'Игрок на связи', text: 'Работа в игре, голосе или при непосредственном диалоге.', icon: IconDeviceGamepad2, mode: 'ONLINE' },
+  { value: 'DISCORD', title: 'Удалённое обращение', text: 'Заявка или сведения получены через Discord.', icon: IconBrandDiscord, mode: 'ONLINE' },
+  { value: 'FORM', title: 'Готовая заявка', text: 'Игрок заранее прислал форму, скриншот или файл.', icon: IconForms, mode: 'OFFLINE' },
+  { value: 'INTERNAL', title: 'Внутренняя работа', text: 'Операция сотрудника без участия игрока.', icon: IconSettings, mode: 'INTERNAL' },
 ]
 
-const MODE_LABELS: Record<ServiceSessionMode, string> = {
-  ONLINE: 'Онлайн',
-  OFFLINE: 'Офлайн',
-  INTERNAL: 'Внутренняя',
+const statusCopy: Record<string, { label: string; group: 'active' | 'waiting' | 'done' }> = {
+  ACTIVE: { label: 'В работе', group: 'active' },
+  WAITING_SCAN: { label: 'Ждём игрока', group: 'waiting' },
+  REVIEW: { label: 'На рассмотрении', group: 'waiting' },
+  COMPLETED: { label: 'Исполнено', group: 'done' },
+  CANCELLED: { label: 'Отменено', group: 'done' },
 }
 
 export function ServiceCenterPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
-  const requestedTab = params.get('tab') as CenterTab | null
-  const [tab, setTabState] = useState<CenterTab>(requestedTab ?? 'sessions')
+  const [tab, setTabState] = useState<ContactTab>((params.get('tab') as ContactTab) || 'queue')
   const [sessions, setSessions] = useState<ServiceSession[]>([])
   const [citizens, setCitizens] = useState<Citizen[]>([])
-  const [readiness, setReadiness] = useState<Readiness>({ ready: false, check: null, valid_until: null })
+  const [registry, setRegistry] = useState<RegistryData>({ documents: [], requests: [], attachments: [] })
   const [loading, setLoading] = useState(true)
-  const [startOpen, setStartOpen] = useState(false)
-  const [mode, setMode] = useState<ServiceSessionMode>('ONLINE')
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('OPEN')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [channel, setChannel] = useState<ContactChannel>('GAME')
   const [subject, setSubject] = useState('')
   const [contact, setContact] = useState('')
   const [citizenId, setCitizenId] = useState('')
-  const [bypass, setBypass] = useState(false)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [stationLoading, setStationLoading] = useState(false)
-  const [testSheets, setTestSheets] = useState<PrinterTestSheet[]>([])
-  const [registry, setRegistry] = useState<RegistryData>({ documents: [], requests: [], attachments: [] })
-  const [registrySearch, setRegistrySearch] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<{ kind: 'session' | 'document' | 'request' | 'attachment' | 'test-sheet'; id: string; title: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ServiceSession | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
-  const scanInput = useRef<HTMLInputElement>(null)
 
-  const setTab = (next: CenterTab) => {
+  const setTab = (next: ContactTab) => {
     setTabState(next)
-    setParams(next === 'sessions' ? {} : { tab: next }, { replace: true })
+    setParams(next === 'queue' ? {} : { tab: next }, { replace: true })
   }
 
-  const fetchCore = useCallback(async () => {
+  const fetchSessions = useCallback(async () => {
     setLoading(true)
     try {
-      const [sessionRes, readinessRes, citizenRes] = await Promise.all([
+      const [sessionResponse, citizenResponse] = await Promise.all([
         apiClient.get<ServiceSession[]>('/service-center/sessions'),
-        apiClient.get<Readiness>('/service-center/readiness'),
         apiClient.get<Citizen[]>('/citizens'),
       ])
-      setSessions(sessionRes.data)
-      setReadiness(readinessRes.data)
-      setCitizens(citizenRes.data)
+      setSessions(sessionResponse.data)
+      setCitizens(citizenResponse.data)
     } finally {
       setLoading(false)
     }
   }, [])
 
-  const fetchStation = useCallback(async () => {
-    const response = await apiClient.get<PrinterTestSheet[]>('/print-center/test-sheets')
-    setTestSheets(response.data)
-  }, [])
-
   const fetchRegistry = useCallback(async () => {
-    const suffix = registrySearch ? `?search=${encodeURIComponent(registrySearch)}` : ''
+    const suffix = query.trim() ? `?search=${encodeURIComponent(query.trim())}` : ''
     const response = await apiClient.get<RegistryData>(`/service-center/registry${suffix}`)
     setRegistry(response.data)
-  }, [registrySearch])
+  }, [query])
 
-  useEffect(() => { void fetchCore() }, [fetchCore])
+  useEffect(() => { void fetchSessions() }, [fetchSessions])
   useEffect(() => {
-    if (tab === 'station') void fetchStation()
-    if (tab === 'registry') {
-      const timer = window.setTimeout(() => void fetchRegistry(), 250)
-      return () => window.clearTimeout(timer)
-    }
-  }, [fetchRegistry, fetchStation, tab])
+    if (tab !== 'materials') return
+    const timer = window.setTimeout(() => void fetchRegistry(), 250)
+    return () => window.clearTimeout(timer)
+  }, [fetchRegistry, tab])
 
-  const createSession = async () => {
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    return sessions.filter((item) => {
+      const copy = `${item.number} ${item.subject} ${item.citizen?.nickname ?? ''} ${item.citizen?.reg_number ?? ''}`.toLowerCase()
+      const matchesQuery = !normalized || copy.includes(normalized)
+      const group = statusCopy[item.status]?.group
+      const matchesStatus = statusFilter === 'ALL'
+        || (statusFilter === 'OPEN' && group !== 'done')
+        || (statusFilter === 'WAITING' && group === 'waiting')
+        || (statusFilter === 'DONE' && group === 'done')
+      return matchesQuery && matchesStatus
+    })
+  }, [query, sessions, statusFilter])
+
+  const stats = useMemo(() => ({
+    active: sessions.filter((item) => statusCopy[item.status]?.group === 'active').length,
+    waiting: sessions.filter((item) => statusCopy[item.status]?.group === 'waiting').length,
+    today: sessions.filter((item) => new Date(item.started_at).toDateString() === new Date().toDateString()).length,
+    done: sessions.filter((item) => item.status === 'COMPLETED').length,
+  }), [sessions])
+
+  const resetCreate = () => {
+    setChannel('GAME')
+    setSubject('')
+    setContact('')
+    setCitizenId('')
+    setError(null)
+  }
+
+  const createContact = async () => {
     if (!subject.trim()) {
-      setError('Укажите предмет обслуживания')
+      setError('Укажите, зачем игрок обратился')
       return
     }
+    const selectedChannel = channels.find((item) => item.value === channel)!
     setCreating(true)
     setError(null)
     try {
       const response = await apiClient.post<ServiceSession>('/service-center/sessions', {
-        mode,
-        subject,
-        contact,
-        citizen_id: citizenId || null,
-        printer_check_bypassed: bypass,
+        mode: selectedChannel.mode,
+        subject: subject.trim(),
+        contact: contact.trim(),
+        citizen_id: channel === 'INTERNAL' ? null : citizenId || null,
+        data: { channel, source: selectedChannel.title },
       })
-      setStartOpen(false)
+      setCreateOpen(false)
+      resetCreate()
       navigate(`/office/sessions/${response.data.id}`)
-    } catch (err: unknown) {
-      setError((err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось начать сессию')
+    } catch (requestError: unknown) {
+      setError((requestError as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Не удалось создать обращение')
     } finally {
       setCreating(false)
     }
   }
 
-  const createTestSheet = async () => {
-    setStationLoading(true)
-    try {
-      const response = await apiClient.post<PrinterTestSheet>('/print-center/test-sheets', {})
-      await fetchStation()
-      await printPdf(`/api/print-center/test-sheets/${response.data.id}/pdf`, true)
-    } finally {
-      setStationLoading(false)
-    }
-  }
-
-  const uploadPrinterScan = async (file: File) => {
-    const sheet = testSheets.find((item) => item.status === 'PRINTED') ?? testSheets[0]
-    if (!sheet) return
-    setStationLoading(true)
-    const body = new FormData()
-    body.append('scan', file)
-    try {
-      await apiClient.post(`/service-center/printer-checks/${sheet.id}/scan`, body, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      await Promise.all([fetchStation(), fetchCore()])
-    } finally {
-      setStationLoading(false)
-      if (scanInput.current) scanInput.current.value = ''
-    }
-  }
-
-  const deleteRecord = async () => {
+  const deleteContact = async () => {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      const endpoint = deleteTarget.kind === 'test-sheet'
-        ? `/print-center/test-sheets/${deleteTarget.id}`
-        : `/service-center/${deleteTarget.kind === 'session' ? 'sessions' : `${deleteTarget.kind}s`}/${deleteTarget.id}`
-      await apiClient.delete(endpoint)
+      await apiClient.delete(`/service-center/sessions/${deleteTarget.id}`)
       setDeleteTarget(null)
-      await Promise.all([fetchCore(), fetchRegistry(), fetchStation()])
+      await fetchSessions()
     } finally {
       setDeleteLoading(false)
     }
   }
 
-  const stats = useMemo(() => ({
-    active: sessions.filter((item) => item.status !== 'COMPLETED' && item.status !== 'CANCELLED').length,
-    offlineReview: sessions.filter((item) => item.mode === 'OFFLINE' && item.status === 'REVIEW').length,
-    today: sessions.filter((item) => new Date(item.started_at).toDateString() === new Date().toDateString()).length,
-  }), [sessions])
-
-  const sessionColumns: TableColumn<ServiceSession>[] = [
-    { key: 'number', header: 'Сессия', width: '175px', render: (row) => <div><strong>{row.number}</strong><div className="table-secondary">{MODE_LABELS[row.mode]}</div></div> },
-    { key: 'subject', header: 'Предмет', render: (row) => <div><strong>{row.subject}</strong><div className="table-secondary">{row.citizen ? `${row.citizen.nickname} · ${row.citizen.reg_number}` : 'Без привязки к гражданину'}</div></div> },
-    { key: 'registry_code', header: 'ШК', width: '205px', render: (row) => <RegistryMark code={row.registry_code} compact /> },
-    { key: 'files', header: 'Материалы', width: '115px', render: (row) => `${row._count?.documents ?? 0} док. · ${row._count?.attachments ?? 0} файлов` },
-    { key: 'status', header: 'Статус', width: '125px', render: (row) => <Badge status={row.status} /> },
-    { key: 'started_at', header: 'Начата', width: '145px', render: (row) => formatDateTime(row.started_at) },
-    { key: 'actions', header: '', width: '46px', render: (row) => isHeadOfState ? <ActionMenu items={[{ label: 'Удалить сессию и материалы', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget({ kind: 'session', id: row.id, title: row.number }) }]} /> : null },
-  ]
-
-  const deleteMenu = (kind: 'document' | 'request' | 'attachment', id: string, title: string) =>
-    isHeadOfState ? <ActionMenu items={[{ label: 'Удалить запись', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget({ kind, id, title }) }]} /> : null
-
   return (
-    <div className="service-center-page service-center-v3">
-      <section className="service-command">
-        <div className="service-command-copy">
-          <span className="service-command-kicker">Единое рабочее место сотрудника</span>
-          <h1>Центр обслуживания</h1>
-          <p>Одна среда для приёма граждан, внутренних операций, печатных форм и полного архива материалов.</p>
-          <Button variant="primary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={17} />Начать новую сессию</Button>
+    <div className="contact-center">
+      <header className="contact-hero">
+        <div className="contact-hero-copy">
+          <span>СОНАР · Контакт</span>
+          <h1>Работа с игроками<br />без лишней бюрократии</h1>
+          <p>Найдите игрока, зафиксируйте цель и оформите всё необходимое в одном обращении.</p>
+          <div>
+            <Button variant="primary" onClick={() => { resetCreate(); setCreateOpen(true) }}><IconPlus size={17} />Новое обращение</Button>
+            <button type="button" onClick={() => setTab('materials')}><IconArchive size={16} />Архив материалов</button>
+          </div>
         </div>
-        <div className={`service-station-card ${readiness.ready ? 'is-ready' : 'is-warning'}`}>
-          <header>
-            <span>{readiness.ready ? <IconCheck size={19} /> : <IconAlertTriangle size={19} />}</span>
-            <div><small>Персональная станция печати</small><strong>{readiness.ready ? 'Готова к работе' : 'Требуется проверка'}</strong></div>
-          </header>
-          <p>{readiness.ready && readiness.valid_until ? `Допуск действует до ${formatDateTime(readiness.valid_until)}` : 'Проверка закрепляется за текущей учётной записью и действует 24 часа.'}</p>
-          <button type="button" onClick={() => setTab('station')}>Перейти к диагностике</button>
+        <div className="contact-hero-pulse">
+          <div><IconUsers size={30} /><strong>{stats.active}</strong><span>сейчас в работе</span></div>
+          <i /><i /><i />
         </div>
+      </header>
+
+      <section className="contact-stats">
+        <article><span><IconInbox size={18} /></span><div><small>В работе</small><strong>{stats.active}</strong></div></article>
+        <article><span><IconClock size={18} /></span><div><small>Ждём игрока</small><strong>{stats.waiting}</strong></div></article>
+        <article><span><IconSparkles size={18} /></span><div><small>Открыто сегодня</small><strong>{stats.today}</strong></div></article>
+        <article><span><IconCheck size={18} /></span><div><small>Исполнено всего</small><strong>{stats.done}</strong></div></article>
       </section>
 
-      <nav className="service-workspaces" aria-label="Рабочие области центра обслуживания">
-        <button type="button" className={tab === 'sessions' ? 'is-active' : ''} onClick={() => setTab('sessions')}>
-          <span><IconPlayerPlay size={19} /></span>
-          <div><strong>Рабочие сессии</strong><small>Очередь и активные операции</small></div>
-          <b>{sessions.length}</b>
-        </button>
-        <button type="button" className={tab === 'registry' ? 'is-active' : ''} onClick={() => setTab('registry')}>
-          <span><IconDatabase size={19} /></span>
-          <div><strong>Архив материалов</strong><small>Документы, обращения и сканы</small></div>
-          <b>{registry.documents.length + registry.requests.length + registry.attachments.length || '—'}</b>
-        </button>
-        <button type="button" className={tab === 'station' ? 'is-active' : ''} onClick={() => setTab('station')}>
-          <span><IconSettings size={19} /></span>
-          <div><strong>Печатная станция</strong><small>Пробный лист и оценка качества</small></div>
-          <b>{readiness.ready ? 'OK' : '!'}</b>
-        </button>
+      <nav className="contact-tabs">
+        <button className={tab === 'queue' ? 'is-active' : ''} onClick={() => setTab('queue')}><IconInbox size={17} /><span><strong>Обращения</strong><small>Очередь работы с игроками</small></span></button>
+        <button className={tab === 'materials' ? 'is-active' : ''} onClick={() => setTab('materials')}><IconArchive size={17} /><span><strong>Материалы</strong><small>Документы, заявки и файлы</small></span></button>
+        <button className={tab === 'print' ? 'is-active' : ''} onClick={() => setTab('print')}><IconSettings size={17} /><span><strong>Печатный контур</strong><small>Дополнительный инструмент</small></span></button>
       </nav>
 
-      {tab === 'sessions' && <>
-        <div className="service-session-layout">
-          <section className="office-register service-session-register">
-            <div className="section-heading">
-              <div><span className="section-counter">Журнал операций</span><h2>Сессии обслуживания</h2><p>Откройте строку, чтобы вернуться в полноценное рабочее пространство сессии.</p></div>
-              <Button variant="secondary" onClick={() => { setError(null); setStartOpen(true) }}><IconPlayerPlay size={15} />Новая сессия</Button>
+      {tab === 'queue' && (
+        <div className="contact-queue-layout">
+          <main className="contact-queue">
+            <header>
+              <div><span>Рабочая очередь</span><h2>Обращения игроков</h2></div>
+              <Button variant="primary" onClick={() => { resetCreate(); setCreateOpen(true) }}><IconPlus size={15} />Создать</Button>
+            </header>
+            <div className="contact-toolbar">
+              <label><IconSearch size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Игрок, номер или цель обращения" /></label>
+              <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} options={[
+                { value: 'OPEN', label: 'Открытые' },
+                { value: 'WAITING', label: 'Ожидают' },
+                { value: 'DONE', label: 'Завершённые' },
+                { value: 'ALL', label: 'Все обращения' },
+              ]} />
             </div>
-            <Table columns={sessionColumns} data={sessions} keyExtractor={(row) => row.id} loading={loading} onRowClick={(row) => navigate(`/office/sessions/${row.id}`)} />
-          </section>
-          <aside className="service-session-summary">
-            <header><span>Смена сегодня</span><strong>{stats.today}</strong><small>открыто сессий</small></header>
-            <div>
-              <span><IconPlayerPlay size={17} /><small>В работе</small><strong>{stats.active}</strong></span>
-              <span><IconScan size={17} /><small>На сверке</small><strong>{stats.offlineReview}</strong></span>
-              <span><IconArchive size={17} /><small>Всего</small><strong>{sessions.length}</strong></span>
+            <div className="contact-list">
+              {loading && <div className="contact-list-loading">Загружаем обращения…</div>}
+              {!loading && filtered.map((item) => {
+                const channelValue = String((item.data as Record<string, unknown>)?.channel ?? '')
+                const channelInfo = channels.find((entry) => entry.value === channelValue)
+                const ChannelIcon = channelInfo?.icon ?? (item.mode === 'INTERNAL' ? IconSettings : IconUser)
+                return (
+                  <article key={item.id} onClick={() => navigate(`/office/sessions/${item.id}`)}>
+                    <span className="contact-player-mark"><ChannelIcon size={20} /></span>
+                    <div className="contact-list-main">
+                      <header><strong>{item.citizen?.nickname ?? (item.mode === 'INTERNAL' ? 'Внутренняя операция' : 'Игрок не привязан')}</strong><Badge status={item.status} label={statusCopy[item.status]?.label} /></header>
+                      <h3>{item.subject}</h3>
+                      <footer><span>{item.number}</span><span>{channelInfo?.title ?? 'Старое обращение'}</span><span>{formatDateTime(item.started_at)}</span></footer>
+                    </div>
+                    <div className="contact-list-materials"><strong>{(item._count?.documents ?? 0) + (item._count?.requests ?? 0) + (item._count?.attachments ?? 0)}</strong><span>материалов</span></div>
+                    {isHeadOfState ? <ActionMenu items={[{ label: 'Удалить обращение', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget(item) }]} /> : <IconArrowRight size={18} />}
+                  </article>
+                )
+              })}
+              {!loading && filtered.length === 0 && <EmptyState title="Обращений не найдено" description="Измените фильтр или начните работу с новым игроком." />}
             </div>
-            <footer><IconClipboardText size={17} /><span>Все документы и приложения сохраняются внутри соответствующей сессии.</span></footer>
+          </main>
+          <aside className="contact-guide">
+            <span>Новый порядок</span>
+            <h3>Одно обращение.<br />Все действия внутри.</h3>
+            <ol>
+              <li><b>1</b><div><strong>Найдите игрока</strong><small>Или оставьте без привязки</small></div></li>
+              <li><b>2</b><div><strong>Укажите цель</strong><small>Паспорт, заявление, справка</small></div></li>
+              <li><b>3</b><div><strong>Оформите результат</strong><small>Документы и файлы сохранятся вместе</small></div></li>
+            </ol>
+            <footer>Печать больше не требуется для начала работы.</footer>
           </aside>
         </div>
-      </>}
+      )}
 
-      {tab === 'registry' && <section className="office-register">
-        <div className="section-heading office-toolbar-heading">
-          <div><h2>Единый реестр материалов</h2><p>Документы, обращения и сканы из всех сессий.</p></div>
-          <Input placeholder="Номер, ШК, название или текст скана" value={registrySearch} onChange={(event) => setRegistrySearch(event.target.value)} />
-        </div>
-        <div className="registry-groups">
-          <article>
-            <header><IconFileText size={17} /><strong>Документы</strong><b>{registry.documents.length}</b></header>
-            {registry.documents.slice(0, 30).map((item) => <div className="registry-record" key={item.id}><button onClick={() => printPdf(`/api/print-center/documents/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><RegistryMark code={item.registry_code} compact /></button>{deleteMenu('document', item.id, item.number)}</div>)}
-          </article>
-          <article>
-            <header><IconClipboardText size={17} /><strong>Обращения</strong><b>{registry.requests.length}</b></header>
-            {registry.requests.slice(0, 30).map((item) => <div className="registry-record" key={item.id}><button onClick={() => printPdf(`/api/office/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><Badge status={item.status} /></button>{deleteMenu('request', item.id, item.number)}</div>)}
-          </article>
-          <article>
-            <header><IconScan size={17} /><strong>Сканы и приложения</strong><b>{registry.attachments.length}</b></header>
-            {registry.attachments.slice(0, 30).map((item) => <div className="registry-record" key={item.id}><a href={item.url} target="_blank" rel="noreferrer"><span><strong>{item.original_name}</strong><small>{item.session.number} · OCR: {item.ocr_status}</small></span><IconUpload size={15} /></a>{deleteMenu('attachment', item.id, item.original_name)}</div>)}
-          </article>
-        </div>
-      </section>}
+      {tab === 'materials' && (
+        <section className="contact-materials">
+          <header><div><span>Единый архив</span><h2>Материалы обращений</h2></div><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер, ШК или название" /></header>
+          <div>
+            <article><header><IconFileText size={18} /><strong>Документы</strong><b>{registry.documents.length}</b></header>{registry.documents.slice(0, 40).map((item) => <button key={item.id} onClick={() => printPdf(`/api/print-center/documents/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><IconArrowRight size={15} /></button>)}</article>
+            <article><header><IconClipboardText size={18} /><strong>Заявки</strong><b>{registry.requests.length}</b></header>{registry.requests.slice(0, 40).map((item) => <button key={item.id} onClick={() => printPdf(`/api/office/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><IconArrowRight size={15} /></button>)}</article>
+            <article><header><IconArchive size={18} /><strong>Файлы</strong><b>{registry.attachments.length}</b></header>{registry.attachments.slice(0, 40).map((item) => <a key={item.id} href={item.url} target="_blank" rel="noreferrer"><span><strong>{item.original_name}</strong><small>{item.session.number}</small></span><IconArrowRight size={15} /></a>)}</article>
+          </div>
+        </section>
+      )}
 
-      {tab === 'station' && <section className="station-workspace">
-        <div className="section-heading">
-          <div><h2>Проверка станции текущего аккаунта</h2><p>Результат действует 24 часа только для вашей учётной записи.</p></div>
-          <Button variant="primary" loading={stationLoading} onClick={createTestSheet}><IconPrinter size={16} />Напечатать пробный лист</Button>
+      {tab === 'print' && (
+        <div className="contact-print">
+          <section><span><IconSettings size={25} /></span><div><small>Дополнительный модуль</small><h2>Печать не блокирует работу с игроком</h2><p>Диагностика и бумажные формы используются только тогда, когда действительно нужен физический документ.</p></div></section>
+          <PrintCenterPage embedded />
         </div>
-        <input ref={scanInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => event.target.files?.[0] && void uploadPrinterScan(event.target.files[0])} />
-        <div className="station-actions">
-          <button type="button" disabled={!testSheets.length || stationLoading} onClick={() => scanInput.current?.click()}><IconScan size={20} /><strong>Загрузить скан</strong><span>JPG, PNG или WebP</span></button>
-          <div><IconCheck size={20} /><strong>Автоматическая оценка</strong><span>Порог пригодности: 65 из 100</span></div>
-        </div>
-        {testSheets.length ? <Table
-          columns={[
-            { key: 'number', header: 'Пробный лист', render: (row: PrinterTestSheet) => <strong>{row.number}</strong> },
-            { key: 'created_at', header: 'Создан', render: (row: PrinterTestSheet) => formatDateTime(row.created_at) },
-            { key: 'quality', header: 'Оценка', render: (row: PrinterTestSheet) => row.quality_score != null ? `${row.quality_score}/100` : 'Ожидает скан' },
-            { key: 'status', header: 'Статус', render: (row: PrinterTestSheet) => <Badge status={row.status} /> },
-            { key: 'print', header: '', render: (row: PrinterTestSheet) => <Button variant="secondary" size="sm" onClick={() => printPdf(`/api/print-center/test-sheets/${row.id}/pdf`)}><IconPrinter size={14} />Печать</Button> },
-            { key: 'actions', header: '', width: '46px', render: (row: PrinterTestSheet) => isHeadOfState ? <ActionMenu items={[{ label: 'Удалить пробный лист', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget({ kind: 'test-sheet', id: row.id, title: row.number }) }]} /> : null },
-          ]}
-          data={testSheets}
-          keyExtractor={(row) => row.id}
-        /> : <EmptyState title="Ваших проверок пока нет" description="Напечатайте первый пробный лист для этой учётной записи." />}
-      </section>}
+      )}
 
-      <Modal open={startOpen} onClose={() => setStartOpen(false)} title="Начать сессию обслуживания" width={760} footer={<><Button variant="secondary" onClick={() => setStartOpen(false)}>Отмена</Button><Button variant="primary" loading={creating} onClick={createSession}>Открыть рабочее пространство</Button></>}>
-        <div className="session-mode-grid">
-          {MODES.map(({ value, title, text, icon: ModeIcon }) => <button key={value} className={mode === value ? 'is-active' : ''} onClick={() => setMode(value)}><ModeIcon size={20} /><strong>{title}</strong><span>{text}</span></button>)}
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Новое обращение"
+        description="Зафиксируйте игрока, канал связи и ожидаемый результат."
+        width={780}
+        footer={<><Button variant="secondary" onClick={() => setCreateOpen(false)}>Отмена</Button><Button variant="primary" loading={creating} onClick={createContact}>Создать обращение</Button></>}
+      >
+        <div className="contact-create">
+          <div className="contact-channel-grid">
+            {channels.map(({ value, title, text, icon: ChannelIcon }) => (
+              <button type="button" key={value} className={channel === value ? 'is-active' : ''} onClick={() => setChannel(value)}>
+                <span><ChannelIcon size={20} /></span><strong>{title}</strong><small>{text}</small>
+              </button>
+            ))}
+          </div>
+          <div className="form-grid">
+            {channel !== 'INTERNAL' && <Select label="Игрок / гражданин" value={citizenId} onChange={(event) => setCitizenId(event.target.value)} placeholder="Можно выбрать позже" searchable options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />}
+            <Input label="Контакт или Discord" value={contact} onChange={(event) => setContact(event.target.value)} placeholder="@username или примечание" />
+            <div className="span-2"><Input label="Что нужно сделать *" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Например: выдать паспорт или принять заявление" /></div>
+          </div>
+          <div className="contact-create-note"><IconSparkles size={17} /><span>После создания откроется рабочая страница с документами, заявками, файлами и статусом обращения.</span></div>
+          {error && <div className="form-error">{error}</div>}
         </div>
-        <div className="form-grid">
-          <Input label="Предмет обслуживания *" value={subject} onChange={(event) => setSubject(event.target.value)} />
-          <Input label="Контакт" value={contact} onChange={(event) => setContact(event.target.value)} />
-          {mode !== 'INTERNAL' && <Select label="Гражданин" value={citizenId} onChange={(event) => setCitizenId(event.target.value)} placeholder="Без привязки" searchable options={citizens.map((item) => ({ value: item.id, label: `${item.nickname} · ${item.reg_number}` }))} />}
-        </div>
-        {!readiness.ready && <label className="bypass-check"><input type="checkbox" checked={bypass} onChange={(event) => setBypass(event.target.checked)} /><span><strong>Продолжить без проверки станции</strong><small>Предупреждение появится снова при следующей сессии этого аккаунта.</small></span></label>}
-        {error && <div className="form-error">{error}</div>}
       </Modal>
 
-      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Удалить запись центра обслуживания" footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={deleteRecord}>Удалить</Button></>}>
-        <div className="danger-confirm"><strong>{deleteTarget?.title}</strong> будет удалена без возможности восстановления. При удалении сессии удаляются все её обращения, документы и загруженные материалы.</div>
+      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Удалить обращение" footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={deleteContact}>Удалить</Button></>}>
+        <div className="danger-confirm"><strong>{deleteTarget?.number}</strong> и все связанные материалы будут удалены без возможности восстановления.</div>
       </Modal>
     </div>
   )

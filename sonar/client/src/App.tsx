@@ -79,7 +79,7 @@ export default function App() {
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="roles/*" element={<RolesPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="print-center" element={<Navigate to="/office?tab=forms" replace />} />
+        <Route path="print-center" element={<Navigate to="/office?tab=print" replace />} />
         <Route path="verify" element={<VerificationPage />} />
         <Route path="office" element={<ServiceCenterPage />} />
         <Route path="office/sessions/:id" element={<ServiceSessionPage />} />
