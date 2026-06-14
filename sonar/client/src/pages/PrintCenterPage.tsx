@@ -254,8 +254,8 @@ export function PrintCenterPage({ serviceSessionId, embedded = false }: { servic
       <div className="page-heading">
         <div>
           <span className="page-kicker">СОНАР · Документооборот</span>
-          <h1>{embedded ? 'Документы сессии' : 'Центр печати'}</h1>
-          <p>{embedded ? 'Созданные здесь формы и справки автоматически входят в материалы текущей сессии.' : 'Формы, справки, выписки и архив сформированных документов.'}</p>
+          <h1>{embedded ? 'Документы обращения' : 'Центр печати'}</h1>
+          <p>{embedded ? 'Созданные здесь формы и справки автоматически входят в материалы текущего обращения.' : 'Формы, справки, выписки и архив сформированных документов.'}</p>
         </div>
         <Button variant="primary" onClick={() => templates[0] && openTemplate(templates[0])}><IconPlus size={16} />Новая форма</Button>
       </div>

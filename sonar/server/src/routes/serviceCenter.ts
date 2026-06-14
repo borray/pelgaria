@@ -216,7 +216,7 @@ router.get('/sessions', requireAuth, requirePermission('office.view'), async (re
         ],
       } : {}),
     },
-    orderBy: { started_at: 'desc' },
+    orderBy: { updated_at: 'desc' },
     include: {
       citizen: { select: { id: true, reg_number: true, nickname: true } },
       operator: { select: { id: true, login: true } },
@@ -442,6 +442,12 @@ router.get('/registry', requireAuth, requirePermission('office.view'), async (re
       take: 100,
       include: {
         citizen: { select: { id: true, reg_number: true, nickname: true } },
+        created_by: { select: { id: true, login: true } },
+        assignee: { select: { id: true, login: true } },
+        events: {
+          orderBy: { created_at: 'desc' },
+          include: { created_by: { select: { id: true, login: true } } },
+        },
         service_session: { select: { id: true, number: true } },
       },
     }),

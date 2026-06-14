@@ -4,6 +4,7 @@ import {
   IconArchive,
   IconArrowRight,
   IconBrandDiscord,
+  IconCalendar,
   IconCheck,
   IconClipboardText,
   IconClock,
@@ -12,6 +13,7 @@ import {
   IconForms,
   IconInbox,
   IconPlus,
+  IconRefresh,
   IconSearch,
   IconSettings,
   IconSparkles,
@@ -33,7 +35,7 @@ import { formatDateTime } from '../utils/formatters'
 import { printPdf } from '../utils/pdf'
 import { PrintCenterPage } from './PrintCenterPage'
 
-type ContactTab = 'queue' | 'materials' | 'print'
+type ContactTab = 'queue' | 'archive' | 'materials' | 'print'
 type ContactChannel = 'GAME' | 'DISCORD' | 'FORM' | 'INTERNAL'
 
 interface RegistryData {
@@ -57,11 +59,26 @@ const statusCopy: Record<string, { label: string; group: 'active' | 'waiting' | 
   CANCELLED: { label: 'Отменено', group: 'done' },
 }
 
+const requestStatusLabels: Record<string, string> = {
+  RECEIVED: 'Принято',
+  REVIEW: 'На рассмотрении',
+  IN_PROGRESS: 'В работе',
+  WAITING: 'Ожидает сведений',
+  COMPLETED: 'Исполнено',
+  REJECTED: 'Отказано',
+  CANCELLED: 'Отменено',
+}
+
 export function ServiceCenterPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
-  const [tab, setTabState] = useState<ContactTab>((params.get('tab') as ContactTab) || 'queue')
+  const requestedTab = params.get('tab')
+  const [tab, setTabState] = useState<ContactTab>(
+    requestedTab && ['queue', 'archive', 'materials', 'print'].includes(requestedTab)
+      ? requestedTab as ContactTab
+      : 'queue',
+  )
   const [sessions, setSessions] = useState<ServiceSession[]>([])
   const [citizens, setCitizens] = useState<Citizen[]>([])
   const [registry, setRegistry] = useState<RegistryData>({ documents: [], requests: [], attachments: [] })
@@ -77,6 +94,7 @@ export function ServiceCenterPage() {
   const [error, setError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ServiceSession | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState<RegistryData['requests'][number] | null>(null)
 
   const setTab = (next: ContactTab) => {
     setTabState(next)
@@ -123,6 +141,15 @@ export function ServiceCenterPage() {
       return matchesQuery && matchesStatus
     })
   }, [query, sessions, statusFilter])
+
+  const archivedSessions = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    return sessions.filter((item) => {
+      if (statusCopy[item.status]?.group !== 'done') return false
+      const copy = `${item.number} ${item.subject} ${item.citizen?.nickname ?? ''} ${item.citizen?.reg_number ?? ''}`.toLowerCase()
+      return !normalized || copy.includes(normalized)
+    })
+  }, [query, sessions])
 
   const stats = useMemo(() => ({
     active: sessions.filter((item) => statusCopy[item.status]?.group === 'active').length,
@@ -186,7 +213,7 @@ export function ServiceCenterPage() {
           <p>Найдите игрока, зафиксируйте цель и оформите всё необходимое в одном обращении.</p>
           <div>
             <Button variant="primary" onClick={() => { resetCreate(); setCreateOpen(true) }}><IconPlus size={17} />Новое обращение</Button>
-            <button type="button" onClick={() => setTab('materials')}><IconArchive size={16} />Архив материалов</button>
+            <button type="button" onClick={() => setTab('archive')}><IconArchive size={16} />Архив обращений</button>
           </div>
         </div>
         <div className="contact-hero-pulse">
@@ -204,6 +231,7 @@ export function ServiceCenterPage() {
 
       <nav className="contact-tabs">
         <button className={tab === 'queue' ? 'is-active' : ''} onClick={() => setTab('queue')}><IconInbox size={17} /><span><strong>Обращения</strong><small>Очередь работы с игроками</small></span></button>
+        <button className={tab === 'archive' ? 'is-active' : ''} onClick={() => setTab('archive')}><IconArchive size={17} /><span><strong>Архив дел</strong><small>Завершённые и отменённые обращения</small></span></button>
         <button className={tab === 'materials' ? 'is-active' : ''} onClick={() => setTab('materials')}><IconArchive size={17} /><span><strong>Материалы</strong><small>Документы, заявки и файлы</small></span></button>
         <button className={tab === 'print' ? 'is-active' : ''} onClick={() => setTab('print')}><IconSettings size={17} /><span><strong>Печатный контур</strong><small>Дополнительный инструмент</small></span></button>
       </nav>
@@ -259,12 +287,40 @@ export function ServiceCenterPage() {
         </div>
       )}
 
+      {tab === 'archive' && (
+        <section className="contact-archive">
+          <header>
+            <div><span>Архив СОНАР-КОНТАКТ</span><h2>Завершённые обращения</h2><p>Закрытие не уничтожает рабочее дело: его можно открыть, изучить и при необходимости возобновить.</p></div>
+            <label><IconSearch size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер, игрок или содержание" /></label>
+          </header>
+          <div className="contact-archive-list">
+            {archivedSessions.map((item) => (
+              <article key={item.id}>
+                <button className="contact-archive-open" onClick={() => navigate(`/office/sessions/${item.id}`)}>
+                  <span className="contact-player-mark"><IconArchive size={19} /></span>
+                  <span>
+                    <small>{item.number} · {formatDateTime(item.completed_at ?? item.updated_at)}</small>
+                    <strong>{item.subject}</strong>
+                    <em>{item.citizen?.nickname ?? (item.mode === 'INTERNAL' ? 'Внутренняя операция' : 'Игрок не привязан')}</em>
+                  </span>
+                  <Badge status={item.status} label={statusCopy[item.status]?.label} />
+                  <span className="contact-archive-count">{(item._count?.documents ?? 0) + (item._count?.requests ?? 0) + (item._count?.attachments ?? 0)}<small>материалов</small></span>
+                  <IconArrowRight size={18} />
+                </button>
+                {isHeadOfState && <ActionMenu items={[{ label: 'Удалить обращение', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget(item) }]} />}
+              </article>
+            ))}
+            {!loading && archivedSessions.length === 0 && <EmptyState title="Архив пуст" description="Завершённые обращения появятся здесь и останутся доступными для просмотра." />}
+          </div>
+        </section>
+      )}
+
       {tab === 'materials' && (
         <section className="contact-materials">
           <header><div><span>Единый архив</span><h2>Материалы обращений</h2></div><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер, ШК или название" /></header>
           <div>
             <article><header><IconFileText size={18} /><strong>Документы</strong><b>{registry.documents.length}</b></header>{registry.documents.slice(0, 40).map((item) => <button key={item.id} onClick={() => printPdf(`/api/print-center/documents/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><IconArrowRight size={15} /></button>)}</article>
-            <article><header><IconClipboardText size={18} /><strong>Заявки</strong><b>{registry.requests.length}</b></header>{registry.requests.slice(0, 40).map((item) => <button key={item.id} onClick={() => printPdf(`/api/office/${item.id}/pdf`)}><span><strong>{item.number}</strong><small>{item.title}</small></span><IconArrowRight size={15} /></button>)}</article>
+            <article><header><IconClipboardText size={18} /><strong>Заявки</strong><b>{registry.requests.length}</b></header>{registry.requests.slice(0, 40).map((item) => <button key={item.id} onClick={() => setSelectedRequest(item)}><span><strong>{item.number}</strong><small>{item.title}</small></span><Badge status={item.status} label={requestStatusLabels[item.status]} /></button>)}</article>
             <article><header><IconArchive size={18} /><strong>Файлы</strong><b>{registry.attachments.length}</b></header>{registry.attachments.slice(0, 40).map((item) => <a key={item.id} href={item.url} target="_blank" rel="noreferrer"><span><strong>{item.original_name}</strong><small>{item.session.number}</small></span><IconArrowRight size={15} /></a>)}</article>
           </div>
         </section>
@@ -305,6 +361,40 @@ export function ServiceCenterPage() {
 
       <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Удалить обращение" footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Отмена</Button><Button variant="danger" loading={deleteLoading} onClick={deleteContact}>Удалить</Button></>}>
         <div className="danger-confirm"><strong>{deleteTarget?.number}</strong> и все связанные материалы будут удалены без возможности восстановления.</div>
+      </Modal>
+
+      <Modal
+        open={Boolean(selectedRequest)}
+        onClose={() => setSelectedRequest(null)}
+        title={selectedRequest ? `${selectedRequest.number} · ${selectedRequest.title}` : 'Карточка заявки'}
+        description="Полная запись из архива СОНАР-КОНТАКТ"
+        width={860}
+        footer={selectedRequest && <>
+          <Button variant="secondary" onClick={() => printPdf(`/api/office/${selectedRequest.id}/pdf`)}><IconFileText size={15} />Сформировать</Button>
+          {selectedRequest.service_session && <Button variant="primary" onClick={() => navigate(`/office/sessions/${selectedRequest.service_session!.id}`)}>
+            {selectedRequest.status === 'COMPLETED' ? <IconArchive size={15} /> : <IconRefresh size={15} />}
+            {selectedRequest.status === 'COMPLETED' ? 'Открыть дело' : 'Продолжить работу'}
+          </Button>}
+        </>}
+      >
+        {selectedRequest && <div className="contact-request-detail">
+          <section className="contact-request-summary">
+            <div><span>Статус</span><Badge status={selectedRequest.status} label={requestStatusLabels[selectedRequest.status]} /></div>
+            <div><span>Заявитель</span><strong>{selectedRequest.citizen ? `${selectedRequest.citizen.nickname} · ${selectedRequest.citizen.reg_number}` : selectedRequest.contact || 'Не указан'}</strong></div>
+            <div><span>Ответственный</span><strong>{selectedRequest.assignee?.login ?? 'Не назначен'}</strong></div>
+            <div><span>Срок</span><strong><IconCalendar size={14} />{selectedRequest.due_at ? new Date(selectedRequest.due_at).toLocaleDateString('ru-RU') : 'Не установлен'}</strong></div>
+          </section>
+          <section className="contact-request-body">
+            <span>Содержание заявки</span>
+            <p>{selectedRequest.description}</p>
+            {selectedRequest.resolution && <div><strong>Результат исполнения</strong><p>{selectedRequest.resolution}</p></div>}
+          </section>
+          <section className="contact-request-history">
+            <span>История работы</span>
+            {(selectedRequest.events ?? []).map((event) => <article key={event.id}><i /><div><strong>{event.message}</strong><small>{event.created_by.login} · {formatDateTime(event.created_at)}</small></div></article>)}
+            {!selectedRequest.events?.length && <p>История изменений пока пуста.</p>}
+          </section>
+        </div>}
       </Modal>
     </div>
   )

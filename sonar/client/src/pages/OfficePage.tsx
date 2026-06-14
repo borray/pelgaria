@@ -299,8 +299,8 @@ export function OfficePage({ serviceSessionId, embedded = false }: { serviceSess
       <div className="page-heading">
         <div>
           <span className="page-kicker">СОНАР · Документооборот</span>
-          <h1>{embedded ? 'Обращения сессии' : 'Приёмная'}</h1>
-          <p>{embedded ? 'Все обращения на этой странице автоматически связаны с текущей сессией.' : 'Обращения граждан, заявления, жалобы и служебные поручения с контролем исполнения.'}</p>
+          <h1>{embedded ? 'Заявки обращения' : 'Приёмная'}</h1>
+          <p>{embedded ? 'Все заявки на этой странице автоматически связаны с текущим делом СОНАР-КОНТАКТ.' : 'Обращения граждан, заявления, жалобы и служебные поручения с контролем исполнения.'}</p>
         </div>
         {canCreate && (
           <Button variant="primary" onClick={() => { setCreateError(null); setCreateOpen(true) }}>

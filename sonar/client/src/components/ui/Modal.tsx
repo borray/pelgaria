@@ -58,7 +58,7 @@ export function Modal({ open, onClose, title, description, children, footer, wid
       <section
         ref={dialogRef}
         className={`modal-dialog${destructive ? ' is-destructive' : ''}`}
-        style={{ maxWidth: width }}
+        style={{ width: `min(${width}px, calc(100vw - 32px))`, maxWidth: width }}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

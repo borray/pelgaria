@@ -7,9 +7,11 @@ import {
   IconClipboardText,
   IconClock,
   IconFileText,
+  IconHome,
   IconMessageCircle,
   IconPaperclip,
   IconPlayerPause,
+  IconRefresh,
   IconSearch,
   IconTrash,
   IconUpload,
@@ -41,6 +43,7 @@ export function ServiceSessionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isHeadOfState = useAuthStore((state) => state.user?.role?.name === 'Глава государства')
+  const canManage = useAuthStore((state) => state.hasPermission('office.manage'))
   const [contact, setContact] = useState<ServiceSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [workspace, setWorkspace] = useState<ContactWorkspace>('work')
@@ -144,9 +147,19 @@ export function ServiceSessionPage() {
         <div className="contact-record-state"><Badge status={contact.status} label={statusLabels[contact.status]} /><small>Оператор: {contact.operator.login}</small></div>
         <div className="contact-record-actions">
           {!isClosed && <Button variant="primary" loading={statusLoading} onClick={() => setStatus('COMPLETED')}><IconCheck size={15} />Исполнено</Button>}
+          {isClosed && canManage && <Button variant="secondary" loading={statusLoading} onClick={() => setStatus('ACTIVE')}><IconRefresh size={15} />Возобновить</Button>}
+          {isClosed && <Button variant="primary" onClick={() => navigate('/office')}><IconHome size={15} />В СОНАР-КОНТАКТ</Button>}
           {isHeadOfState && <ActionMenu items={[{ label: 'Удалить обращение', icon: <IconTrash size={15} />, danger: true, onClick: () => setDeleteTarget({ kind: 'session', id: contact.id, title: contact.number }) }]} />}
         </div>
       </header>
+
+      {isClosed && (
+        <section className="contact-complete-banner">
+          <span><IconCheck size={22} /></span>
+          <div><small>Работа завершена</small><strong>Материалы сохранены в архиве СОНАР-КОНТАКТ</strong><p>Карточка остаётся доступной для просмотра. Если появились новые сведения, обращение можно вернуть в работу.</p></div>
+          <Button variant="secondary" onClick={() => navigate('/office')}><IconHome size={15} />Главное меню</Button>
+        </section>
+      )}
 
       <div className="contact-work-layout">
         <aside className="contact-record-sidebar">

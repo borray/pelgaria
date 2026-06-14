@@ -1,0 +1,138 @@
+/* SONAR renovation, cycle 8: durable Contact workflow */
+
+.topbar-messenger {
+  position: relative;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--surface);
+  text-decoration: none;
+  font-size: 8px;
+  font-weight: 700;
+}
+.topbar-messenger:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: var(--accent-faint); }
+.topbar-messenger i { width: 6px; height: 6px; border-radius: 50%; background: #38c992; box-shadow: 0 0 0 3px color-mix(in srgb, #38c992 14%, transparent); }
+
+.contact-archive {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.contact-archive > header {
+  min-height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 19px;
+  border-bottom: 1px solid var(--line);
+}
+.contact-archive > header span { color: var(--accent); font-size: 7px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.contact-archive > header h2 { margin: 5px 0 3px; font-size: 18px !important; }
+.contact-archive > header p { margin: 0; color: var(--muted); font-size: 8px; }
+.contact-archive > header label {
+  width: min(330px, 100%);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--quiet);
+  background: var(--surface-subtle);
+}
+.contact-archive > header label:focus-within { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.contact-archive > header input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 9px; }
+.contact-archive-list { min-height: 360px; padding: 8px; }
+.contact-archive-list > article {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.contact-archive-open {
+  width: 100%;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 105px 70px 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 42px 11px 11px;
+  border: 0;
+  border-radius: 11px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.contact-archive-open:hover { background: var(--accent-faint); }
+.contact-archive-open > span:nth-child(2) { min-width: 0; }
+.contact-archive-open > span:nth-child(2) small,
+.contact-archive-open > span:nth-child(2) strong,
+.contact-archive-open > span:nth-child(2) em { display: block; }
+.contact-archive-open > span:nth-child(2) small { color: var(--quiet); font: 7px Consolas, monospace; }
+.contact-archive-open > span:nth-child(2) strong { margin: 6px 0 5px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.contact-archive-open > span:nth-child(2) em { color: var(--muted); font-size: 7.5px; font-style: normal; }
+.contact-archive-count { text-align: center; font: 700 14px Consolas, monospace; }
+.contact-archive-count small { display: block; margin-top: 3px; color: var(--quiet); font: 6.5px var(--font-sans); }
+.contact-archive-list > article > .action-menu-trigger { position: absolute; right: 10px; z-index: 1; }
+
+.contact-request-detail { display: grid; gap: 11px; }
+.contact-request-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: var(--line); gap: 1px; }
+.contact-request-summary > div { min-height: 70px; padding: 12px; background: var(--surface); }
+.contact-request-summary span, .contact-request-body > span, .contact-request-history > span { display: block; margin-bottom: 7px; color: var(--quiet); font-size: 7px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.contact-request-summary strong { display: flex; align-items: center; gap: 5px; font-size: 8.5px; }
+.contact-request-body, .contact-request-history { padding: 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.contact-request-body > p, .contact-request-body > div p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.65; white-space: pre-wrap; }
+.contact-request-body > div { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+.contact-request-body > div strong { display: block; margin-bottom: 6px; font-size: 8px; }
+.contact-request-history article { position: relative; min-height: 43px; display: flex; align-items: start; padding: 4px 0 10px 18px; border-left: 1px solid var(--line); }
+.contact-request-history article i { position: absolute; top: 7px; left: -4px; width: 7px; height: 7px; border: 2px solid var(--surface); border-radius: 50%; background: var(--accent); }
+.contact-request-history article strong, .contact-request-history article small { display: block; }
+.contact-request-history article strong { font-size: 8px; }.contact-request-history article small { margin-top: 4px; color: var(--quiet); font-size: 7px; }
+.contact-request-history > p { color: var(--quiet); font-size: 8px; }
+
+.contact-complete-banner {
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
+  border-radius: 14px;
+  background: linear-gradient(100deg, var(--accent-faint), var(--surface));
+}
+.contact-complete-banner > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; color: var(--accent); background: var(--accent-soft); }
+.contact-complete-banner small, .contact-complete-banner strong, .contact-complete-banner p { display: block; }
+.contact-complete-banner small { color: var(--accent); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.contact-complete-banner strong { margin-top: 4px; font-size: 10px; }.contact-complete-banner p { margin: 4px 0 0; color: var(--muted); font-size: 7.5px; }
+
+/* Forms keep their geometry while controls gain focus or open a popover. */
+.modal-dialog { min-width: 0; }
+.modal-workspace, .modal-content, .form-section-stack, .form-section, .form-grid, .form-grid > *, .ui-field { min-width: 0; }
+.modal-content { overflow-x: hidden; overflow-y: auto; }
+.contact-channel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.contact-channel-grid button { min-height: 106px; }
+.ui-select-control { position: relative; }
+.ui-select-popover { width: 100%; min-width: 100%; max-width: 100%; }
+
+@media (max-width: 900px) {
+  .contact-request-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contact-archive-open { grid-template-columns: 42px minmax(0, 1fr) 18px; }
+  .contact-archive-open > .ui-badge, .contact-archive-count { display: none; }
+}
+@media (max-width: 720px) {
+  .topbar-messenger span { display: none; }.topbar-messenger { width: 40px; justify-content: center; padding: 0; }.topbar-messenger i { position: absolute; top: 8px; right: 7px; }
+  .contact-archive > header { align-items: stretch; flex-direction: column; }.contact-archive > header label { width: 100%; }
+  .contact-request-summary, .contact-channel-grid { grid-template-columns: 1fr; }
+  .contact-complete-banner { grid-template-columns: 40px 1fr; }.contact-complete-banner .ui-button { grid-column: 1 / -1; }
+}

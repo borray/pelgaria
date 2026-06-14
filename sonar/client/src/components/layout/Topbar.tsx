@@ -2,6 +2,7 @@ import {
   IconApps,
   IconChevronDown,
   IconLogout,
+  IconMessageCircle,
   IconUserCircle,
 } from '@tabler/icons-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
@@ -19,7 +20,7 @@ export function Topbar({ onNavigationClick, navigationOpen }: { onNavigationClic
 
   const primaryNavigation = [
     { to: '/', label: 'Обзор' },
-    { to: '/office', label: 'Обслуживание', permission: 'office.view' },
+    { to: '/office', label: 'Контакт', permission: 'office.view' },
     { to: '/citizens', label: 'Граждане', permission: 'citizens.view' },
     { to: '/laws', label: 'Право', permission: 'laws.view' },
   ].filter((item) => !item.permission || hasPermission(item.permission))
@@ -40,6 +41,13 @@ export function Topbar({ onNavigationClick, navigationOpen }: { onNavigationClic
       </div>
       <div className="topbar-tools">
         <CommandPalette />
+        {hasPermission('chat.send') && (
+          <Link to="/chat" className="topbar-messenger" title="Открыть служебный мессенджер">
+            <IconMessageCircle size={18} />
+            <span>Связь</span>
+            <i aria-hidden="true" />
+          </Link>
+        )}
         <button
           type="button"
           className={`topbar-sections-button${navigationOpen ? ' is-active' : ''}`}
