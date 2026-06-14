@@ -112,3 +112,17 @@ jobs:
 
             pm2 save
           ENDSSH
+
+      - name: Verify deployed API
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error https://pg-bridge.ru/api/health | grep -q '"status":"ok"'; then
+              echo "SONAR API is healthy"
+              exit 0
+            fi
+            echo "API is not ready yet (attempt ${attempt}/12)"
+            sleep 5
+          done
+
+          echo "SONAR API failed to become healthy after deployment"
+          exit 1

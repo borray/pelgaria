@@ -15,6 +15,19 @@ interface AuthState {
   hasPermission: (perm: string) => boolean
 }
 
+async function readApiResponse(response: Response) {
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('application/json')) {
+    if (response.status >= 500) {
+      throw new Error('СОНАР временно недоступен. Сервер не отвечает, попробуйте войти через несколько минут.')
+    }
+    throw new Error('Сервер вернул некорректный ответ. Обновите страницу и повторите попытку.')
+  }
+
+  return response.json()
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -32,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ login, password }),
           })
 
-          const data = await response.json()
+          const data = await readApiResponse(response)
 
           if (!response.ok) {
             throw new Error(data.error || 'Ошибка входа')
@@ -72,7 +85,7 @@ export const useAuthStore = create<AuthState>()(
           return
         }
 
-        const data = await response.json()
+        const data = await readApiResponse(response)
         set({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
