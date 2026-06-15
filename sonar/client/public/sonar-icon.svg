@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="background" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#052d2a"/>
+      <stop offset=".58" stop-color="#07584d"/>
+      <stop offset="1" stop-color="#0b8873"/>
+    </linearGradient>
+    <linearGradient id="symbol" x1="32" y1="8" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#c8fff0"/>
+    </linearGradient>
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M6 43Q31 8 58 39" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#background)"/>
+  <path d="M9 50Q32 22 56 47" fill="none" stroke="#8effdf" stroke-width="1.5" stroke-linecap="round" opacity=".22"/>
+  <path d="M28 8H36V16H44V24H52V32H44V40H36V48H28V40H20V32H12V24H20V16H28Z" fill="url(#symbol)" mask="url(#cut)"/>
+  <path d="M6 43Q31 8 58 39" fill="none" stroke="#92ffe0" stroke-width="1.7" stroke-linecap="round"/>
+  <circle cx="58" cy="39" r="3" fill="#fff"/>
+  <circle cx="58" cy="39" r="1.35" fill="#70e4c5"/>
+</svg>

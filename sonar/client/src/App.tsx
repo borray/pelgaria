@@ -63,6 +63,13 @@ export default function App() {
         : 'СОНАР — государственная система Пельгарии'
   }, [location.pathname])
 
+  useEffect(() => {
+    const isPublicPage = location.pathname === '/'
+    const iconHref = isPublicPage ? '/icon.svg?v=6' : '/sonar-icon.svg?v=1'
+    document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]')
+      .forEach((link) => link.href = iconHref)
+  }, [location.pathname])
+
   return <Suspense fallback={<div className="route-loading"><span /></div>}>
     <Routes>
       <Route path="/" element={<BridgePage />} />

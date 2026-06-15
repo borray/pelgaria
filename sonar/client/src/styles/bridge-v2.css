@@ -404,6 +404,7 @@
 }
 
 .pelgaria-sonar {
+  --sonar-scan: #fff;
   min-height: 46px;
   display: flex;
   align-items: center;
@@ -419,6 +420,17 @@
   text-decoration: none;
   backdrop-filter: blur(16px);
   transition: color .2s, border-color .2s, background .2s, transform .2s;
+}
+
+.pelgaria-sonar > svg {
+  width: 19px;
+  height: 19px;
+  overflow: visible;
+  color: #8effdf;
+}
+
+.pelgaria-sonar .sonar-mark-pulse {
+  filter: drop-shadow(0 0 4px rgba(142,255,223,.65));
 }
 
 .pelgaria-sonar:hover {

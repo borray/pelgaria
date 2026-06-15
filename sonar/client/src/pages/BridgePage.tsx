@@ -1,6 +1,7 @@
-import { IconArrowUpRight, IconLock } from '@tabler/icons-react'
+import { IconArrowUpRight } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { PelgariaMark } from '../components/brand/PelgariaMark'
+import { SonarMark } from '../components/brand/SonarMark'
 
 export function BridgePage() {
   return (
@@ -54,7 +55,7 @@ export function BridgePage() {
         </Link>
 
         <Link to="/login" className="pelgaria-sonar">
-          <IconLock size={16} stroke={1.7} />
+          <SonarMark />
           <span>СОНАР</span>
           <IconArrowUpRight size={16} stroke={1.7} />
         </Link>
