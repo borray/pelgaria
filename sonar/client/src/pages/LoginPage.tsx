@@ -60,7 +60,7 @@ export function LoginPage() {
 
   return (
     <main className="auth auth-renovated">
-      <Link to="/" className="auth-bridge-return">← Мост Пельгарии</Link>
+      <Link to="/" className="auth-bridge-return">← Пельгария</Link>
       <div className="auth-theme-toggle"><ThemeToggle compact /></div>
       <section className="auth-stage">
         <aside className="auth-brief">

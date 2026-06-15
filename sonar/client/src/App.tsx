@@ -57,7 +57,7 @@ export default function App() {
 
   useEffect(() => {
     document.title = location.pathname === '/'
-      ? 'Мост Пельгарии — Minecraft Java RP'
+      ? 'Пельгария — скоро'
       : location.pathname === '/login'
         ? 'СОНАР — служебный вход'
         : 'СОНАР — государственная система Пельгарии'
