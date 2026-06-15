@@ -66,12 +66,10 @@ export function BridgePage() {
           <span>Сигнал обнаружен</span>
         </div>
         <p className="pelgaria-kicker">Minecraft Java · Role Play</p>
-        <h1>ПЕЛЬГАРИЯ</h1>
+        <h1>Пельгария</h1>
         <p className="pelgaria-tagline">Мир, которого ещё нет на карте.</p>
         <div className="pelgaria-message-footer">
           <span>Проект находится в разработке</span>
-          <i />
-          <span>Открытие позднее</span>
         </div>
       </section>
 

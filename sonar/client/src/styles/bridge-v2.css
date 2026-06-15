@@ -11,7 +11,7 @@
   background:
     radial-gradient(circle at 76% 44%, rgba(41, 112, 227, .23), transparent 32%),
     linear-gradient(125deg, #020712 0%, #05152f 48%, #092a60 100%);
-  font-family: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+  font-family: "Bahnschrift", "Arial Narrow", "Segoe UI", Arial, sans-serif;
 }
 
 .pelgaria-teaser::before {
@@ -389,8 +389,10 @@
 
 .pelgaria-brand strong {
   font-size: 13px;
-  font-weight: 720;
-  letter-spacing: .2em;
+  font-family: "Bahnschrift", "Arial Narrow", "Segoe UI", sans-serif;
+  font-stretch: condensed;
+  font-weight: 650;
+  letter-spacing: .22em;
 }
 
 .pelgaria-brand small {
@@ -463,36 +465,41 @@
 .pelgaria-message h1 {
   margin: 0;
   color: #f7fbff !important;
-  font-size: clamp(78px, 10.5vw, 188px) !important;
-  font-weight: 610;
-  line-height: .78;
-  letter-spacing: -.075em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(82px, 10.8vw, 194px) !important;
+  font-weight: 400;
+  line-height: .82;
+  letter-spacing: -.055em;
   text-shadow: 0 18px 80px rgba(3, 16, 37, .48);
 }
 
 .pelgaria-tagline {
-  margin: 35px 0 0;
+  margin: 42px 0 0;
   color: rgba(224, 237, 252, .72);
-  font-size: clamp(20px, 2vw, 30px);
-  font-weight: 420;
-  letter-spacing: -.025em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(20px, 1.8vw, 28px);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -.015em;
 }
 
 .pelgaria-message-footer {
   display: flex;
   align-items: center;
-  gap: 15px;
   margin-top: 34px;
   color: rgba(198, 220, 245, .43);
   font-size: 11px;
-  letter-spacing: .09em;
+  font-weight: 500;
+  letter-spacing: .14em;
   text-transform: uppercase;
 }
 
-.pelgaria-message-footer i {
-  width: 42px;
+.pelgaria-message-footer::before {
+  content: "";
+  width: 30px;
   height: 1px;
-  background: rgba(185, 216, 248, .25);
+  margin-right: 13px;
+  background: rgba(185, 216, 248, .32);
 }
 
 .pelgaria-footer {
@@ -668,27 +675,26 @@
   }
 
   .pelgaria-message h1 {
-    font-size: clamp(48px, 14.7vw, 68px) !important;
-    line-height: .84;
+    font-size: clamp(53px, 16.4vw, 72px) !important;
+    line-height: .88;
+    letter-spacing: -.06em;
   }
 
   .pelgaria-tagline {
     max-width: 310px;
-    margin-top: 23px;
-    font-size: 19px;
+    margin-top: 28px;
+    font-size: 18px;
     line-height: 1.35;
   }
 
   .pelgaria-message-footer {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
     margin-top: 23px;
     font-size: 9px;
   }
 
-  .pelgaria-message-footer i {
-    display: none;
+  .pelgaria-message-footer::before {
+    width: 22px;
+    margin-right: 10px;
   }
 
   .pelgaria-footer {
@@ -715,7 +721,7 @@
   }
 
   .pelgaria-message h1 {
-    font-size: clamp(72px, 9vw, 125px) !important;
+    font-size: clamp(76px, 9.4vw, 132px) !important;
   }
 
   .pelgaria-kicker {

@@ -22,6 +22,7 @@ import {
 type RenovationView = 'active' | 'next' | 'archive'
 
 const activeSystems = [
+  { title: 'Типографика Пельгарии', text: 'Тизер получил отдельную выразительную шрифтовую систему: редакционное начертание для названия и строгий узкий гротеск для служебных сигналов.', Icon: IconSparkles, tag: 'Готово' },
   { title: 'Тизер Пельгарии', text: 'Публичная витрина пересобрана с нуля как единая анимированная композиция: световой сигнал, орбитальная графика, фирменный знак и минимум информации до открытия проекта.', Icon: IconSparkles, tag: 'Готово' },
   { title: 'Знак Пельгарии', text: 'Проект получил собственный модульный символ из 13 равных элементов. Он встроен в публичную витрину, вкладку браузера и устанавливаемое приложение.', Icon: IconSparkles, tag: 'Готово' },
   { title: 'Комфорт на Full HD', text: 'Текст, подписи, кнопки, формы, таблицы и модальные окна получили новый минимум читаемости для масштаба 100%.', Icon: IconSparkles, tag: 'Готово' },
@@ -53,6 +54,7 @@ const archived = [
 ]
 
 const releaseNotes = [
+  ['Цикл 13', 'Новая выразительная типографика публичного тизера'],
   ['Цикл 12', 'Новая анимированная витрина-тизер Пельгарии'],
   ['Цикл 11', 'Новый модульный знак Пельгарии во всех точках проекта'],
   ['Цикл 10', 'Фирменный знак Пельгарии и единая иконка проекта'],
@@ -84,7 +86,7 @@ export function ReconstructionPanel() {
     <>
       <button className="renovation-launcher" type="button" onClick={() => setOpen(true)}>
         <span className="renovation-launcher-radar"><IconRadar size={18} /><i /></span>
-        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 12</strong></span>
+        <span className="renovation-launcher-copy"><small>СОНАР развивается</small><strong>Реновация · цикл 13</strong></span>
         <span className="renovation-launcher-progress"><i /></span>
         <IconArrowUpRight size={15} />
       </button>
@@ -155,7 +157,7 @@ export function ReconstructionPanel() {
                 </main>
 
                 <aside className="renovation-release-log">
-                  <header><span>Журнал обновлений</span><strong>12 циклов</strong></header>
+                  <header><span>Журнал обновлений</span><strong>13 циклов</strong></header>
                   <div>
                     {releaseNotes.map(([cycle, title], index) => (
                       <article key={cycle} className={index === 0 ? 'is-current' : ''}>
