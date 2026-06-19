@@ -396,6 +396,7 @@ export interface ServiceRequest {
 }
 
 export type Permission =
+  | 'system.superadmin'
   | 'citizens.view'
   | 'citizens.create'
   | 'citizens.edit'

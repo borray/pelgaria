@@ -1,0 +1,67 @@
+# Локальный/самостоятельный запуск всего стека Пельгария / СОНАР.
+# Запуск:  cp .env.example .env  &&  docker compose up --build
+# Фронтенд: http://localhost:${CLIENT_HTTP_PORT:-8080}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sonar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sonar_local_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sonar}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sonar} -d ${POSTGRES_DB:-sonar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./sonar/server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: "3001"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sonar:sonar_local_password@postgres:5432/sonar?schema=public}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-change-me-access-secret-please}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh-secret-please}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      FILE_STORAGE_DRIVER: ${FILE_STORAGE_DRIVER:-local}
+      UPLOADS_DIR: ${UPLOADS_DIR:-/app/uploads}
+      UPLOADS_PUBLIC_PATH: ${UPLOADS_PUBLIC_PATH:-/uploads}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-}
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "3001"
+
+  client:
+    build:
+      context: ./sonar/client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "${CLIENT_HTTP_PORT:-8080}:80"
+
+volumes:
+  pg_data:
+  uploads_data:
