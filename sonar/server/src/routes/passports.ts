@@ -9,10 +9,14 @@ import {
   barcodeStripes,
   escapeHtml,
   guillocheRosette,
+  guillocheField,
+  microtextLine,
+  qrCode,
   mrzLines,
   sealBlock,
   pageShell,
   parseOptionalDate,
+  A4_W,
   ACCENT,
   INK,
 } from '../services/templates'
@@ -46,8 +50,11 @@ async function renderPassportPdf(passport: {
   const seed = passport.number
   const barcodeData = passport.registry_code ?? `${passport.number}|${passport.citizen.nickname}|${passport.issued_at.toISOString().slice(0, 10)}`
   const hash8 = crypto.createHash('sha256').update(barcodeData).digest('hex').slice(0, 8)
-  const barcode = barcodeStripes(`${barcodeData}|${hash8}`, 320, 40)
-  const rosette = guillocheRosette(seed, 150)
+  const barcode = barcodeStripes(`${barcodeData}|${hash8}`, 300, 46)
+  const qr = qrCode(`СОНАР|ПАСПОРТ|${passport.registry_code ?? passport.number}|${passport.citizen.nickname}`, 96)
+  const rosette = guillocheRosette(seed, 84)
+  const field = guillocheField(`${seed}:fill`, A4_W - 130, 64, 0.14)
+  const micro = microtextLine('ПЕЛЬГРАД · СОНАР · ВНУТРЕННИЙ ПАСПОРТ · ' + (passport.registry_code ?? passport.number), A4_W - 130)
 
   const issuedDate = passport.issued_at.toLocaleDateString('ru-RU')
   const expiresDate = passport.expires_at
@@ -67,75 +74,105 @@ async function renderPassportPdf(passport: {
   })
 
   const signer = passport.issued_by?.login ?? 'СОНАР'
-  const seal = sealBlock({ number: passport.number, signer, role: 'Глава государства', date: issuedDate, size: 130 })
+  const seal = sealBlock({ number: passport.number, signer, role: 'Председатель Верховного Совета', date: issuedDate, size: 116 })
 
-  const field = (label: string, value: string, mono = false) =>
-    `<div class="pp-field"><div class="pp-label">${escapeHtml(label)}</div><div class="pp-value"${mono ? ' style="font-family:\'JetBrains Mono\',monospace;color:#1B3A6B;"' : ''}>${escapeHtml(value)}</div></div>`
+  // Реперные (регистрационные) чёрные квадраты по углам — для точной ЧБ-печати
+  const regSquare = (cls: string) => `<div class="pp-reg ${cls}"></div>`
+
+  const fieldRow = (label: string, value: string, mono = false) =>
+    `<div class="pp-field"><div class="pp-flabel">${escapeHtml(label)}</div><div class="pp-fvalue${mono ? ' mono' : ''}">${escapeHtml(value)}</div></div>`
 
   const header = `<div class="pp-header">
-    <div class="pp-rosette">${rosette}</div>
+    <div class="pp-rosette ink">${rosette}</div>
     <div class="pp-head-text">
-      <div class="pp-state">ГОСУДАРСТВО ПЕЛЬГАРИЯ</div>
+      <div class="pp-state">ГОСУДАРСТВО ПЕЛЬГРАД</div>
       <div class="pp-title">ВНУТРЕННИЙ ПАСПОРТ</div>
-      <div class="pp-sub">ГОСУДАРСТВЕННАЯ ИНФОРМАЦИОННАЯ СИСТЕМА СОНАР</div>
+      <div class="pp-sub">Государственная информационная система СОНАР · мир Пельгария</div>
     </div>
-    <div class="pp-photo">МЕСТО<br>ДЛЯ<br>ФОТО</div>
+    <div class="pp-photo"><span>М.Ф.</span><small>место<br>для фото</small></div>
   </div>`
 
   const body = `
     <div class="pp-numberbar">
-      <div><div class="pp-label">НОМЕР ПАСПОРТА / PASSPORT №</div><div class="pp-number">${escapeHtml(passport.number)}</div><div class="pp-registry">${escapeHtml(passport.registry_code)}</div></div>
-      <div class="pp-emblem">⬢</div>
+      <div>
+        <div class="pp-label">Номер паспорта · PASSPORT №</div>
+        <div class="pp-number">${escapeHtml(passport.number)}</div>
+        <div class="pp-registry">${escapeHtml(passport.registry_code ?? '—')}</div>
+      </div>
+      <div class="pp-qr bc">${qr}</div>
     </div>
-    <div class="pp-grid">
-      ${field('Никнейм / SURNAME', passport.citizen.nickname)}
-      ${field('Discord', passport.citizen.discord_username ?? '—')}
-      ${field('Роль в государстве', passport.citizen.role_title)}
-      ${field('Рег. номер', passport.citizen.reg_number, true)}
-      ${field('Дата выдачи', issuedDate)}
-      ${field('Действителен до', expiresDate)}
+    <div class="pp-fieldwrap">
+      <div class="pp-fill ink">${field}</div>
+      <div class="pp-grid">
+        ${fieldRow('Никнейм · SURNAME', passport.citizen.nickname)}
+        ${fieldRow('Discord', passport.citizen.discord_username ?? '—')}
+        ${fieldRow('Статус / роль', passport.citizen.role_title)}
+        ${fieldRow('Рег. номер', passport.citizen.reg_number, true)}
+        ${fieldRow('Дата выдачи', issuedDate)}
+        ${fieldRow('Действителен до', expiresDate)}
+      </div>
     </div>
+    <div class="pp-micro ink">${micro}</div>
     <div class="pp-seal-row">${seal}</div>
   `
 
   const footer = `
-    <div class="pp-mrz">${mrz.split('\n').map((l) => `<div>${l}</div>`).join('')}</div>
+    <div class="pp-mrz">${mrz.split('\n').map((l) => `<div>${escapeHtml(l)}</div>`).join('')}</div>
     <div class="pp-foot">
-      <div class="pp-barcode">${barcode}<div class="pp-barcode-text">${escapeHtml(passport.number)}</div></div>
-      <div class="pp-foot-strip">Документ действителен при наличии электронной подписи СОНАР · Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
+      <div class="pp-barcode bc">${barcode}<div class="pp-barcode-text">${escapeHtml(passport.registry_code ?? passport.number)}</div></div>
+      <div class="pp-foot-strip">Документ действителен при наличии электронной подписи СОНАР.<br>Дата печати: ${new Date().toLocaleDateString('ru-RU')}</div>
     </div>
   `
 
   const styles = `
-    .pp-header { display:flex; align-items:center; gap:18px; background:${INK}; color:#fff; padding:16px 22px; border-radius:3px; }
-    .pp-rosette { width:74px; height:74px; flex-shrink:0; filter:invert(1) opacity(0.85); }
-    .pp-rosette svg { width:74px; height:74px; }
+    /* Паспорт — оптимизирован под чёткую ЧБ-печать на лазерном принтере (Pantum):
+       только чёрная линия/контур, без тяжёлых сплошных заливок, гильоши/ШК/QR
+       в высоком контрасте grayscale, реперные метки и микротекст. */
+    .pp-reg { position:absolute; width:14px; height:14px; background:#000; z-index:6; }
+    .pp-reg.tl{ top:0; left:0; } .pp-reg.tr{ top:0; right:0; } .pp-reg.bl{ bottom:0; left:0; } .pp-reg.br{ bottom:0; right:0; }
+    .ink svg { filter:grayscale(1) contrast(1.5); }
+    .bc svg { filter:grayscale(1) contrast(2); shape-rendering:crispEdges; }
+    .pp-header { display:flex; align-items:center; gap:18px; border:2px solid #000; padding:14px 20px; }
+    .pp-rosette { width:64px; height:64px; flex-shrink:0; } .pp-rosette svg { width:64px; height:64px; }
     .pp-head-text { flex:1; text-align:center; }
-    .pp-state { font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.65); }
-    .pp-title { font-size:24px; font-weight:700; letter-spacing:0.12em; margin-top:4px; }
-    .pp-sub { font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.05em; }
-    .pp-photo { width:78px; height:96px; border:1.5px dashed rgba(255,255,255,0.4); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; color:rgba(255,255,255,0.5); text-align:center; flex-shrink:0; }
-    .pp-numberbar { display:flex; align-items:flex-end; justify-content:space-between; padding:24px 4px 18px; border-bottom:2px solid ${ACCENT}33; }
-    .pp-label { font-size:9px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
-    .pp-number { font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:700; color:${INK}; letter-spacing:0.06em; }
-    .pp-registry { font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:5px; letter-spacing:.05em; color:#374151; }
-    .pp-emblem { font-size:40px; color:${ACCENT}55; }
-    .pp-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px 28px; padding:26px 4px; }
-    .pp-value { font-size:15px; color:#1F2937; font-weight:500; }
-    .pp-seal-row { display:flex; justify-content:flex-end; padding:8px 10px 0; }
-    .pp-mrz { font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; letter-spacing:2px; background:#F4F6FA; border-top:2px solid ${INK}; border-bottom:1px solid #D0D7E3; padding:12px 14px; color:${INK}; line-height:1.5; overflow:hidden; white-space:nowrap; }
+    .pp-state { font-size:11px; letter-spacing:4px; font-weight:700; color:#000; }
+    .pp-title { font-family:'PT Serif',serif; font-size:25px; font-weight:700; letter-spacing:0.1em; margin-top:5px; color:#000; }
+    .pp-sub { font-size:9.5px; color:#333; margin-top:5px; letter-spacing:0.04em; }
+    .pp-photo { width:78px; height:96px; border:2px solid #000; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; }
+    .pp-photo span { font:700 12px 'JetBrains Mono',monospace; letter-spacing:1px; } .pp-photo small { font-size:8px; color:#444; text-align:center; line-height:1.3; }
+    .pp-numberbar { display:flex; align-items:center; justify-content:space-between; padding:18px 2px 14px; border-bottom:2px solid #000; }
+    .pp-label { font-size:9px; color:#333; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+    .pp-number { font-family:'JetBrains Mono',monospace; font-size:32px; font-weight:700; color:#000; letter-spacing:0.07em; }
+    .pp-registry { font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:5px; letter-spacing:.05em; color:#222; }
+    .pp-qr { width:84px; height:84px; } .pp-qr svg { width:84px; height:84px; }
+    .pp-fieldwrap { position:relative; }
+    .pp-fill { position:absolute; inset:0; z-index:0; opacity:.85; pointer-events:none; } .pp-fill svg { width:100%; }
+    .pp-grid { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr; gap:14px 30px; padding:20px 2px; }
+    .pp-field { border-bottom:1px solid #000; padding-bottom:6px; }
+    .pp-flabel { font-size:8.5px; color:#333; text-transform:uppercase; letter-spacing:0.08em; }
+    .pp-fvalue { font-size:15px; color:#000; font-weight:600; margin-top:4px; }
+    .pp-fvalue.mono { font-family:'JetBrains Mono',monospace; font-size:14px; }
+    .pp-micro { height:11px; overflow:hidden; margin:6px 0 2px; opacity:.8; } .pp-micro svg { width:100%; }
+    .pp-seal-row { display:flex; justify-content:flex-end; padding:6px 8px 0; }
+    .pp-mrz { font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; letter-spacing:2px; border-top:2px solid #000; border-bottom:2px solid #000; padding:11px 12px; color:#000; line-height:1.5; overflow:hidden; white-space:nowrap; }
     .pp-foot { display:flex; align-items:flex-end; justify-content:space-between; padding-top:14px; }
     .pp-barcode { display:flex; flex-direction:column; gap:4px; }
-    .pp-barcode-text { font-family:'JetBrains Mono',monospace; font-size:9px; color:#9CA3AF; letter-spacing:0.06em; }
-    .pp-foot-strip { font-size:9px; color:#9CA3AF; text-align:right; max-width:300px; line-height:1.5; }
+    .pp-barcode-text { font-family:'JetBrains Mono',monospace; font-size:9px; color:#222; letter-spacing:0.06em; }
+    .pp-foot-strip { font-size:9px; color:#333; text-align:right; max-width:300px; line-height:1.55; }
+    @media print {
+      * { color:#000 !important; }
+      .ink svg { filter:grayscale(1) contrast(1.7) !important; }
+      .bc svg { filter:grayscale(1) contrast(2.2) !important; shape-rendering:crispEdges; }
+      .pp-reg { background:#000 !important; }
+    }
   `
 
-  const watermark = `<div style="width:520px;height:520px;">${guillocheRosette(seed + ':wm', 520)}</div>`
+  const watermark = `<div style="width:480px;height:480px;">${guillocheRosette(seed + ':wm', 480)}</div>`
 
   const html = pageShell({
     seed,
-    accent: ACCENT,
-    header,
+    accent: INK,
+    header: `${regSquare('tl')}${regSquare('tr')}${regSquare('bl')}${regSquare('br')}${header}`,
     body,
     footer,
     styles,
