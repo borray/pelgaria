@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { requireAuth } from '../middleware/auth'
+import { effectivePermissions } from '../middleware/permissions'
 
 const router = Router()
 const prisma = new PrismaClient()
@@ -49,7 +50,7 @@ router.post('/login', async (req: Request, res: Response) => {
       return
     }
 
-    const permissions = (user.role.permissions as Record<string, boolean>) || {}
+    const permissions = effectivePermissions(user.role)
 
     const tokenPayload = {
       id: user.id,
@@ -141,7 +142,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     await prisma.refreshToken.delete({ where: { token: refreshToken } })
 
-    const permissions = (user.role.permissions as Record<string, boolean>) || {}
+    const permissions = effectivePermissions(user.role)
     const tokenPayload = {
       id: user.id,
       login: user.login,
@@ -267,7 +268,7 @@ router.post('/change-login', requireAuth, async (req: Request, res: Response) =>
     })
 
     // Перевыпускаем токены, чтобы новый логин был актуален во всех частях системы
-    const permissions = (user.role.permissions as Record<string, boolean>) || {}
+    const permissions = effectivePermissions(user.role)
     const tokenPayload = {
       id: user.id,
       login: user.login,
@@ -326,7 +327,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
         name: user.role.name,
         color: user.role.color,
       },
-      permissions: (user.role.permissions as Record<string, boolean>) || {},
+      permissions: effectivePermissions(user.role),
       must_change_password: user.must_change_password,
       discord_username: user.discord_username,
       discord_avatar: user.discord_avatar,

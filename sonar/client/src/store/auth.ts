@@ -102,6 +102,9 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (perm: string) => {
         const { user } = get()
         if (!user) return false
+        // Суперадмин (Председатель Верховного Совета) проходит любую проверку прав —
+        // согласовано с серверным requirePermission.
+        if (user.permissions?.['system.superadmin'] === true) return true
         return user.permissions?.[perm] === true
       },
     }),

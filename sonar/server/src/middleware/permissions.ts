@@ -31,6 +31,21 @@ const SUPERADMIN_PERMISSION = 'system.superadmin'
 // пока всем суперадмин-ролям не проставлено право system.superadmin.
 const LEGACY_SUPERADMIN_ROLE = 'Глава государства'
 
+/**
+ * Эффективные права роли для токена/ответа клиенту.
+ * Если роль является суперадмином (есть право `system.superadmin` ИЛИ это историческая
+ * роль «Глава государства»), гарантированно проставляем `system.superadmin`. Так Председатель
+ * Верховного Совета получает доступ ко всем — в т.ч. новым — функциям без ручной правки роли,
+ * даже если её запись в БД создана до появления этого права.
+ */
+export function effectivePermissions(role: { name: string; permissions: unknown }): Record<string, boolean> {
+  const base = (role.permissions as Record<string, boolean>) || {}
+  if (base[SUPERADMIN_PERMISSION] === true || role.name === LEGACY_SUPERADMIN_ROLE) {
+    return { ...base, [SUPERADMIN_PERMISSION]: true }
+  }
+  return base
+}
+
 export function isSuperadmin(req: Request): boolean {
   const user = req.user
   if (!user) return false
