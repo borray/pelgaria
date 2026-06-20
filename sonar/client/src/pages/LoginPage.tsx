@@ -91,7 +91,7 @@ export function LoginPage() {
             <div className="auth-renovation-notice">
               <span><IconTool size={18} /></span>
               <div>
-                <strong>Идёт цикл реновации СОНАР</strong>
+                <strong>Идёт цикл развития СОНАР</strong>
                 <p>Интерфейс и внутренние модули обновляются поэтапно. До завершения работ отдельные функции могут временно работать нестабильно.</p>
               </div>
             </div>
