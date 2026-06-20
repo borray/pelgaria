@@ -49,6 +49,8 @@ model User {
   service_sessions          ServiceSession[]        @relation("ServiceOperator")
   service_attachments       ServiceAttachment[]     @relation("ServiceAttachmentUploader")
   printer_test_sheets       PrinterTestSheet[]       @relation("PrinterTestOwner")
+  created_initiatives       ProjectInitiative[]      @relation("InitiativeAuthor")
+  initiative_events         ProjectInitiativeEvent[] @relation("InitiativeEventAuthor")
 }
 
 model RefreshToken {
@@ -629,4 +631,67 @@ model ChatAttachment {
   mime_type     String
   size          Int
   url           String
+}
+
+// ─── Проектная инициатива (Канцелярия Верховного Совета · реестр СОНАР) ───────
+model ProjectInitiative {
+  id               String                   @id @default(cuid())
+  number           String                   @unique
+  registry_code    String                   @unique
+  type             InitiativeType
+  status           InitiativeStatus         @default(SUBMITTED)
+  title            String
+  initiator        String
+  essence          String
+  state_request    String
+  responsible      String?
+  created_by_id    String
+  created_by       User                     @relation("InitiativeAuthor", fields: [created_by_id], references: [id])
+  decision_note    String?
+  decided_by_login String?
+  decided_at       DateTime?
+  submitted_at     DateTime                 @default(now())
+  events           ProjectInitiativeEvent[]
+  created_at       DateTime                 @default(now())
+  updated_at       DateTime                 @updatedAt
+
+  @@index([status, submitted_at])
+  @@index([type])
+}
+
+model ProjectInitiativeEvent {
+  id            String            @id @default(cuid())
+  initiative_id String
+  initiative    ProjectInitiative @relation(fields: [initiative_id], references: [id], onDelete: Cascade)
+  type          String            @default("NOTE")
+  message       String
+  from_status   InitiativeStatus?
+  to_status     InitiativeStatus?
+  created_by_id String
+  created_by    User              @relation("InitiativeEventAuthor", fields: [created_by_id], references: [id])
+  created_at    DateTime          @default(now())
+
+  @@index([initiative_id, created_at])
+}
+
+enum InitiativeType {
+  BUILDING
+  ORGANIZATION
+  DEPARTMENT
+  COMPANY
+  LAW
+  CAMPAIGN
+  DEVELOPMENT
+  POLICY
+  OTHER
+}
+
+enum InitiativeStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  REVISION
+  IMPLEMENTED
+  ARCHIVED
 }

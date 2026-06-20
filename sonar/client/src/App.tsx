@@ -31,6 +31,7 @@ const DashboardPage = lazyPage(() => import('./pages/DashboardPage'), 'Dashboard
 const VerificationPage = lazyPage(() => import('./pages/VerificationPage'), 'VerificationPage')
 const ServiceCenterPage = lazyPage(() => import('./pages/ServiceCenterPage'), 'ServiceCenterPage')
 const ServiceSessionPage = lazyPage(() => import('./pages/ServiceSessionPage'), 'ServiceSessionPage')
+const ProjectInitiativesPage = lazyPage(() => import('./pages/ProjectInitiativesPage'), 'ProjectInitiativesPage')
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -104,6 +105,7 @@ export default function App() {
         <Route path="verify" element={<VerificationPage />} />
         <Route path="office" element={<ServiceCenterPage />} />
         <Route path="office/sessions/:id" element={<ServiceSessionPage />} />
+        <Route path="initiatives" element={<ProjectInitiativesPage />} />
         <Route path="service-center" element={<Navigate to="/office" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

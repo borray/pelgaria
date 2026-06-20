@@ -5,6 +5,7 @@ import {
   IconArrowUpRight,
   IconBuilding,
   IconBuildingBank,
+  IconBulb,
   IconCurrencyDollar,
   IconGavel,
   IconId,
@@ -41,6 +42,7 @@ const groups: HubGroup[] = [
     caption: 'Обслуживание и государственные реестры',
     items: [
       { to: '/office', label: 'СОНАР · Контакт', description: 'Обращения игроков, документы и материалы', icon: IconInbox, permission: 'office.view' },
+      { to: '/initiatives', label: 'Проектные инициативы', description: 'Реестр Канцелярии Верховного Совета', icon: IconBulb, permission: 'initiatives.view' },
       { to: '/citizens', label: 'Игроки', description: 'Игровые карточки, гражданство и учёт', icon: IconUsers, permission: 'citizens.view' },
       { to: '/passports', label: 'Паспорта', description: 'Выдача, статусы и проверка документов', icon: IconId, permission: 'passports.view' },
       { to: '/verify', label: 'Проверка подлинности', description: 'Поиск документа по номеру или ШК', icon: IconShieldCheck },

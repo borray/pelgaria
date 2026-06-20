@@ -26,6 +26,7 @@ import dashboardRouter from './routes/dashboard'
 import printCenterRouter from './routes/printCenter'
 import verifyRouter from './routes/verify'
 import officeRouter from './routes/office'
+import projectInitiativesRouter from './routes/projectInitiatives'
 import serviceCenterRouter from './routes/serviceCenter'
 
 const app = express()
@@ -81,6 +82,7 @@ app.use('/api/dashboard', dashboardRouter)
 app.use('/api/print-center', printCenterRouter)
 app.use('/api/verify', verifyRouter)
 app.use('/api/office', officeRouter)
+app.use('/api/project-initiatives', projectInitiativesRouter)
 app.use('/api/service-center', serviceCenterRouter)
 
 app.get('/api/health', (_req, res) => {

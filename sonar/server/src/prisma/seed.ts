@@ -40,6 +40,10 @@ const ALL_PERMISSIONS: Record<string, boolean> = {
   'office.view': true,
   'office.create': true,
   'office.manage': true,
+  'initiatives.view': true,
+  'initiatives.create': true,
+  'initiatives.manage': true,
+  'initiatives.decide': true,
 }
 
 const MINISTER_PERMISSIONS: Record<string, boolean> = {
@@ -68,6 +72,9 @@ const MINISTER_PERMISSIONS: Record<string, boolean> = {
   'office.view': true,
   'office.create': true,
   'office.manage': true,
+  'initiatives.view': true,
+  'initiatives.create': true,
+  'initiatives.manage': true,
 }
 
 const CITIZEN_PERMISSIONS: Record<string, boolean> = {

@@ -395,6 +395,58 @@ export interface ServiceRequest {
   updated_at: string
 }
 
+export type InitiativeType =
+  | 'BUILDING'
+  | 'ORGANIZATION'
+  | 'DEPARTMENT'
+  | 'COMPANY'
+  | 'LAW'
+  | 'CAMPAIGN'
+  | 'DEVELOPMENT'
+  | 'POLICY'
+  | 'OTHER'
+
+export type InitiativeStatus =
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'REVISION'
+  | 'IMPLEMENTED'
+  | 'ARCHIVED'
+
+export interface ProjectInitiativeEvent {
+  id: string
+  initiative_id: string
+  type: string
+  message: string
+  from_status?: InitiativeStatus | null
+  to_status?: InitiativeStatus | null
+  created_by: Pick<User, 'id' | 'login'>
+  created_at: string
+}
+
+export interface ProjectInitiative {
+  id: string
+  number: string
+  registry_code: string
+  type: InitiativeType
+  status: InitiativeStatus
+  title: string
+  initiator: string
+  essence: string
+  state_request: string
+  responsible?: string | null
+  decision_note?: string | null
+  decided_by_login?: string | null
+  decided_at?: string | null
+  submitted_at: string
+  created_by: Pick<User, 'id' | 'login'>
+  events: ProjectInitiativeEvent[]
+  created_at: string
+  updated_at: string
+}
+
 export type Permission =
   | 'system.superadmin'
   | 'citizens.view'
@@ -431,3 +483,7 @@ export type Permission =
   | 'office.view'
   | 'office.create'
   | 'office.manage'
+  | 'initiatives.view'
+  | 'initiatives.create'
+  | 'initiatives.manage'
+  | 'initiatives.decide'
