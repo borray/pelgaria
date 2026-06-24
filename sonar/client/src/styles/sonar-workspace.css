@@ -289,3 +289,60 @@ button { font: inherit; }
   .s-search { flex-basis: 100%; }
   .s-toolbar-cta { width: 100%; margin-left: 0; }
 }
+
+/* ============================================================
+   Sidebar brand corner (redesigned) + founders easter egg
+   ============================================================ */
+.sonar-sidebar-top { padding: 2px 6px 0; }
+.sonar-brand { display: flex; align-items: center; gap: 11px; }
+.sonar-brand-mark { position: relative; display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border: 0; border-radius: 13px; color: #fff; background: linear-gradient(150deg, #2c7ee0, #14529f); box-shadow: 0 8px 18px rgba(20, 70, 150, .28), inset 0 1px 0 rgba(255, 255, 255, .25); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+.sonar-brand-mark svg { width: 26px; height: 26px; }
+.sonar-brand-mark::after { content: "✦"; position: absolute; top: -5px; right: -5px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; color: #9a6a00; background: #ffe08a; font-size: 9px; box-shadow: 0 2px 6px rgba(20, 70, 150, .3); transform: scale(0); transition: transform .25s ease; }
+.sonar-brand-mark:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 12px 24px rgba(20, 70, 150, .34), inset 0 1px 0 rgba(255, 255, 255, .3); }
+.sonar-brand-mark:hover::after { transform: scale(1); animation: egg-sparkle 1.8s ease-in-out infinite; }
+.sonar-brand-name { display: grid; gap: 2px; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.sonar-brand-name strong { color: #0d3269; font-size: 18px; letter-spacing: .05em; line-height: 1; }
+.sonar-brand-name small { color: #8aa0bf; font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.sonar-brand-name:hover strong { color: #1452a8; }
+
+.sonar-scope { position: relative; gap: 12px; margin: 30px 4px 26px; padding: 14px 14px 14px 16px; border: 1px solid #dfeaf9; border-radius: 16px; background: linear-gradient(135deg, #eef5ff, #e6effd); overflow: hidden; }
+.sonar-scope::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #2c7ee0, #14579f); }
+.sonar-scope > svg { box-shadow: 0 6px 14px rgba(20, 70, 150, .22); }
+.sonar-scope b { color: #0d3269; }
+
+/* Founders easter egg modal */
+.egg-scrim { position: fixed; z-index: 60; inset: 0; display: grid; place-items: center; padding: 22px; background: rgba(6, 16, 38, .6); backdrop-filter: blur(5px); animation: s-fade .2s ease both; }
+.egg { position: relative; width: min(460px, 100%); overflow: hidden; border-radius: 26px; background: linear-gradient(180deg, #0a1c40, #0e3576 62%, #15498d); box-shadow: 0 40px 100px rgba(4, 14, 40, .6), inset 0 0 0 1px rgba(150, 195, 255, .16); animation: egg-pop .42s cubic-bezier(.2, .8, .25, 1) both; }
+@keyframes egg-pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+
+.egg-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.egg-glow { position: absolute; left: 50%; bottom: -34%; width: 130%; height: 84%; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(96, 170, 255, .42), transparent 62%); }
+.egg-orbit { position: absolute; border: 1px solid rgba(170, 210, 255, .12); border-radius: 50%; }
+.egg-orbit-a { top: -90px; right: -70px; width: 240px; height: 240px; animation: egg-rot 30s linear infinite; }
+.egg-orbit-b { top: -50px; left: -80px; width: 180px; height: 180px; animation: egg-rot 24s linear infinite reverse; }
+@keyframes egg-rot { to { transform: rotate(360deg); } }
+.egg-star { position: absolute; border-radius: 50%; background: #eaf4ff; box-shadow: 0 0 6px rgba(200, 225, 255, .85); animation: egg-tw 3s ease-in-out infinite; }
+@keyframes egg-tw { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+.egg-close { position: absolute; z-index: 2; top: 14px; right: 14px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(190, 220, 255, .22); border-radius: 10px; color: #cfe2ff; background: rgba(255, 255, 255, .08); cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+.egg-close svg { width: 18px; height: 18px; }
+.egg-close:hover { background: rgba(255, 255, 255, .16); border-color: rgba(190, 220, 255, .45); }
+
+.egg-body { position: relative; z-index: 1; padding: 32px 28px 26px; text-align: center; color: #eaf3ff; }
+.egg-eyebrow { margin: 0; color: #9fd0ff; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.egg-body h2 { margin: 12px 0 4px; font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 500; letter-spacing: -.02em; line-height: 1.12; }
+.egg-stage { margin: 4px 0; }
+.egg-figures { display: block; width: 100%; height: auto; overflow: visible; }
+.egg-fig { transform-box: fill-box; transform-origin: center bottom; }
+.egg-fig-a { animation: egg-float 4s ease-in-out infinite; }
+.egg-fig-b { animation: egg-float 4.6s ease-in-out infinite .3s; }
+.egg-fig-c { animation: egg-float 4.2s ease-in-out infinite .15s; }
+@keyframes egg-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.egg-spark { transform-box: fill-box; transform-origin: center; animation: egg-sparkle 2.6s ease-in-out infinite; }
+@keyframes egg-sparkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(90deg); } }
+.egg-text { max-width: 360px; margin: 10px auto 0; color: #c4dcf7; font-size: 14px; line-height: 1.6; }
+.egg-sign { margin: 16px 0 0; color: #7fa6d6; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+
+@media (prefers-reduced-motion: reduce) {
+  .egg-fig-a, .egg-fig-b, .egg-fig-c, .egg-spark, .egg-orbit, .egg-star { animation: none !important; }
+}

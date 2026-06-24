@@ -104,6 +104,70 @@ function IconButton({ icon, label, onClick, tone = 'neutral', busy }: { icon: Ic
   )
 }
 
+function FoundersEgg({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+  const stars = Array.from({ length: 34 }, (_, index) => ({
+    left: (index * 53) % 100,
+    top: (index * 29) % 62,
+    size: 1 + (index % 3),
+    delay: (index % 7) * 0.4,
+    dur: 2.4 + (index % 5) * 0.5,
+  }))
+  return (
+    <div className="egg-scrim" onMouseDown={onClose}>
+      <div className="egg" role="dialog" aria-modal="true" aria-label="О создателях Пельгарии" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="egg-sky" aria-hidden="true">
+          <span className="egg-orbit egg-orbit-a" />
+          <span className="egg-orbit egg-orbit-b" />
+          <span className="egg-glow" />
+          {stars.map((star, index) => (
+            <i key={index} className="egg-star" style={{ left: `${star.left}%`, top: `${star.top}%`, width: star.size, height: star.size, animationDelay: `${star.delay}s`, animationDuration: `${star.dur}s` }} />
+          ))}
+        </div>
+        <button type="button" className="egg-close" onClick={onClose} aria-label="Закрыть"><WorkspaceIcon name="close" /></button>
+        <div className="egg-body">
+          <p className="egg-eyebrow">✦ Пасхалка · основание мира</p>
+          <h2>Трое, с которых<br />началась Пельгария</h2>
+          <div className="egg-stage" aria-hidden="true">
+            <svg viewBox="0 0 360 210" className="egg-figures" role="img" aria-label="Три силуэта разного роста">
+              <defs>
+                <linearGradient id="eggFig" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#bfe0ff" /><stop offset="1" stopColor="#5aa0ee" />
+                </linearGradient>
+                <radialGradient id="eggHorizon" cx="0.5" cy="1" r="0.9">
+                  <stop offset="0" stopColor="rgba(125,196,255,.55)" /><stop offset="1" stopColor="rgba(125,196,255,0)" />
+                </radialGradient>
+                <filter id="eggSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" /></filter>
+              </defs>
+              <ellipse cx="180" cy="188" rx="150" ry="26" fill="url(#eggHorizon)" />
+              <polyline points="92,96 180,70 268,108" fill="none" stroke="rgba(190,224,255,.5)" strokeWidth="1" strokeDasharray="2 5" strokeLinecap="round" />
+              <g className="egg-fig egg-fig-a">
+                <g fill="url(#eggFig)" opacity=".35" filter="url(#eggSoft)"><circle cx="92" cy="96" r="13" /><rect x="76" y="106" width="32" height="78" rx="16" /></g>
+                <circle cx="92" cy="96" r="12" fill="url(#eggFig)" /><rect x="77" y="106" width="30" height="78" rx="15" fill="url(#eggFig)" />
+              </g>
+              <g className="egg-fig egg-fig-b">
+                <g fill="url(#eggFig)" opacity=".35" filter="url(#eggSoft)"><circle cx="180" cy="68" r="15" /><rect x="162" y="80" width="36" height="104" rx="18" /></g>
+                <circle cx="180" cy="68" r="14" fill="url(#eggFig)" /><rect x="163" y="80" width="34" height="104" rx="17" fill="url(#eggFig)" />
+              </g>
+              <g className="egg-fig egg-fig-c">
+                <g fill="url(#eggFig)" opacity=".35" filter="url(#eggSoft)"><circle cx="268" cy="108" r="12" /><rect x="253" y="117" width="30" height="67" rx="15" /></g>
+                <circle cx="268" cy="108" r="11" fill="url(#eggFig)" /><rect x="254" y="117" width="28" height="67" rx="14" fill="url(#eggFig)" />
+              </g>
+              <g className="egg-spark"><path d="M180 40 l2.2 5 5 2.2 -5 2.2 -2.2 5 -2.2 -5 -5 -2.2 5 -2.2z" fill="#dff0ff" /></g>
+            </svg>
+          </div>
+          <p className="egg-text">Пельгария родилась не из устава, а из дружбы троих — разного роста, одного дела. Этот мир держится на них.</p>
+          <p className="egg-sign">с теплом к основателям · Пельгария</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function StatStrip({ items }: { items: Array<{ icon: IconName; label: string; value: number; tone?: 'accent' | 'ok' | 'warn' | 'muted' }> }) {
   return (
     <div className="s-stats">
@@ -143,6 +207,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const isChairman = account.role === 'CHAIRMAN'
   const [section, setSection] = useState<WorkspaceSection>('overview')
   const [isMenuOpen, setMenuOpen] = useState(false)
+  const [isEggOpen, setEggOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [passwordState, setPasswordState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -324,7 +389,10 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
     <main className="sonar-workspace">
       <aside className={`sonar-sidebar ${isMenuOpen ? 'sonar-sidebar-open' : ''}`}>
         <div className="sonar-sidebar-top">
-          <button className="sonar-wordmark" type="button" onClick={() => navigate('overview')} aria-label="Открыть обзор СОНАР"><span><SonarMark /></span><strong>СОНАР</strong></button>
+          <div className="sonar-brand">
+            <button className="sonar-brand-mark" type="button" onClick={() => setEggOpen(true)} aria-label="О создателях Пельгарии" title="✦"><SonarMark /></button>
+            <button className="sonar-brand-name" type="button" onClick={() => navigate('overview')} aria-label="Открыть обзор СОНАР"><strong>СОНАР</strong><small>контур управления</small></button>
+          </div>
           <button className="sonar-close" type="button" onClick={() => setMenuOpen(false)} aria-label="Закрыть меню"><WorkspaceIcon name="close" /></button>
         </div>
         <div className="sonar-scope"><PelgradMark /><span><small>Государственный контур</small><b>Пельград</b></span></div>
@@ -562,6 +630,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
         <footer className="sonar-footer"><span>СОНАР · Пельград</span><span>Вымышленная система Minecraft Role Play</span></footer>
       </section>
 
+      {isEggOpen && <FoundersEgg onClose={() => setEggOpen(false)} />}
       {editingDecision && <DecisionEditor decision={editingDecision} onClose={() => setEditingDecision(null)} onSave={saveDecisionEdit} />}
       {editingPlayer && <PlayerEditor player={editingPlayer} onClose={() => setEditingPlayer(null)} onSave={savePlayerEdit} />}
       {confirm && (
