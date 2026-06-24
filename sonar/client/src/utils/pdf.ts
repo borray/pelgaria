@@ -60,9 +60,22 @@ export function confirmDocumentFormation(
 }
 
 async function readError(response: Response): Promise<string> {
+  const contentType = response.headers.get('content-type') ?? ''
   try {
-    const data = await response.json() as { error?: string }
-    return data.error || `Ошибка формирования документа (${response.status})`
+    if (contentType.includes('application/json')) {
+      const data = await response.json() as { error?: string }
+      return data.error || `Ошибка формирования документа (${response.status})`
+    }
+
+    const raw = (await response.text())
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (raw && raw.length < 180) return raw
+    if (contentType.includes('text/html')) {
+      return `Сервер вернул страницу вместо PDF (${response.status}). Повторите попытку позже.`
+    }
+    return `Ошибка формирования документа (${response.status})`
   } catch {
     return `Ошибка формирования документа (${response.status})`
   }

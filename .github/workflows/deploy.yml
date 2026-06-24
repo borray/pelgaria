@@ -56,6 +56,7 @@ jobs:
           DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_REDIRECT_URI=https://pg-bridge.ru/api/auth/discord/callback
+          SONAR_BUNDLED_CHROMIUM=1
           ENVEOF"
 
       - name: Upload server build
@@ -109,6 +110,23 @@ jobs:
             else
               pm2 start dist/index.js --name sonar --env production
             fi
+
+            # Проверяем именно печатный движок на рабочем Linux-сервере.
+            # Обычная health-проверка не замечает поломку Chromium до первой печати.
+            node -e "
+              require('dotenv').config();
+              const { htmlToPdf, closePdfBrowser } = require('./dist/services/pdf');
+              (async () => {
+                const pdf = await htmlToPdf('<!doctype html><html><body>SONAR print check</body></html>');
+                await closePdfBrowser();
+                if (pdf.subarray(0, 5).toString('ascii') !== '%PDF-') throw new Error('PDF signature is invalid');
+                console.log('SONAR PDF engine is ready');
+              })().catch(async (error) => {
+                console.error('SONAR PDF engine check failed', error);
+                try { await closePdfBrowser(); } catch {}
+                process.exit(1);
+              });
+            "
 
             pm2 save
           ENDSSH

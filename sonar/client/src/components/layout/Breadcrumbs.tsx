@@ -9,6 +9,7 @@ const PATH_LABELS: Record<string, string> = {
   punishments: 'Наказания', taxes: 'Налоги', treasury: 'Казна', buildings: 'РЕЛИКТ',
   chat: 'Чат', accounts: 'Аккаунты',
   roles: 'Роли', profile: 'Профиль', 'print-center': 'Печатный контур',
+  initiatives: 'Проектные инициативы',
 }
 
 export function Breadcrumbs() {

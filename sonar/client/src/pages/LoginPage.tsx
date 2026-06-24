@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import {
-  IconBrandDiscord,
+  IconArrowRight,
+  IconHelpCircle,
   IconInfoCircle,
   IconLock,
   IconUser,
-  IconHelpCircle,
-  IconArrowRight,
-  IconTool,
-  IconShieldCheck,
-  IconForms,
-  IconDatabase,
 } from '@tabler/icons-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SonarBrand } from '../components/brand/SonarBrand'
@@ -59,92 +54,57 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth auth-renovated">
+    <main className="auth auth-entry">
       <Link to="/" className="auth-bridge-return">← Пельгария</Link>
-      <div className="auth-theme-toggle"><ThemeToggle compact /></div>
-      <section className="auth-stage">
-        <aside className="auth-brief">
-          <div className="auth-brief-grid" aria-hidden="true" />
-          <div className="auth-brief-head">
-            <SonarBrand size="lg" light />
-            <span className="auth-environment"><i /> Служебный контур</span>
-          </div>
-          <div className="auth-brief-copy">
-            <span className="auth-eyebrow">Единая государственная система</span>
-            <h1>Работа с государством<br />в одном контуре.</h1>
-            <p>Реестры игроков, государственное обслуживание, законодательство и печатные документы без перехода между разрозненными системами.</p>
-          </div>
-          <div className="auth-capabilities">
-            <span><IconDatabase size={17} /><b>Единые реестры</b></span>
-            <span><IconForms size={17} /><b>Документы и формы</b></span>
-            <span><IconShieldCheck size={17} /><b>Контроль операций</b></span>
-          </div>
-          <div className="auth-brief-foot">
-            <span>СОНАР / Пельгария</span>
-            <span>Minecraft Role Play</span>
-          </div>
-        </aside>
+      <div className="auth-entry-theme"><ThemeToggle compact /></div>
+      <div className="auth-entry-scene" aria-hidden="true">
+        <span className="auth-entry-grid" />
+        <span className="auth-entry-orbit auth-entry-orbit-a" />
+        <span className="auth-entry-orbit auth-entry-orbit-b" />
+        <span className="auth-entry-signal" />
+        <span className="auth-entry-scan" />
+      </div>
 
-        <div className="auth-panel">
-          <div className="auth-panel-inner">
-            <div className="auth-mobile-brand"><SonarBrand size="md" /></div>
-            <div className="auth-renovation-notice">
-              <span><IconTool size={18} /></span>
-              <div>
-                <strong>Идёт цикл развития СОНАР</strong>
-                <p>Интерфейс и внутренние модули обновляются поэтапно. До завершения работ отдельные функции могут временно работать нестабильно.</p>
-              </div>
+      <section className="auth-entry-card" aria-labelledby="auth-entry-title">
+        <div className="auth-entry-brand"><SonarBrand size="md" /></div>
+        <header className="auth-entry-heading">
+          <span><i /> Служебный контур</span>
+          <h1 id="auth-entry-title">Вход в СОНАР</h1>
+        </header>
+
+        <form onSubmit={handleSubmit} className="auth-form auth-entry-form">
+          <label className="auth-field">
+            <span>Логин</span>
+            <div><IconUser size={18} /><input value={loginVal} onChange={(event) => setLoginVal(event.target.value)} autoComplete="username" autoFocus placeholder="Введите логин" /></div>
+          </label>
+          <label className="auth-field">
+            <span>Пароль</span>
+            <div><IconLock size={18} /><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="Введите пароль" /></div>
+          </label>
+
+          <button type="button" className="auth-forgot" onClick={() => setShowForgot((value) => !value)}>
+            Не помню пароль
+          </button>
+
+          {showForgot && (
+            <div className="auth-hint">
+              <IconHelpCircle size={16} />
+              <span>Обратитесь к администратору системы, чтобы получить временный пароль.</span>
             </div>
+          )}
 
-            <header className="auth-panel-heading">
-              <span>Авторизация сотрудника</span>
-              <h2>Вход в СОНАР</h2>
-              <p>Используйте служебную учётную запись</p>
-            </header>
+          {error && <div className="auth-error">{error}</div>}
 
-            <form onSubmit={handleSubmit} className="auth-form">
-              <label className="auth-field">
-                <span>Логин</span>
-                <div><IconUser size={18} /><input value={loginVal} onChange={(e) => setLoginVal(e.target.value)} autoComplete="username" autoFocus placeholder="Введите логин" /></div>
-              </label>
-              <label className="auth-field">
-                <span>Пароль</span>
-                <div><IconLock size={18} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="Введите пароль" /></div>
-              </label>
+          <button className="auth-submit" type="submit" disabled={isLoading}>
+            <span>{isLoading ? 'Проверяем данные' : 'Войти'}</span>
+            {!isLoading && <IconArrowRight size={18} />}
+          </button>
+        </form>
 
-              <button type="button" className="auth-forgot" onClick={() => setShowForgot((value) => !value)}>
-                Не помню пароль
-              </button>
-
-              {showForgot && (
-                <div className="auth-hint">
-                  <IconHelpCircle size={16} />
-                  <span>Обратитесь к администратору системы: он назначит временный пароль для восстановления доступа.</span>
-                </div>
-              )}
-
-              {error && <div className="auth-error">{error}</div>}
-
-              <button className="auth-submit" type="submit" disabled={isLoading}>
-                <span>{isLoading ? 'Проверяем данные' : 'Продолжить'}</span>
-                {!isLoading && <IconArrowRight size={18} />}
-              </button>
-
-              <div className="auth-divider"><span>Другой способ</span></div>
-
-              <button className="auth-discord" type="button" disabled title="Функция в разработке">
-                <IconBrandDiscord size={19} />
-                Discord
-                <small>Скоро</small>
-              </button>
-            </form>
-
-            <div className="auth-fiction">
-              <IconInfoCircle size={17} />
-              <span><strong>Это вымышленный сервис.</strong> Пельгария является государством ролевой игры Minecraft. СОНАР не относится к реальным государственным органам и не оказывает настоящих услуг.</span>
-            </div>
-          </div>
-        </div>
+        <footer className="auth-entry-foot">
+          <IconInfoCircle size={15} />
+          <span>Пельгария является вымышленным государством ролевой игры Minecraft.</span>
+        </footer>
       </section>
     </main>
   )

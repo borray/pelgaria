@@ -12,7 +12,7 @@ let queueTail: Promise<void> = Promise.resolve()
 
 function isExecutable(candidate: string): boolean {
   try {
-    accessSync(candidate, constants.F_OK)
+    accessSync(candidate, constants.F_OK | constants.X_OK)
     return true
   } catch {
     return false
@@ -69,22 +69,30 @@ async function findChromium(): Promise<string> {
 
 async function launchBrowser(): Promise<Browser> {
   const executablePath = await findChromium()
-  const browser = await puppeteer.launch({
-    executablePath,
-    args: [...(packagedBrowser ? chromium.args : []),
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--font-render-hinting=medium',
-    ],
-    headless: packagedBrowser ? chromium.headless : true,
-  })
+  try {
+    const browser = await puppeteer.launch({
+      executablePath,
+      args: [...(packagedBrowser ? chromium.args : []),
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-background-networking',
+        '--font-render-hinting=medium',
+      ],
+      headless: packagedBrowser ? chromium.headless : true,
+    })
 
-  browser.once('disconnected', () => {
-    browserPromise = null
-  })
-  return browser
+    browser.once('disconnected', () => {
+      browserPromise = null
+    })
+    return browser
+  } catch (error) {
+    cachedBrowserPath = null
+    packagedBrowser = false
+    throw error
+  }
 }
 
 async function getBrowser(): Promise<Browser> {
@@ -170,8 +178,12 @@ export async function closePdfBrowser(): Promise<void> {
 export function pdfError(error: unknown, context: string): { error: string; errorId: string } {
   const errorId = crypto.randomBytes(4).toString('hex').toUpperCase()
   console.error(`[PDF ${errorId}] ${context}`, error)
+  const technicalMessage = error instanceof Error ? error.message : ''
+  const engineUnavailable = /chromium|chrome|browser|executable|launch/i.test(technicalMessage)
   return {
-    error: `Не удалось сформировать документ. Код ошибки: ${errorId}`,
+    error: engineUnavailable
+      ? `Печатный модуль временно недоступен. Код ошибки: ${errorId}`
+      : `Не удалось сформировать документ. Код ошибки: ${errorId}`,
     errorId,
   }
 }
