@@ -4,6 +4,7 @@ import App from './App'
 import './styles/foundation.css'
 import './styles/sonar-workspace.css'
 import './styles/auth.css'
+import './styles/verify.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

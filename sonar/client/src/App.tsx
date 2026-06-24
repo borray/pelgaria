@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react'
 import { AuthPage, type SonarAccount } from './pages/AuthPage'
 import { FoundationPage } from './pages/FoundationPage'
 import { SonarWorkspace } from './pages/SonarWorkspace'
+import { VerifyPage } from './pages/VerifyPage'
 
 export default function App() {
   const [isSonarOpen, setSonarOpen] = useState(() => window.location.hash === '#sonar')
+  const [isVerifyOpen, setVerifyOpen] = useState(() => window.location.hash.startsWith('#verify'))
   const [account, setAccount] = useState<SonarAccount | null>(null)
   const [isCheckingSession, setCheckingSession] = useState(() => window.location.hash === '#sonar')
 
   useEffect(() => {
-    document.title = isSonarOpen ? 'СОНАР · Пельград' : 'Пельгария · основание мира'
-  }, [isSonarOpen])
+    document.title = isVerifyOpen ? 'Проверка документа · Пельград' : isSonarOpen ? 'СОНАР · Пельград' : 'Пельгария · основание мира'
+  }, [isSonarOpen, isVerifyOpen])
 
   useEffect(() => {
     if (!isSonarOpen) { setCheckingSession(false); return }
@@ -25,6 +27,7 @@ export default function App() {
   }, [isSonarOpen])
 
   const openSonar = () => {
+    setVerifyOpen(false)
     window.history.pushState(null, '', '#sonar')
     setSonarOpen(true)
   }
@@ -33,6 +36,13 @@ export default function App() {
     window.history.pushState(null, '', window.location.pathname)
     setAccount(null)
     setSonarOpen(false)
+    setVerifyOpen(false)
+  }
+
+  const openVerify = () => {
+    window.history.pushState(null, '', '#verify')
+    setSonarOpen(false)
+    setVerifyOpen(true)
   }
 
   const logout = async () => {
@@ -40,7 +50,8 @@ export default function App() {
     setAccount(null)
   }
 
-  if (!isSonarOpen) return <FoundationPage onOpenSonar={openSonar} />
+  if (isVerifyOpen) return <VerifyPage onExit={closeSonar} />
+  if (!isSonarOpen) return <FoundationPage onOpenSonar={openSonar} onOpenVerify={openVerify} />
   if (isCheckingSession) return <main className="portal-loading"><span /><p>Открываем СОНАР</p></main>
   if (!account) return <AuthPage onAuthenticated={setAccount} onExit={closeSonar} />
   return <SonarWorkspace account={account} onExit={closeSonar} onLogout={logout} />

@@ -14,9 +14,10 @@ const externalUnits = ['Гарнизон', 'Разведкорпус', 'Запр
 
 type FoundationPageProps = {
   onOpenSonar: () => void
+  onOpenVerify: () => void
 }
 
-export function FoundationPage({ onOpenSonar }: FoundationPageProps) {
+export function FoundationPage({ onOpenSonar, onOpenVerify }: FoundationPageProps) {
   return (
     <main className="foundation-page">
       <div className="foundation-atmosphere" aria-hidden="true">
@@ -33,6 +34,7 @@ export function FoundationPage({ onOpenSonar }: FoundationPageProps) {
         </a>
         <div className="foundation-header-actions">
           <div className="foundation-status"><i /> Основание мира · 20.06.2026</div>
+          <button className="foundation-verify-link" type="button" onClick={onOpenVerify}>Проверить документ</button>
           <button className="foundation-sonar-link" type="button" onClick={onOpenSonar}>Открыть СОНАР <span aria-hidden="true">↗</span></button>
         </div>
       </header>

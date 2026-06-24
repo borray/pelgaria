@@ -6,14 +6,15 @@ import { SonarMark } from '../components/brand/SonarMark'
 import type { SonarAccount } from './AuthPage'
 
 type WorkspaceSection = 'overview' | 'council' | 'institutions' | 'registry' | 'system'
-type IconName = 'grid' | 'council' | 'building' | 'archive' | 'settings' | 'arrow' | 'menu' | 'close' | 'bell' | 'check'
+type IconName = 'grid' | 'council' | 'building' | 'archive' | 'settings' | 'arrow' | 'menu' | 'close' | 'check'
 type CouncilDecision = { id: string; number: number; title: string; body: string; status: 'DRAFT' | 'ADOPTED'; created_at: string; adopted_at: string | null; author: { login: string } }
+type RegistryPlayer = { id: string; nickname: string; minecraft_uuid: string | null; note: string | null; created_at: string; passport: { number: string; status: 'ACTIVE' | 'REVOKED'; issued_at: string } | null }
 
 const navigation: Array<{ id: WorkspaceSection; label: string; icon: IconName }> = [
   { id: 'overview', label: 'Обзор', icon: 'grid' },
   { id: 'council', label: 'Верховный Совет', icon: 'council' },
   { id: 'institutions', label: 'Ведомства', icon: 'building' },
-  { id: 'registry', label: 'Реестр мира', icon: 'archive' },
+  { id: 'registry', label: 'Игроки', icon: 'archive' },
   { id: 'system', label: 'Система', icon: 'settings' },
 ]
 
@@ -55,7 +56,6 @@ function WorkspaceIcon({ name }: { name: IconName }) {
   if (name === 'arrow') return <svg viewBox="0 0 24 24" {...common}><path d="M5 12H19M13 6L19 12L13 18" /></svg>
   if (name === 'menu') return <svg viewBox="0 0 24 24" {...common}><path d="M4 7H20M4 12H20M4 17H20" /></svg>
   if (name === 'close') return <svg viewBox="0 0 24 24" {...common}><path d="M6 6L18 18M18 6L6 18" /></svg>
-  if (name === 'bell') return <svg viewBox="0 0 24 24" {...common}><path d="M18 10A6 6 0 0 0 6 10C6 17 3.5 17 3.5 19H20.5C20.5 17 18 17 18 10M10 22H14" /></svg>
   return <svg viewBox="0 0 24 24" {...common}><path d="M5 12L10 17L19 7" /></svg>
 }
 
@@ -83,6 +83,13 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const [draftTitle, setDraftTitle] = useState('')
   const [draftBody, setDraftBody] = useState('')
   const [isSubmittingDecision, setSubmittingDecision] = useState(false)
+  const [players, setPlayers] = useState<RegistryPlayer[]>([])
+  const [isPlayersLoading, setPlayersLoading] = useState(false)
+  const [playersError, setPlayersError] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [minecraftUuid, setMinecraftUuid] = useState('')
+  const [playerNote, setPlayerNote] = useState('')
+  const [isSubmittingPlayer, setSubmittingPlayer] = useState(false)
 
   const navigate = (next: WorkspaceSection) => {
     setSection(next)
@@ -103,6 +110,19 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
       })
       .catch((reason) => setCouncilError(reason instanceof Error ? reason.message : 'Не удалось получить журнал решений.'))
       .finally(() => setCouncilLoading(false))
+  }, [section])
+
+  useEffect(() => {
+    if (section !== 'registry') return
+    setPlayersLoading(true)
+    fetch('/api/players', { credentials: 'include' })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({})) as { players?: RegistryPlayer[]; error?: string }
+        if (!response.ok) throw new Error(body.error ?? 'Не удалось получить реестр игроков.')
+        setPlayers(body.players ?? [])
+      })
+      .catch((reason) => setPlayersError(reason instanceof Error ? reason.message : 'Не удалось получить реестр игроков.'))
+      .finally(() => setPlayersLoading(false))
   }, [section])
 
   const createDecision = async () => {
@@ -126,6 +146,28 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
       if (!response.ok || !payload.decision) throw new Error(payload.error ?? 'Не удалось принять решение.')
       setDecisions((current) => current.map((decision) => decision.id === id ? payload.decision! : decision))
     } catch (reason) { setCouncilError(reason instanceof Error ? reason.message : 'Не удалось принять решение.') }
+  }
+
+  const deleteDecision = async (id: string) => {
+    if (!window.confirm('Удалить это решение без возможности восстановления?')) return
+    try {
+      const response = await fetch(`/api/council/decisions/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!response.ok) { const body = await response.json().catch(() => ({})) as { error?: string }; throw new Error(body.error ?? 'Не удалось удалить решение.') }
+      setDecisions((current) => current.filter((decision) => decision.id !== id))
+    } catch (reason) { setCouncilError(reason instanceof Error ? reason.message : 'Не удалось удалить решение.') }
+  }
+
+  const createPlayer = async () => {
+    if (isSubmittingPlayer) return
+    setSubmittingPlayer(true)
+    setPlayersError('')
+    try {
+      const response = await fetch('/api/players', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname, minecraftUuid, note: playerNote }) })
+      const payload = await response.json().catch(() => ({})) as { player?: RegistryPlayer; error?: string }
+      if (!response.ok || !payload.player) throw new Error(payload.error ?? 'Не удалось зарегистрировать игрока.')
+      setPlayers((current) => [payload.player!, ...current])
+      setNickname(''); setMinecraftUuid(''); setPlayerNote('')
+    } catch (reason) { setPlayersError(reason instanceof Error ? reason.message : 'Не удалось зарегистрировать игрока.') } finally { setSubmittingPlayer(false) }
   }
 
   const changePassword = async () => {
@@ -176,15 +218,22 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
         <header className="sonar-topbar">
           <button className="sonar-menu" type="button" onClick={() => setMenuOpen(true)} aria-label="Открыть меню"><WorkspaceIcon name="menu" /></button>
           <div className="sonar-breadcrumb"><span>СОНАР</span><i /> <b>{activeItem.label}</b></div>
-          <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><span className="sonar-account"><b>{account.login}</b><small>{account.role === 'CHAIRMAN' ? 'Председатель' : 'Оператор'}</small></span><button type="button" aria-label="Уведомления"><WorkspaceIcon name="bell" /></button><button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
+          <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><span className="sonar-account"><b>{account.login}</b><small>{account.role === 'CHAIRMAN' ? 'Председатель' : 'Оператор'}</small></span><button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
         </header>
 
-        {section === 'council' ? (
+        {section === 'registry' ? (
+          <section className="sonar-registry-page">
+            <div className="sonar-council-heading"><div><p>Гражданская канцелярия</p><h1>Реестр игроков</h1><span>Каждая запись создаёт игрока и его единственный активный паспорт одновременно. Номер паспорта не является порядковым и не подлежит подбору.</span></div><PelgariaMark /></div>
+            {account.role === 'CHAIRMAN' && <section className="sonar-decision-form sonar-player-form"><div><p>Новый игрок</p><h2>Зарегистрировать и выдать паспорт</h2></div><label>Minecraft-ник<input value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={16} placeholder="Например, PelgariaPlayer" /></label><label>UUID (необязательно)<input value={minecraftUuid} onChange={(event) => setMinecraftUuid(event.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" /></label><label>Служебная заметка<textarea value={playerNote} onChange={(event) => setPlayerNote(event.target.value)} maxLength={500} placeholder="Не выводится в паспорт" /></label><button type="button" disabled={nickname.trim().length < 3 || isSubmittingPlayer} onClick={createPlayer}>{isSubmittingPlayer ? 'Регистрируем...' : 'Создать игрока и паспорт'}</button></section>}
+            {playersError && <p className="sonar-council-error">{playersError}</p>}
+            <section className="sonar-player-list">{isPlayersLoading ? <p className="sonar-council-empty">Загружаем реестр игроков...</p> : players.length === 0 ? <p className="sonar-council-empty">Реестр пуст. Первый игрок получит первый паспорт нового Пельграда.</p> : players.map((player) => <article key={player.id}><div className="sonar-player-avatar">{player.nickname.slice(0, 1).toUpperCase()}</div><div><h2>{player.nickname}</h2><p>{player.minecraft_uuid ?? 'UUID пока не указан'}</p><span>{player.passport?.number ?? 'Паспорт не найден'}</span></div><div className="sonar-player-actions"><i className={player.passport?.status === 'ACTIVE' ? 'is-active' : ''}>{player.passport?.status === 'ACTIVE' ? 'Действителен' : 'Отозван'}</i>{player.passport && <button type="button" onClick={() => window.open(`/api/players/${player.id}/passport.pdf`, '_blank', 'noopener,noreferrer')}>Открыть для печати</button>}</div></article>)}</section>
+          </section>
+        ) : section === 'council' ? (
           <section className="sonar-council-page">
             <div className="sonar-council-heading"><div><p>Высший контур управления</p><h1>Журнал решений</h1><span>Решения Верховного Совета формируют курс Пельграда. Черновик становится действующим только после принятия Председателем.</span></div><CouncilMark /></div>
             {account.role === 'CHAIRMAN' && <section className="sonar-decision-form"><div><p>Новое решение</p><h2>Зафиксировать курс</h2></div><label>Заголовок<input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} maxLength={160} placeholder="Краткое название решения" /></label><label>Содержание<textarea value={draftBody} onChange={(event) => setDraftBody(event.target.value)} maxLength={12000} placeholder="Что решено и почему" /></label><button type="button" disabled={draftTitle.trim().length < 3 || draftBody.trim().length < 10 || isSubmittingDecision} onClick={createDecision}>{isSubmittingDecision ? 'Сохраняем...' : 'Создать черновик'}</button></section>}
             {councilError && <p className="sonar-council-error">{councilError}</p>}
-            <section className="sonar-decision-list" aria-live="polite">{isCouncilLoading ? <p className="sonar-council-empty">Загружаем журнал решений...</p> : decisions.length === 0 ? <p className="sonar-council-empty">Журнал пока чист. Первое решение станет точкой отсчёта нового Пельграда.</p> : decisions.map((decision) => <article key={decision.id}><div className="sonar-decision-number">ВС-{String(decision.number).padStart(4, '0')}</div><div className="sonar-decision-body"><div><span className={decision.status === 'ADOPTED' ? 'is-adopted' : ''}>{decision.status === 'ADOPTED' ? 'Принято' : 'Черновик'}</span><time>{new Date(decision.created_at).toLocaleDateString('ru-RU')}</time></div><h2>{decision.title}</h2><p>{decision.body}</p><small>Подготовил: {decision.author.login}</small></div>{account.role === 'CHAIRMAN' && decision.status === 'DRAFT' && <button type="button" onClick={() => adoptDecision(decision.id)}>Принять</button>}</article>)}</section>
+            <section className="sonar-decision-list" aria-live="polite">{isCouncilLoading ? <p className="sonar-council-empty">Загружаем журнал решений...</p> : decisions.length === 0 ? <p className="sonar-council-empty">Журнал пока чист. Первое решение станет точкой отсчёта нового Пельграда.</p> : decisions.map((decision) => <article key={decision.id}><div className="sonar-decision-number">ВС-{String(decision.number).padStart(4, '0')}</div><div className="sonar-decision-body"><div><span className={decision.status === 'ADOPTED' ? 'is-adopted' : ''}>{decision.status === 'ADOPTED' ? 'Принято' : 'Черновик'}</span><time>{new Date(decision.created_at).toLocaleDateString('ru-RU')}</time></div><h2>{decision.title}</h2><p>{decision.body}</p><small>Подготовил: {decision.author.login}</small></div>{account.role === 'CHAIRMAN' && <div className="sonar-decision-actions">{decision.status === 'DRAFT' && <button type="button" onClick={() => adoptDecision(decision.id)}>Принять</button>}<button className="is-delete" type="button" onClick={() => deleteDecision(decision.id)}>Удалить</button></div>}</article>)}</section>
           </section>
         ) : sectionDetails ? (
           <section className="sonar-stage">

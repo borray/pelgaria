@@ -34,6 +34,7 @@ button, a { font: inherit; }
 .foundation-sonar-link { min-height: 38px; padding: 0 13px; border: 1px solid rgba(203, 226, 255, .26); border-radius: 999px; color: #eaf3ff; background: rgba(213, 231, 255, .08); font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
 .foundation-sonar-link:hover { border-color: rgba(203, 226, 255, .55); background: rgba(213, 231, 255, .16); }
 .foundation-sonar-link span { margin-left: 4px; color: #83d8cf; }
+.foundation-verify-link { padding: 0; border: 0; color: #b9cfeb; background: transparent; font-size: 12px; font-weight: 650; cursor: pointer; }.foundation-verify-link:hover { color: #fff; }
 .foundation-state-mark { padding: 7px; color: #e7f0ff; background: #174c97; }
 .foundation-council-title > span { font-weight: inherit; }
 .foundation-council-title svg { width: 33px; height: 33px; }

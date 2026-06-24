@@ -54,7 +54,8 @@ jobs:
               'PORT=3001' \
               'DATABASE_URL=${{ secrets.DATABASE_URL }}' \
               'SONAR_INITIAL_LOGIN=${{ secrets.SONAR_INITIAL_LOGIN }}' \
-              'SONAR_INITIAL_PASSWORD=${{ secrets.SONAR_INITIAL_PASSWORD }}' > .env
+              'SONAR_INITIAL_PASSWORD=${{ secrets.SONAR_INITIAL_PASSWORD }}' \
+              'PASSPORT_QR_SECRET=${{ secrets.PASSPORT_QR_SECRET }}' > .env
             npm ci
             npx prisma generate --schema prisma/sonar.prisma
             if pm2 describe sonar > /dev/null 2>&1; then

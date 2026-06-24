@@ -1,9 +1,11 @@
 import 'dotenv/config'
 import { promisify } from 'node:util'
-import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import cors from 'cors'
 import express, { type NextFunction, type Request, type Response } from 'express'
-import { PrismaClient, SonarAccountRole, SonarCouncilDecisionStatus, type SonarAccount } from '@prisma/client'
+import PDFDocument from 'pdfkit'
+import QRCode from 'qrcode'
+import { PrismaClient, SonarAccountRole, SonarCouncilDecisionStatus, SonarPassportStatus, type SonarAccount } from '@prisma/client'
 
 const app = express()
 const prisma = new PrismaClient()
@@ -59,6 +61,150 @@ function parseDecision(value: unknown): { title: string; body: string } | null {
   const normalizedBody = body.trim()
   if (normalizedTitle.length < 3 || normalizedTitle.length > 160 || normalizedBody.length < 10 || normalizedBody.length > 12000) return null
   return { title: normalizedTitle, body: normalizedBody }
+}
+
+function parsePlayer(value: unknown): { nickname: string; minecraftUuid: string | null; note: string | null } | null {
+  if (!value || typeof value !== 'object') return null
+  const { nickname, minecraftUuid, note } = value as Record<string, unknown>
+  if (typeof nickname !== 'string') return null
+  const normalizedNickname = nickname.trim()
+  if (!/^[A-Za-z0-9_]{3,16}$/.test(normalizedNickname)) return null
+  const normalizedUuid = typeof minecraftUuid === 'string' && minecraftUuid.trim() ? minecraftUuid.trim().toLowerCase() : null
+  if (normalizedUuid && !/^[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}$/i.test(normalizedUuid)) return null
+  const normalizedNote = typeof note === 'string' && note.trim() ? note.trim().slice(0, 500) : null
+  return { nickname: normalizedNickname, minecraftUuid: normalizedUuid, note: normalizedNote }
+}
+
+function passportSecret(): string {
+  const secret = process.env.PASSPORT_QR_SECRET
+  if (!secret || secret.length < 32) throw new Error('PASSPORT_QR_SECRET must contain at least 32 characters.')
+  return secret
+}
+
+function newPassportNumber(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const bytes = randomBytes(10)
+  let body = ''
+  for (const byte of bytes) body += alphabet[byte % alphabet.length]
+  return `PG-${body.slice(0, 5)}-${body.slice(5)}`
+}
+
+function passportSignature(number: string): string {
+  return createHmac('sha256', passportSecret()).update(`pelgrad-passport:v1:${number}`).digest('base64url').slice(0, 20)
+}
+
+function passportQrPayload(number: string): string {
+  return `PGP1.${number}.${passportSignature(number)}`
+}
+
+function isValidPassportCode(number: string, code?: string): boolean {
+  if (!code) return true
+  const actual = Buffer.from(code)
+  const expected = Buffer.from(passportQrPayload(number))
+  return actual.length === expected.length && timingSafeEqual(actual, expected)
+}
+
+type PassportPrintData = {
+  number: string
+  status: SonarPassportStatus
+  issued_at: Date
+  player: { nickname: string; minecraft_uuid: string | null }
+  issued_by: { login: string }
+}
+
+function drawPassportMark(doc: InstanceType<typeof PDFDocument>, x: number, y: number, size: number): void {
+  const unit = size / 5
+  doc.save().fillColor('#111')
+  for (const [col, row] of [[2, 0], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [1, 3], [2, 3], [3, 3], [2, 4]]) {
+    doc.rect(x + col * unit, y + row * unit, unit, unit).fill()
+  }
+  doc.restore()
+}
+
+function drawGuilloche(doc: InstanceType<typeof PDFDocument>, cx: number, cy: number, radius: number): void {
+  doc.save().lineWidth(.35).strokeColor('#b6b6b6')
+  for (let ring = 0; ring < 3; ring += 1) {
+    const r = radius - ring * 8
+    doc.moveTo(cx + r, cy)
+    for (let step = 1; step <= 360; step += 3) {
+      const angle = step * Math.PI / 180
+      const wave = Math.sin(angle * 8) * (2 + ring)
+      doc.lineTo(cx + Math.cos(angle) * (r + wave), cy + Math.sin(angle) * (r + wave))
+    }
+    doc.closePath().stroke()
+  }
+  doc.restore()
+}
+
+async function createPassportPdf(passport: PassportPrintData): Promise<Buffer> {
+  const verification = passportQrPayload(passport.number)
+  const qr = await QRCode.toBuffer(`https://pg-bridge.ru/#verify?code=${encodeURIComponent(verification)}`, { type: 'png', errorCorrectionLevel: 'M', margin: 1, width: 360 })
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0, autoFirstPage: false, info: { Title: `Pelgrad passport ${passport.number}`, Author: 'SONAR' } })
+    const chunks: Buffer[] = []
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk))
+    doc.on('end', () => resolve(Buffer.concat(chunks)))
+    doc.on('error', reject)
+    const width = 841.89
+    const height = 595.28
+    const half = width / 2
+    const issued = passport.issued_at.toISOString().slice(0, 10)
+    const border = (x: number) => {
+      doc.save().lineWidth(1).strokeColor('#111').rect(x + 18, 18, half - 36, height - 36).stroke()
+      doc.lineWidth(.45).strokeColor('#777').rect(x + 25, 25, half - 50, height - 50).stroke()
+      drawGuilloche(doc, x + half - 92, 91, 45)
+      doc.restore()
+    }
+    const label = (text: string, x: number, y: number, size = 7) => doc.fillColor('#555').font('Helvetica-Bold').fontSize(size).text(text, x, y, { characterSpacing: .8 })
+    const value = (text: string, x: number, y: number, size = 15) => doc.fillColor('#111').font('Helvetica-Bold').fontSize(size).text(text, x, y)
+
+    doc.addPage({ size: 'A4', layout: 'landscape', margin: 0 })
+    border(0); border(half)
+    // Outside: left is the back cover, right is the front cover after folding.
+    label('PELGRAD / DOCUMENT CONTROL', 42, 48, 8)
+    value('PASSPORT CHECK', 42, 69, 22)
+    doc.fillColor('#444').font('Helvetica').fontSize(9).text('Verify the document number or scan the QR code\nat pg-bridge.ru/#verify', 42, 106)
+    doc.image(qr, 42, 168, { width: 124 })
+    label('PASSPORT NUMBER', 42, 310)
+    value(passport.number, 42, 325, 16)
+    label('QR CONTROL CODE', 42, 364)
+    doc.fillColor('#333').font('Courier').fontSize(7).text(verification, 42, 377)
+    doc.fillColor('#666').font('Helvetica').fontSize(7).text('Print landscape, double-sided, flip on short edge. Fold at the center.', 42, 525, { width: half - 84 })
+
+    drawPassportMark(doc, half + 42, 51, 48)
+    label('REPUBLIC OF PELGRAD', half + 106, 54, 8)
+    value('PASSPORT', half + 42, 124, 42)
+    doc.fillColor('#4b4b4b').font('Helvetica').fontSize(11).text('Official player identity document', half + 45, 178)
+    doc.moveTo(half + 42, 222).lineTo(width - 42, 222).lineWidth(.7).strokeColor('#111').stroke()
+    label('HOLDER', half + 42, 247)
+    value(passport.player.nickname, half + 42, 263, 25)
+    label('PASSPORT NUMBER', half + 42, 321)
+    value(passport.number, half + 42, 336, 16)
+    doc.fillColor('#666').font('Helvetica').fontSize(7).text('SONAR / PELGRAD', half + 42, 524)
+
+    doc.addPage({ size: 'A4', layout: 'landscape', margin: 0 })
+    border(0); border(half)
+    // Inside left page.
+    label('PLAYER RECORD', 42, 48, 8)
+    value('IDENTITY', 42, 72, 26)
+    label('MINECRAFT NICKNAME', 42, 136); value(passport.player.nickname, 42, 151, 19)
+    label('MINECRAFT UUID', 42, 208); doc.fillColor('#111').font('Courier').fontSize(10).text(passport.player.minecraft_uuid ?? 'NOT RECORDED', 42, 223)
+    label('ISSUED', 42, 278); value(issued, 42, 293, 13)
+    label('ISSUED BY', 42, 345); value(passport.issued_by.login.toUpperCase(), 42, 360, 13)
+    label('STATUS', 42, 412); value(passport.status === SonarPassportStatus.ACTIVE ? 'ACTIVE' : 'REVOKED', 42, 427, 13)
+    doc.fillColor('#666').font('Helvetica').fontSize(7).text('This document belongs to the fictional Minecraft RP world Pelgaria.', 42, 524)
+
+    // Inside right page.
+    label('AUTHENTICITY', half + 42, 48, 8)
+    value('VERIFY', half + 42, 72, 26)
+    doc.image(qr, half + 42, 130, { width: 177 })
+    label('UNIQUE QR', half + 239, 144); doc.fillColor('#333').font('Helvetica').fontSize(9).text('The code contains a signed\nverification reference for this\nexact passport number.', half + 239, 160)
+    label('NUMBER', half + 239, 240); value(passport.number, half + 239, 255, 14)
+    doc.moveTo(half + 42, 347).lineTo(width - 42, 347).lineWidth(.5).strokeColor('#777').stroke()
+    doc.fillColor('#555').font('Helvetica').fontSize(8).text('A passport is valid only while the verification service reports ACTIVE status.', half + 42, 365, { width: half - 84 })
+    doc.fillColor('#666').font('Helvetica').fontSize(7).text('PELGRAD / SONAR / PASSPORT BOOKLET', half + 42, 524)
+    doc.end()
+  })
 }
 
 function hashToken(value: string): string {
@@ -226,6 +372,35 @@ async function ensureSonarSchema(): Promise<void> {
     );
   `)
   await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_council_decisions_status_idx ON sonar_council_decisions(status);')
+  await prisma.$executeRawUnsafe(`
+    DO $$ BEGIN
+      CREATE TYPE sonar_passport_status AS ENUM ('ACTIVE', 'REVOKED');
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS sonar_players (
+      id TEXT PRIMARY KEY,
+      nickname TEXT NOT NULL UNIQUE,
+      minecraft_uuid TEXT UNIQUE,
+      note TEXT,
+      registered_by_id TEXT NOT NULL REFERENCES sonar_accounts(id) ON DELETE RESTRICT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS sonar_passports (
+      id TEXT PRIMARY KEY,
+      number TEXT NOT NULL UNIQUE,
+      player_id TEXT NOT NULL UNIQUE REFERENCES sonar_players(id) ON DELETE CASCADE,
+      issued_by_id TEXT NOT NULL REFERENCES sonar_accounts(id) ON DELETE RESTRICT,
+      status sonar_passport_status NOT NULL DEFAULT 'ACTIVE',
+      issued_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      revoked_at TIMESTAMPTZ
+    );
+  `)
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_passports_status_idx ON sonar_passports(status);')
 }
 
 app.get('/api/health', (_req, res) => {
@@ -320,6 +495,86 @@ app.post('/api/council/decisions/:id/adopt', requireAuth, async (req: Authentica
       include: { author: { select: { login: true } } },
     })
     res.json({ decision })
+  } catch (error) { next(error) }
+})
+
+app.delete('/api/council/decisions/:id', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Удалять решения может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор решения.' }); return }
+    await prisma.sonarCouncilDecision.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) { next(error) }
+})
+
+app.get('/api/players', requireAuth, async (_req, res, next) => {
+  try {
+    const players = await prisma.sonarPlayer.findMany({ orderBy: { created_at: 'desc' }, include: { passport: true } })
+    res.json({ players })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/players', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Регистрировать игроков может только Председатель.' }); return }
+    const player = parsePlayer(req.body)
+    if (!player) { res.status(400).json({ error: 'Укажите корректный Minecraft-ник (3-16 латинских символов, цифр или _). UUID необязателен.' }); return }
+    let created: Awaited<ReturnType<typeof prisma.sonarPlayer.create>> | undefined
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        created = await prisma.sonarPlayer.create({
+          data: {
+            nickname: player.nickname,
+            minecraft_uuid: player.minecraftUuid,
+            note: player.note,
+            registered_by_id: req.account!.id,
+            passport: { create: { number: newPassportNumber(), issued_by_id: req.account!.id } },
+          },
+          include: { passport: true },
+        })
+        break
+      } catch (error) {
+        if (attempt === 3) throw error
+      }
+    }
+    res.status(201).json({ player: created })
+  } catch (error) { next(error) }
+})
+
+app.get('/api/players/:id/passport.pdf', requireAuth, async (req, res, next) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор игрока.' }); return }
+    const player = await prisma.sonarPlayer.findUnique({ where: { id }, include: { passport: { include: { issued_by: { select: { login: true } } } } } })
+    if (!player?.passport) { res.status(404).json({ error: 'Паспорт не найден.' }); return }
+    const pdf = await createPassportPdf({ ...player.passport, player: { nickname: player.nickname, minecraft_uuid: player.minecraft_uuid }, issued_by: player.passport.issued_by })
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `inline; filename="${player.passport.number}.pdf"`)
+    res.setHeader('Cache-Control', 'private, no-store')
+    res.send(pdf)
+  } catch (error) { next(error) }
+})
+
+app.delete('/api/players/:id', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Удалять записи игроков может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор игрока.' }); return }
+    await prisma.sonarPlayer.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) { next(error) }
+})
+
+app.get('/api/public/passports/:number', async (req, res, next) => {
+  try {
+    const number = Array.isArray(req.params.number) ? req.params.number[0] : req.params.number
+    const code = typeof req.query.code === 'string' ? req.query.code : undefined
+    if (!number || !/^PG-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(number)) { res.status(404).json({ valid: false }) ; return }
+    if (!isValidPassportCode(number, code)) { res.status(404).json({ valid: false }); return }
+    const passport = await prisma.sonarPassport.findUnique({ where: { number }, include: { player: true } })
+    if (!passport) { res.status(404).json({ valid: false }); return }
+    res.json({ valid: passport.status === SonarPassportStatus.ACTIVE, number: passport.number, status: passport.status, holder: passport.player.nickname, issuedAt: passport.issued_at })
   } catch (error) { next(error) }
 })
 

@@ -21,6 +21,13 @@ enum SonarCouncilDecisionStatus {
   @@map("sonar_council_decision_status")
 }
 
+enum SonarPassportStatus {
+  ACTIVE
+  REVOKED
+
+  @@map("sonar_passport_status")
+}
+
 model SonarAccount {
   id               String           @id @default(cuid())
   login            String           @unique
@@ -32,8 +39,38 @@ model SonarAccount {
   password_changed DateTime         @default(now())
   sessions         SonarSession[]
   council_decisions SonarCouncilDecision[]
+  registered_players SonarPlayer[] @relation("PlayerRegisteredBy")
+  issued_passports SonarPassport[] @relation("PassportIssuedBy")
 
   @@map("sonar_accounts")
+}
+
+model SonarPlayer {
+  id              String        @id @default(cuid())
+  nickname        String        @unique
+  minecraft_uuid  String?       @unique
+  note            String?
+  registered_by_id String
+  registered_by   SonarAccount  @relation("PlayerRegisteredBy", fields: [registered_by_id], references: [id])
+  created_at      DateTime      @default(now())
+  passport        SonarPassport?
+
+  @@map("sonar_players")
+}
+
+model SonarPassport {
+  id           String              @id @default(cuid())
+  number       String              @unique
+  player_id    String              @unique
+  player       SonarPlayer         @relation(fields: [player_id], references: [id], onDelete: Cascade)
+  issued_by_id String
+  issued_by    SonarAccount        @relation("PassportIssuedBy", fields: [issued_by_id], references: [id])
+  status       SonarPassportStatus @default(ACTIVE)
+  issued_at    DateTime            @default(now())
+  revoked_at   DateTime?
+
+  @@index([status])
+  @@map("sonar_passports")
 }
 
 model SonarCouncilDecision {
