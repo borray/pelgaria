@@ -340,8 +340,14 @@ button { font: inherit; }
 @keyframes egg-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .egg-spark { transform-box: fill-box; transform-origin: center; animation: egg-sparkle 2.6s ease-in-out infinite; }
 @keyframes egg-sparkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(90deg); } }
-.egg-text { max-width: 360px; margin: 10px auto 0; color: #c4dcf7; font-size: 14px; line-height: 1.6; }
-.egg-sign { margin: 16px 0 0; color: #7fa6d6; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.egg-text { max-width: 372px; margin: 10px auto 0; color: #c4dcf7; font-size: 14px; line-height: 1.6; }
+.egg-text b { color: #ffe6a6; font-weight: 700; }
+.egg-lineage { display: inline-flex; align-items: center; gap: 10px; margin: 16px auto 0; padding: 7px 9px; border: 1px solid rgba(170, 210, 255, .2); border-radius: 999px; background: rgba(140, 195, 255, .1); }
+.egg-lineage span { padding: 4px 12px; border-radius: 999px; color: #d6e8ff; font-size: 12px; font-weight: 700; }
+.egg-lineage span.is-now { color: #08214a; background: linear-gradient(180deg, #cfe6ff, #a9d0ff); box-shadow: 0 4px 12px rgba(120, 180, 255, .35); }
+.egg-lineage i { display: grid; place-items: center; color: #9fd0ff; }
+.egg-lineage i svg { width: 16px; height: 16px; }
+.egg-sign { margin: 14px 0 0; color: #7fa6d6; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 
 @media (prefers-reduced-motion: reduce) {
   .egg-fig-a, .egg-fig-b, .egg-fig-c, .egg-spark, .egg-orbit, .egg-star { animation: none !important; }

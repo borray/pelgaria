@@ -160,8 +160,9 @@ function FoundersEgg({ onClose }: { onClose: () => void }) {
               <g className="egg-spark"><path d="M180 40 l2.2 5 5 2.2 -5 2.2 -2.2 5 -2.2 -5 -5 -2.2 5 -2.2z" fill="#dff0ff" /></g>
             </svg>
           </div>
-          <p className="egg-text">Пельгария родилась не из устава, а из дружбы троих — разного роста, одного дела. Этот мир держится на них.</p>
-          <p className="egg-sign">с теплом к основателям · Пельгария</p>
+          <p className="egg-text">Эти трое друзей — разного роста, одного дела — создали <b>Пельменьград</b>, свой первый общий мир. Пельгария родилась из него: тот же дух дружбы, только размах больше.</p>
+          <div className="egg-lineage" aria-label="Пельменьград — предок Пельгарии"><span>Пельменьград</span><i><WorkspaceIcon name="arrow" /></i><span className="is-now">Пельгария</span></div>
+          <p className="egg-sign">потомок одного тёплого проекта</p>
         </div>
       </div>
     </div>
