@@ -47,10 +47,9 @@ jobs:
           ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
             set -e
             cd /home/sonar/app
-            cat > .env << 'ENVEOF'
-            CLIENT_URL=https://pg-bridge.ru
-            PORT=3001
-            ENVEOF
+            printf '%s\n' \
+              'CLIENT_URL=https://pg-bridge.ru' \
+              'PORT=3001' > .env
             npm ci --omit=dev
             if pm2 describe sonar > /dev/null 2>&1; then
               pm2 restart sonar --update-env
