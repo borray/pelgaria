@@ -3,7 +3,7 @@ import { promisify } from 'node:util'
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import cors from 'cors'
 import express, { type NextFunction, type Request, type Response } from 'express'
-import { PrismaClient, SonarAccountRole, type SonarAccount } from '@prisma/client'
+import { PrismaClient, SonarAccountRole, SonarCouncilDecisionStatus, type SonarAccount } from '@prisma/client'
 
 const app = express()
 const prisma = new PrismaClient()
@@ -45,6 +45,20 @@ function normalizeLogin(value: unknown): string | null {
 
 function isValidPassword(value: unknown): value is string {
   return typeof value === 'string' && value.length >= 12 && value.length <= 128
+}
+
+function isChairman(req: AuthenticatedRequest): boolean {
+  return req.account?.role === SonarAccountRole.CHAIRMAN
+}
+
+function parseDecision(value: unknown): { title: string; body: string } | null {
+  if (!value || typeof value !== 'object') return null
+  const { title, body } = value as Record<string, unknown>
+  if (typeof title !== 'string' || typeof body !== 'string') return null
+  const normalizedTitle = title.trim()
+  const normalizedBody = body.trim()
+  if (normalizedTitle.length < 3 || normalizedTitle.length > 160 || normalizedBody.length < 10 || normalizedBody.length > 12000) return null
+  return { title: normalizedTitle, body: normalizedBody }
 }
 
 function hashToken(value: string): string {
@@ -192,6 +206,26 @@ async function ensureSonarSchema(): Promise<void> {
   `)
   await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_sessions_account_id_idx ON sonar_sessions(account_id);')
   await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_sessions_expires_at_idx ON sonar_sessions(expires_at);')
+  await prisma.$executeRawUnsafe(`
+    DO $$ BEGIN
+      CREATE TYPE sonar_council_decision_status AS ENUM ('DRAFT', 'ADOPTED');
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS sonar_council_decisions (
+      id TEXT PRIMARY KEY,
+      number SERIAL UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      status sonar_council_decision_status NOT NULL DEFAULT 'DRAFT',
+      author_id TEXT NOT NULL REFERENCES sonar_accounts(id) ON DELETE RESTRICT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      adopted_at TIMESTAMPTZ
+    );
+  `)
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_council_decisions_status_idx ON sonar_council_decisions(status);')
 }
 
 app.get('/api/health', (_req, res) => {
@@ -250,6 +284,43 @@ app.get('/api/system/overview', requireAuth, (_req, res) => {
       { id: 'registry', title: 'Реестр мира', state: 'planned' },
     ],
   })
+})
+
+app.get('/api/council/decisions', requireAuth, async (_req, res, next) => {
+  try {
+    const decisions = await prisma.sonarCouncilDecision.findMany({
+      orderBy: { number: 'desc' },
+      include: { author: { select: { login: true } } },
+    })
+    res.json({ decisions })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/council/decisions', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Создавать решения может только Председатель.' }); return }
+    const decision = parseDecision(req.body)
+    if (!decision) { res.status(400).json({ error: 'Заголовок должен содержать 3–160 символов, текст — 10–12000.' }); return }
+    const created = await prisma.sonarCouncilDecision.create({
+      data: { ...decision, author_id: req.account!.id },
+      include: { author: { select: { login: true } } },
+    })
+    res.status(201).json({ decision: created })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/council/decisions/:id/adopt', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Принимать решения может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор решения.' }); return }
+    const decision = await prisma.sonarCouncilDecision.update({
+      where: { id },
+      data: { status: SonarCouncilDecisionStatus.ADOPTED, adopted_at: new Date() },
+      include: { author: { select: { login: true } } },
+    })
+    res.json({ decision })
+  } catch (error) { next(error) }
 })
 
 app.all('/api/*', (_req, res) => res.status(410).json({ error: 'Этот модуль ещё не создан в новом СОНАР.', phase: 'sonar-alpha' }))

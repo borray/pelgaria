@@ -14,6 +14,13 @@ enum SonarAccountRole {
   @@map("sonar_account_role")
 }
 
+enum SonarCouncilDecisionStatus {
+  DRAFT
+  ADOPTED
+
+  @@map("sonar_council_decision_status")
+}
+
 model SonarAccount {
   id               String           @id @default(cuid())
   login            String           @unique
@@ -24,8 +31,24 @@ model SonarAccount {
   last_login_at    DateTime?
   password_changed DateTime         @default(now())
   sessions         SonarSession[]
+  council_decisions SonarCouncilDecision[]
 
   @@map("sonar_accounts")
+}
+
+model SonarCouncilDecision {
+  id          String                     @id @default(cuid())
+  number      Int                        @unique @default(autoincrement())
+  title       String
+  body        String
+  status      SonarCouncilDecisionStatus @default(DRAFT)
+  author_id   String
+  author      SonarAccount               @relation(fields: [author_id], references: [id])
+  created_at  DateTime                   @default(now())
+  adopted_at  DateTime?
+
+  @@index([status])
+  @@map("sonar_council_decisions")
 }
 
 model SonarSession {

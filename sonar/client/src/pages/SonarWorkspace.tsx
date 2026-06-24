@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CouncilMark } from '../components/brand/CouncilMark'
 import { PelgariaMark } from '../components/brand/PelgariaMark'
 import { PelgradMark } from '../components/brand/PelgradMark'
@@ -7,6 +7,7 @@ import type { SonarAccount } from './AuthPage'
 
 type WorkspaceSection = 'overview' | 'council' | 'institutions' | 'registry' | 'system'
 type IconName = 'grid' | 'council' | 'building' | 'archive' | 'settings' | 'arrow' | 'menu' | 'close' | 'bell' | 'check'
+type CouncilDecision = { id: string; number: number; title: string; body: string; status: 'DRAFT' | 'ADOPTED'; created_at: string; adopted_at: string | null; author: { login: string } }
 
 const navigation: Array<{ id: WorkspaceSection; label: string; icon: IconName }> = [
   { id: 'overview', label: 'Обзор', icon: 'grid' },
@@ -76,6 +77,12 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const [newPassword, setNewPassword] = useState('')
   const [passwordState, setPasswordState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [passwordError, setPasswordError] = useState('')
+  const [decisions, setDecisions] = useState<CouncilDecision[]>([])
+  const [isCouncilLoading, setCouncilLoading] = useState(false)
+  const [councilError, setCouncilError] = useState('')
+  const [draftTitle, setDraftTitle] = useState('')
+  const [draftBody, setDraftBody] = useState('')
+  const [isSubmittingDecision, setSubmittingDecision] = useState(false)
 
   const navigate = (next: WorkspaceSection) => {
     setSection(next)
@@ -84,6 +91,42 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
 
   const activeItem = navigation.find((item) => item.id === section)!
   const sectionDetails = section === 'overview' ? null : sectionCopy[section]
+
+  useEffect(() => {
+    if (section !== 'council') return
+    setCouncilLoading(true)
+    fetch('/api/council/decisions', { credentials: 'include' })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({})) as { decisions?: CouncilDecision[]; error?: string }
+        if (!response.ok) throw new Error(body.error ?? 'Не удалось получить журнал решений.')
+        setDecisions(body.decisions ?? [])
+      })
+      .catch((reason) => setCouncilError(reason instanceof Error ? reason.message : 'Не удалось получить журнал решений.'))
+      .finally(() => setCouncilLoading(false))
+  }, [section])
+
+  const createDecision = async () => {
+    if (isSubmittingDecision) return
+    setSubmittingDecision(true)
+    setCouncilError('')
+    try {
+      const response = await fetch('/api/council/decisions', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: draftTitle, body: draftBody }) })
+      const payload = await response.json().catch(() => ({})) as { decision?: CouncilDecision; error?: string }
+      if (!response.ok || !payload.decision) throw new Error(payload.error ?? 'Не удалось создать решение.')
+      setDecisions((current) => [payload.decision!, ...current])
+      setDraftTitle('')
+      setDraftBody('')
+    } catch (reason) { setCouncilError(reason instanceof Error ? reason.message : 'Не удалось создать решение.') } finally { setSubmittingDecision(false) }
+  }
+
+  const adoptDecision = async (id: string) => {
+    try {
+      const response = await fetch(`/api/council/decisions/${id}/adopt`, { method: 'POST', credentials: 'include' })
+      const payload = await response.json().catch(() => ({})) as { decision?: CouncilDecision; error?: string }
+      if (!response.ok || !payload.decision) throw new Error(payload.error ?? 'Не удалось принять решение.')
+      setDecisions((current) => current.map((decision) => decision.id === id ? payload.decision! : decision))
+    } catch (reason) { setCouncilError(reason instanceof Error ? reason.message : 'Не удалось принять решение.') }
+  }
 
   const changePassword = async () => {
     if (passwordState === 'saving') return
@@ -136,7 +179,14 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
           <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><span className="sonar-account"><b>{account.login}</b><small>{account.role === 'CHAIRMAN' ? 'Председатель' : 'Оператор'}</small></span><button type="button" aria-label="Уведомления"><WorkspaceIcon name="bell" /></button><button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
         </header>
 
-        {sectionDetails ? (
+        {section === 'council' ? (
+          <section className="sonar-council-page">
+            <div className="sonar-council-heading"><div><p>Высший контур управления</p><h1>Журнал решений</h1><span>Решения Верховного Совета формируют курс Пельграда. Черновик становится действующим только после принятия Председателем.</span></div><CouncilMark /></div>
+            {account.role === 'CHAIRMAN' && <section className="sonar-decision-form"><div><p>Новое решение</p><h2>Зафиксировать курс</h2></div><label>Заголовок<input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} maxLength={160} placeholder="Краткое название решения" /></label><label>Содержание<textarea value={draftBody} onChange={(event) => setDraftBody(event.target.value)} maxLength={12000} placeholder="Что решено и почему" /></label><button type="button" disabled={draftTitle.trim().length < 3 || draftBody.trim().length < 10 || isSubmittingDecision} onClick={createDecision}>{isSubmittingDecision ? 'Сохраняем...' : 'Создать черновик'}</button></section>}
+            {councilError && <p className="sonar-council-error">{councilError}</p>}
+            <section className="sonar-decision-list" aria-live="polite">{isCouncilLoading ? <p className="sonar-council-empty">Загружаем журнал решений...</p> : decisions.length === 0 ? <p className="sonar-council-empty">Журнал пока чист. Первое решение станет точкой отсчёта нового Пельграда.</p> : decisions.map((decision) => <article key={decision.id}><div className="sonar-decision-number">ВС-{String(decision.number).padStart(4, '0')}</div><div className="sonar-decision-body"><div><span className={decision.status === 'ADOPTED' ? 'is-adopted' : ''}>{decision.status === 'ADOPTED' ? 'Принято' : 'Черновик'}</span><time>{new Date(decision.created_at).toLocaleDateString('ru-RU')}</time></div><h2>{decision.title}</h2><p>{decision.body}</p><small>Подготовил: {decision.author.login}</small></div>{account.role === 'CHAIRMAN' && decision.status === 'DRAFT' && <button type="button" onClick={() => adoptDecision(decision.id)}>Принять</button>}</article>)}</section>
+          </section>
+        ) : sectionDetails ? (
           <section className="sonar-stage">
             <div className="sonar-stage-icon"><WorkspaceIcon name={activeItem.icon} /></div>
             <p>{sectionDetails.eyebrow}</p>
