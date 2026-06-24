@@ -157,6 +157,43 @@ async function bootstrapChairman(): Promise<void> {
   console.log(`Initial chairman account created for ${login}`)
 }
 
+async function ensureSonarSchema(): Promise<void> {
+  // The legacy schema is deliberately left intact. This creates only the new SONAR contour.
+  await prisma.$executeRawUnsafe(`
+    DO $$ BEGIN
+      CREATE TYPE sonar_account_role AS ENUM ('CHAIRMAN', 'OPERATOR');
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS sonar_accounts (
+      id TEXT PRIMARY KEY,
+      login TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role sonar_account_role NOT NULL DEFAULT 'OPERATOR',
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_login_at TIMESTAMPTZ,
+      password_changed TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS sonar_sessions (
+      id TEXT PRIMARY KEY,
+      token_hash TEXT NOT NULL UNIQUE,
+      account_id TEXT NOT NULL REFERENCES sonar_accounts(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMPTZ NOT NULL,
+      user_agent TEXT,
+      ip_hash TEXT
+    );
+  `)
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_sessions_account_id_idx ON sonar_sessions(account_id);')
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS sonar_sessions_expires_at_idx ON sonar_sessions(expires_at);')
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', phase: 'sonar-alpha', message: 'СОНАР нового цикла разворачивается для Пельграда.', timestamp: new Date().toISOString() })
 })
@@ -223,6 +260,7 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 })
 
 async function start(): Promise<void> {
+  await ensureSonarSchema()
   await bootstrapChairman()
   app.listen(port, () => console.log(`Pelgaria SONAR alpha server is listening on ${port}`))
 }

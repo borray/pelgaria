@@ -57,7 +57,6 @@ jobs:
               'SONAR_INITIAL_PASSWORD=${{ secrets.SONAR_INITIAL_PASSWORD }}' > .env
             npm ci
             npx prisma generate --schema prisma/sonar.prisma
-            npx prisma db push --schema prisma/sonar.prisma --skip-generate
             if pm2 describe sonar > /dev/null 2>&1; then
               pm2 restart sonar --update-env
             else

@@ -10,6 +10,8 @@ datasource db {
 enum SonarAccountRole {
   CHAIRMAN
   OPERATOR
+
+  @@map("sonar_account_role")
 }
 
 model SonarAccount {
