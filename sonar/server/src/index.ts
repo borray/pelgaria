@@ -24,7 +24,7 @@ const failedAttempts = new Map<string, FailedAttempt>()
 app.set('trust proxy', 1)
 app.disable('x-powered-by')
 app.use(express.json({ limit: '20kb', strict: true }))
-app.use(cors({ origin: clientUrl, credentials: true, methods: ['GET', 'POST', 'OPTIONS'] }))
+app.use(cors({ origin: clientUrl, credentials: true, methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'] }))
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('X-Frame-Options', 'DENY')
@@ -73,6 +73,28 @@ function parsePlayer(value: unknown): { nickname: string; minecraftUuid: string 
   if (normalizedUuid && !/^[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}$/i.test(normalizedUuid)) return null
   const normalizedNote = typeof note === 'string' && note.trim() ? note.trim().slice(0, 500) : null
   return { nickname: normalizedNickname, minecraftUuid: normalizedUuid, note: normalizedNote }
+}
+
+function uniqueViolationTarget(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null
+  const code = (error as { code?: string }).code
+  if (code !== 'P2002') return null
+  const target = (error as { meta?: { target?: unknown } }).meta?.target
+  if (Array.isArray(target)) return target.map(String).join(',')
+  return typeof target === 'string' ? target : 'unknown'
+}
+
+async function createPassportForPlayer(playerId: string, accountId: string): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await prisma.sonarPassport.create({ data: { number: newPassportNumber(), player_id: playerId, issued_by_id: accountId } })
+      return
+    } catch (error) {
+      // Only retry when the random passport number collides; rethrow anything else.
+      if (uniqueViolationTarget(error)?.includes('number') && attempt < 4) continue
+      throw error
+    }
+  }
 }
 
 function passportSecret(): string {
@@ -484,6 +506,27 @@ app.post('/api/council/decisions', requireAuth, async (req: AuthenticatedRequest
   } catch (error) { next(error) }
 })
 
+app.patch('/api/council/decisions/:id', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Редактировать решения может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор решения.' }); return }
+    const decision = parseDecision(req.body)
+    if (!decision) { res.status(400).json({ error: 'Заголовок должен содержать 3–160 символов, текст — 10–12000.' }); return }
+    try {
+      const updated = await prisma.sonarCouncilDecision.update({
+        where: { id },
+        data: { title: decision.title, body: decision.body },
+        include: { author: { select: { login: true } } },
+      })
+      res.json({ decision: updated })
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2025') { res.status(404).json({ error: 'Решение не найдено.' }); return }
+      throw error
+    }
+  } catch (error) { next(error) }
+})
+
 app.post('/api/council/decisions/:id/adopt', requireAuth, async (req: AuthenticatedRequest, res, next) => {
   try {
     if (!isChairman(req)) { res.status(403).json({ error: 'Принимать решения может только Председатель.' }); return }
@@ -520,25 +563,79 @@ app.post('/api/players', requireAuth, async (req: AuthenticatedRequest, res, nex
     if (!isChairman(req)) { res.status(403).json({ error: 'Регистрировать игроков может только Председатель.' }); return }
     const player = parsePlayer(req.body)
     if (!player) { res.status(400).json({ error: 'Укажите корректный Minecraft-ник (3-16 латинских символов, цифр или _). UUID необязателен.' }); return }
-    let created: Awaited<ReturnType<typeof prisma.sonarPlayer.create>> | undefined
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      try {
-        created = await prisma.sonarPlayer.create({
-          data: {
-            nickname: player.nickname,
-            minecraft_uuid: player.minecraftUuid,
-            note: player.note,
-            registered_by_id: req.account!.id,
-            passport: { create: { number: newPassportNumber(), issued_by_id: req.account!.id } },
-          },
-          include: { passport: true },
-        })
-        break
-      } catch (error) {
-        if (attempt === 3) throw error
-      }
+    const issuePassport = req.body?.issuePassport !== false
+    try {
+      const created = await prisma.sonarPlayer.create({
+        data: {
+          nickname: player.nickname,
+          minecraft_uuid: player.minecraftUuid,
+          note: player.note,
+          registered_by_id: req.account!.id,
+        },
+      })
+      if (issuePassport) await createPassportForPlayer(created.id, req.account!.id)
+      const full = await prisma.sonarPlayer.findUnique({ where: { id: created.id }, include: { passport: true } })
+      res.status(201).json({ player: full })
+    } catch (error) {
+      const target = uniqueViolationTarget(error)
+      if (target) { res.status(409).json({ error: target.includes('uuid') ? 'Игрок с таким UUID уже зарегистрирован.' : 'Игрок с таким ником уже зарегистрирован.' }); return }
+      throw error
     }
-    res.status(201).json({ player: created })
+  } catch (error) { next(error) }
+})
+
+app.patch('/api/players/:id', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Редактировать записи игроков может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор игрока.' }); return }
+    const player = parsePlayer(req.body)
+    if (!player) { res.status(400).json({ error: 'Укажите корректный Minecraft-ник (3-16 латинских символов, цифр или _). UUID необязателен.' }); return }
+    try {
+      const updated = await prisma.sonarPlayer.update({
+        where: { id },
+        data: { nickname: player.nickname, minecraft_uuid: player.minecraftUuid, note: player.note },
+        include: { passport: true },
+      })
+      res.json({ player: updated })
+    } catch (error) {
+      const target = uniqueViolationTarget(error)
+      if (target) { res.status(409).json({ error: target.includes('uuid') ? 'Игрок с таким UUID уже зарегистрирован.' : 'Игрок с таким ником уже зарегистрирован.' }); return }
+      if ((error as { code?: string }).code === 'P2025') { res.status(404).json({ error: 'Игрок не найден.' }); return }
+      throw error
+    }
+  } catch (error) { next(error) }
+})
+
+app.post('/api/players/:id/passport', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Выдавать паспорта может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор игрока.' }); return }
+    const player = await prisma.sonarPlayer.findUnique({ where: { id }, include: { passport: true } })
+    if (!player) { res.status(404).json({ error: 'Игрок не найден.' }); return }
+    if (player.passport) { res.status(409).json({ error: 'Паспорт уже выдан этому игроку.' }); return }
+    await createPassportForPlayer(player.id, req.account!.id)
+    const full = await prisma.sonarPlayer.findUnique({ where: { id }, include: { passport: true } })
+    res.status(201).json({ player: full })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/players/:id/passport/status', requireAuth, async (req: AuthenticatedRequest, res, next) => {
+  try {
+    if (!isChairman(req)) { res.status(403).json({ error: 'Менять статус паспорта может только Председатель.' }); return }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+    if (!id) { res.status(400).json({ error: 'Не указан идентификатор игрока.' }); return }
+    const status = req.body?.status
+    if (status !== 'ACTIVE' && status !== 'REVOKED') { res.status(400).json({ error: 'Недопустимый статус паспорта.' }); return }
+    const player = await prisma.sonarPlayer.findUnique({ where: { id }, include: { passport: true } })
+    if (!player?.passport) { res.status(404).json({ error: 'Паспорт не найден.' }); return }
+    await prisma.sonarPassport.update({
+      where: { id: player.passport.id },
+      data: { status, revoked_at: status === SonarPassportStatus.REVOKED ? new Date() : null },
+    })
+    const full = await prisma.sonarPlayer.findUnique({ where: { id }, include: { passport: true } })
+    res.json({ player: full })
   } catch (error) { next(error) }
 })
 
