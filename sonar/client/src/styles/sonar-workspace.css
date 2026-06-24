@@ -26,3 +26,83 @@ button { font: inherit; }
 
 .sonar-registry-page { max-width: 1120px; margin: 0 auto; padding: clamp(55px, 8vw, 105px) clamp(24px, 6vw, 76px) 50px; }.sonar-registry-page .sonar-council-heading > svg { width: 78px; height: 78px; padding: 18px; border-radius: 24px; color: #1a63bd; background: #e8f3ff; }.sonar-player-form textarea { min-height: 76px; }.sonar-player-list { display: grid; gap: 12px; margin-top: 30px; }.sonar-player-list article { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 19px 22px; border: 1px solid #dce7f5; border-radius: 16px; background: #fff; }.sonar-player-avatar { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 14px; color: #1c5cae; background: #e9f3ff; font-size: 18px; font-weight: 800; }.sonar-player-list h2 { margin: 0; color: #183b68; font-size: 18px; letter-spacing: -.03em; }.sonar-player-list p { margin: 4px 0 6px; color: #7b90ac; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }.sonar-player-list span { color: #416f9f; font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace; }.sonar-player-actions { display: grid; justify-items: end; gap: 9px; }.sonar-player-actions i { color: #8394aa; font-size: 11px; font-style: normal; }.sonar-player-actions i.is-active { color: #258166; }.sonar-player-actions button { min-height: 35px; padding: 0 10px; border: 1px solid #cfe0f4; border-radius: 9px; color: #2d649e; background: #fff; font-size: 11px; font-weight: 750; cursor: pointer; }.sonar-decision-actions { display: grid; gap: 8px; }.sonar-decision-actions .is-delete { color: #a83d43; background: #fff4f4; }.sonar-decision-list article > .sonar-decision-actions > button { min-width: 79px; }.sonar-decision-list article > .sonar-decision-actions > button.is-delete { background: #fff4f4; color: #a83d43; }
 @media (max-width: 650px) { .sonar-registry-page { padding: 52px 20px 30px; }.sonar-registry-page .sonar-council-heading > svg { width: 58px; height: 58px; padding: 14px; }.sonar-player-list article { grid-template-columns: 46px minmax(0, 1fr); padding: 18px; }.sonar-player-actions { grid-column: 1 / -1; justify-items: stretch; }.sonar-player-actions button { width: 100%; }.sonar-decision-actions { grid-template-columns: 1fr 1fr; }.sonar-decision-list article > .sonar-decision-actions > button { width: 100%; } }
+
+/* ============================================================
+   Polish pass — calmer typography, tidier layout, refined detail
+   Overrides earlier rules; keep this block at the end of the file.
+   ============================================================ */
+:root {
+  --sonar-ink: #15396b;
+  --sonar-ink-soft: #43608a;
+  --sonar-muted: #6c84a4;
+  --sonar-accent: #1763c8;
+  --sonar-accent-strong: #0f4ea6;
+  --sonar-line: #e3ecf8;
+  --sonar-line-soft: #edf3fb;
+  --sonar-card-shadow: 0 16px 40px rgba(20, 60, 120, .07);
+}
+
+/* Make the content column a flex column so the footer always sits at the bottom. */
+.sonar-content { display: flex; flex-direction: column; }
+.sonar-footer { margin-top: auto; border-top-color: var(--sonar-line); }
+
+/* Sidebar — softer active state with an accent rail. */
+.sonar-nav button { position: relative; }
+.sonar-nav button.is-active { background: linear-gradient(90deg, #e7f1ff, #eff6ff); color: var(--sonar-accent-strong); }
+.sonar-nav button.is-active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--sonar-accent); }
+
+/* Topbar — frosted, sits cleanly above content. */
+.sonar-topbar { position: sticky; top: 0; z-index: 2; backdrop-filter: saturate(140%) blur(10px); }
+
+/* ---- Inner page headings: were near-black, oversized and over-tight ---- */
+.sonar-council-heading h1 { color: var(--sonar-ink); font-size: clamp(30px, 3.4vw, 46px); letter-spacing: -.025em; margin: 10px 0 14px; }
+.sonar-council-heading > div > span { color: var(--sonar-ink-soft); }
+.sonar-council-heading p, .sonar-decision-form > div > p, .sonar-stage > p { color: var(--sonar-accent); }
+
+/* Heading badge icon — aligned to the top, softer card. */
+.sonar-council-heading { align-items: flex-start; }
+.sonar-council-heading > svg, .sonar-registry-page .sonar-council-heading > svg { align-self: flex-start; width: 64px; height: 64px; padding: 15px; border-radius: 20px; color: var(--sonar-accent); background: linear-gradient(150deg, #eaf3ff, #e2eeff); box-shadow: inset 0 0 0 1px rgba(23, 99, 200, .08); }
+
+/* ---- Decision / record forms ---- */
+.sonar-decision-form { border-color: var(--sonar-line); border-radius: 18px; box-shadow: var(--sonar-card-shadow); padding: 26px; }
+.sonar-decision-form h2 { color: var(--sonar-ink); }
+.sonar-decision-form label { color: var(--sonar-ink-soft); }
+.sonar-decision-form input, .sonar-decision-form textarea, .sonar-player-form input, .sonar-player-form textarea { background: #fbfdff; transition: border-color .18s ease, box-shadow .18s ease; }
+/* Fix the stretched submit button (grid item stretched to a textarea's height). */
+.sonar-decision-form button { align-self: start; height: max-content; background: linear-gradient(180deg, #1d6fd6, #155fc1); box-shadow: 0 8px 18px rgba(21, 95, 193, .22); transition: filter .18s ease, transform .18s ease, box-shadow .18s ease; }
+.sonar-decision-form button:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
+/* Player form: give the service-note textarea its own full-width row so the button drops below it. */
+.sonar-player-form label:nth-of-type(3) { grid-column: 1 / -1; }
+
+/* ---- Decision & player cards: lift on hover, refined borders ---- */
+.sonar-decision-list article, .sonar-player-list article { border-color: var(--sonar-line); box-shadow: var(--sonar-card-shadow); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.sonar-decision-list article:hover, .sonar-player-list article:hover { border-color: #cfe0f6; box-shadow: 0 18px 44px rgba(20, 60, 120, .1); transform: translateY(-2px); }
+.sonar-decision-body h2, .sonar-player-list h2 { color: var(--sonar-ink); }
+
+/* ---- Module cards on the overview ---- */
+.sonar-module-card { border-color: var(--sonar-line); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.sonar-module-card:hover { border-color: #cfe0f6; box-shadow: 0 18px 44px rgba(20, 60, 120, .1); transform: translateY(-3px); }
+
+/* ============================================================
+   Stage (placeholder) pages — were a single giant black word in a
+   full-viewport void. Recompose as a contained, tidy panel.
+   ============================================================ */
+.sonar-stage { min-height: auto; max-width: 760px; margin: 0 auto; padding: clamp(46px, 6vw, 84px) clamp(24px, 5vw, 40px) 56px; }
+.sonar-stage-icon { width: 56px; height: 56px; border-radius: 17px; background: linear-gradient(150deg, #eaf3ff, #e2eeff); box-shadow: inset 0 0 0 1px rgba(23, 99, 200, .08); }
+.sonar-stage-icon svg { width: 28px; height: 28px; }
+.sonar-stage > p { margin-top: 26px; }
+.sonar-stage h1 { color: var(--sonar-ink); font-size: clamp(30px, 3.2vw, 44px); letter-spacing: -.025em; line-height: 1.04; margin: 10px 0 22px; }
+.sonar-stage-copy { grid-template-columns: 1fr; gap: 9px; padding: 22px 24px; border: 1px solid var(--sonar-line); border-radius: 16px; background: #fff; box-shadow: var(--sonar-card-shadow); }
+.sonar-stage-copy span { color: var(--sonar-accent); }
+.sonar-stage-copy p { font-size: 15px; color: var(--sonar-ink-soft); }
+.sonar-stage-next { width: max-content; max-width: 100%; margin-top: 20px; padding: 11px 16px; border-radius: 12px; color: var(--sonar-accent-strong); background: #eaf3ff; }
+
+/* Password panel inside the system stage. */
+.sonar-password-panel { border-color: var(--sonar-line); box-shadow: var(--sonar-card-shadow); }
+.sonar-password-panel h2 { color: var(--sonar-ink); }
+.sonar-password-fields button { background: linear-gradient(180deg, #1d6fd6, #155fc1); box-shadow: 0 8px 18px rgba(21, 95, 193, .22); transition: filter .18s ease, transform .18s ease; }
+.sonar-password-fields button:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
+
+@media (max-width: 650px) {
+  .sonar-council-heading > svg, .sonar-registry-page .sonar-council-heading > svg { width: 52px; height: 52px; padding: 13px; }
+}
