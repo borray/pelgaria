@@ -3,6 +3,7 @@ import { CouncilMark } from '../components/brand/CouncilMark'
 import { PelgariaMark } from '../components/brand/PelgariaMark'
 import { PelgradMark } from '../components/brand/PelgradMark'
 import { SonarMark } from '../components/brand/SonarMark'
+import type { SonarAccount } from './AuthPage'
 
 type WorkspaceSection = 'overview' | 'council' | 'institutions' | 'registry' | 'system'
 type IconName = 'grid' | 'council' | 'building' | 'archive' | 'settings' | 'arrow' | 'menu' | 'close' | 'bell' | 'check'
@@ -68,7 +69,7 @@ function ModuleCard({ icon, title, description, status }: { icon: IconName; titl
   )
 }
 
-export function SonarWorkspace({ onExit }: { onExit: () => void }) {
+export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAccount; onExit: () => void; onLogout: () => void }) {
   const [section, setSection] = useState<WorkspaceSection>('overview')
   const [isMenuOpen, setMenuOpen] = useState(false)
 
@@ -106,7 +107,7 @@ export function SonarWorkspace({ onExit }: { onExit: () => void }) {
         <header className="sonar-topbar">
           <button className="sonar-menu" type="button" onClick={() => setMenuOpen(true)} aria-label="Открыть меню"><WorkspaceIcon name="menu" /></button>
           <div className="sonar-breadcrumb"><span>СОНАР</span><i /> <b>{activeItem.label}</b></div>
-          <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><button type="button" aria-label="Уведомления"><WorkspaceIcon name="bell" /></button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
+          <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><span className="sonar-account"><b>{account.login}</b><small>{account.role === 'CHAIRMAN' ? 'Председатель' : 'Оператор'}</small></span><button type="button" aria-label="Уведомления"><WorkspaceIcon name="bell" /></button><button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
         </header>
 
         {sectionDetails ? (

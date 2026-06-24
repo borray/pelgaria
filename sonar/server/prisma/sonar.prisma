@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SonarAccountRole {
+  CHAIRMAN
+  OPERATOR
+}
+
+model SonarAccount {
+  id               String           @id @default(cuid())
+  login            String           @unique
+  password_hash    String
+  role             SonarAccountRole @default(OPERATOR)
+  is_active        Boolean          @default(true)
+  created_at       DateTime         @default(now())
+  last_login_at    DateTime?
+  password_changed DateTime         @default(now())
+  sessions         SonarSession[]
+
+  @@map("sonar_accounts")
+}
+
+model SonarSession {
+  id           String       @id @default(cuid())
+  token_hash   String       @unique
+  account_id   String
+  account      SonarAccount @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  created_at   DateTime     @default(now())
+  last_seen_at DateTime     @default(now())
+  expires_at   DateTime
+  user_agent   String?
+  ip_hash      String?
+
+  @@index([account_id])
+  @@index([expires_at])
+  @@map("sonar_sessions")
+}

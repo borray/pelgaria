@@ -40,6 +40,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/sonar/app/dist /home/sonar/app/public"
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" sonar/server/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/dist/
           rsync -az -e "ssh -i ~/.ssh/deploy_key" sonar/server/package.json sonar/server/package-lock.json ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" sonar/server/prisma/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/prisma/
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" sonar/client/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/public/
 
       - name: Restart SONAR
@@ -48,9 +49,15 @@ jobs:
             set -e
             cd /home/sonar/app
             printf '%s\n' \
+              'NODE_ENV=production' \
               'CLIENT_URL=https://pg-bridge.ru' \
-              'PORT=3001' > .env
-            npm ci --omit=dev
+              'PORT=3001' \
+              'DATABASE_URL=${{ secrets.DATABASE_URL }}' \
+              'SONAR_INITIAL_LOGIN=${{ secrets.SONAR_INITIAL_LOGIN }}' \
+              'SONAR_INITIAL_PASSWORD=${{ secrets.SONAR_INITIAL_PASSWORD }}' > .env
+            npm ci
+            npx prisma generate --schema prisma/sonar.prisma
+            npx prisma db push --schema prisma/sonar.prisma --skip-generate
             if pm2 describe sonar > /dev/null 2>&1; then
               pm2 restart sonar --update-env
             else

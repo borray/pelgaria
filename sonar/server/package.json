@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
+    "build": "prisma generate --schema prisma/sonar.prisma && node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
     "start": "node dist/index.js",
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@prisma/client": "^6.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0"
@@ -16,6 +17,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "prisma": "^6.10.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
