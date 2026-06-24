@@ -41,3 +41,18 @@ button, a { font: inherit; }
 .foundation-sonar aside button { display: block; margin-top: 12px; padding: 0; border: 0; color: #d4fff5; background: transparent; font: inherit; font-weight: 750; cursor: pointer; }
 .foundation-sonar aside button:hover { color: #fff; }
 @media (max-width: 560px) { .foundation-header-actions { align-items: flex-end; flex-direction: column; gap: 11px; }.foundation-sonar-link { min-height: 34px; } }
+
+/* ============================================================
+   Polish — calm the decorative layers behind the hero so the
+   atmosphere reads as ambient depth, not stacked clutter.
+   ============================================================ */
+.foundation-page::before { opacity: .16; }
+.foundation-atmosphere { opacity: .5; }
+/* Keep the headline and its content on a clean, dedicated layer. */
+.foundation-hero, .foundation-header { position: relative; z-index: 1; }
+/* Push the largest ring further out so it stops crossing the headline. */
+.foundation-orbit { right: -24vw; top: 4vw; }
+.foundation-orbit-b { right: -8vw; }
+/* Drop the innermost ring — it was the busiest overlap over the lead text. */
+.foundation-orbit-c { display: none; }
+.foundation-signal { opacity: .5; }
