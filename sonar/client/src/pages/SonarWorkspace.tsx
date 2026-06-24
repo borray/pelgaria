@@ -9,6 +9,7 @@ type WorkspaceSection = 'overview' | 'council' | 'institutions' | 'registry' | '
 type IconName =
   | 'grid' | 'council' | 'building' | 'archive' | 'settings' | 'arrow' | 'menu' | 'close' | 'check'
   | 'edit' | 'trash' | 'print' | 'revoke' | 'restore' | 'plus' | 'passport' | 'spinner'
+  | 'search' | 'users' | 'scroll' | 'clock'
 type PassportStatus = 'ACTIVE' | 'REVOKED'
 type Passport = { id: string; number: string; status: PassportStatus; issued_at: string } | null
 type CouncilDecision = { id: string; number: number; title: string; body: string; status: 'DRAFT' | 'ADOPTED'; created_at: string; adopted_at: string | null; author: { login: string } }
@@ -59,6 +60,10 @@ function WorkspaceIcon({ name }: { name: IconName }) {
     case 'plus': return <svg viewBox="0 0 24 24" {...common}><path d="M12 5V19M5 12H19" /></svg>
     case 'passport': return <svg viewBox="0 0 24 24" {...common}><rect x="5" y="3" width="14" height="18" rx="2" /><circle cx="12" cy="10" r="2.5" /><path d="M9 15.5H15" /></svg>
     case 'spinner': return <svg viewBox="0 0 24 24" {...common} className="s-spin"><path d="M12 3A9 9 0 1 0 21 12" /></svg>
+    case 'search': return <svg viewBox="0 0 24 24" {...common}><circle cx="11" cy="11" r="7" /><path d="M16.5 16.5L21 21" /></svg>
+    case 'users': return <svg viewBox="0 0 24 24" {...common}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19A5.5 5.5 0 0 1 14.5 19M16 6.2A3 3 0 0 1 16 11.8M20.5 19A5 5 0 0 0 17 14.4" /></svg>
+    case 'scroll': return <svg viewBox="0 0 24 24" {...common}><path d="M7 4H17A2 2 0 0 1 19 6V18A2 2 0 0 0 21 20H8A2 2 0 0 1 6 18V6M6 6A2 2 0 0 0 3 7.5A1.5 1.5 0 0 0 6 9M10 9H15M10 13H15" /></svg>
+    case 'clock': return <svg viewBox="0 0 24 24" {...common}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12L15 14" /></svg>
   }
 }
 
@@ -99,6 +104,41 @@ function IconButton({ icon, label, onClick, tone = 'neutral', busy }: { icon: Ic
   )
 }
 
+function StatStrip({ items }: { items: Array<{ icon: IconName; label: string; value: number; tone?: 'accent' | 'ok' | 'warn' | 'muted' }> }) {
+  return (
+    <div className="s-stats">
+      {items.map((item) => (
+        <div className={`s-stat s-stat--${item.tone ?? 'accent'}`} key={item.label}>
+          <span className="s-stat-icon"><WorkspaceIcon name={item.icon} /></span>
+          <span className="s-stat-body"><b>{item.value}</b><small>{item.label}</small></span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FilterChips<T extends string>({ value, onChange, options }: { value: T; onChange: (value: T) => void; options: Array<{ id: T; label: string; count: number }> }) {
+  return (
+    <div className="s-chips" role="tablist">
+      {options.map((option) => (
+        <button type="button" key={option.id} role="tab" aria-selected={value === option.id} className={`s-chip ${value === option.id ? 'is-active' : ''}`} onClick={() => onChange(option.id)}>
+          {option.label}<span>{option.count}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
+  return (
+    <div className="s-search">
+      <WorkspaceIcon name="search" />
+      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} type="search" />
+      {value && <button type="button" className="s-search-clear" onClick={() => onChange('')} aria-label="Очистить"><WorkspaceIcon name="close" /></button>}
+    </div>
+  )
+}
+
 export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAccount; onExit: () => void; onLogout: () => void }) {
   const isChairman = account.role === 'CHAIRMAN'
   const [section, setSection] = useState<WorkspaceSection>('overview')
@@ -115,6 +155,9 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const [draftBody, setDraftBody] = useState('')
   const [isSubmittingDecision, setSubmittingDecision] = useState(false)
   const [editingDecision, setEditingDecision] = useState<CouncilDecision | null>(null)
+  const [decisionQuery, setDecisionQuery] = useState('')
+  const [decisionFilter, setDecisionFilter] = useState<'all' | 'adopted' | 'draft'>('all')
+  const [showDecisionForm, setShowDecisionForm] = useState(false)
 
   const [players, setPlayers] = useState<RegistryPlayer[]>([])
   const [isPlayersLoading, setPlayersLoading] = useState(false)
@@ -126,6 +169,9 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const [isSubmittingPlayer, setSubmittingPlayer] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState<RegistryPlayer | null>(null)
   const [busyPlayerId, setBusyPlayerId] = useState<string | null>(null)
+  const [playerQuery, setPlayerQuery] = useState('')
+  const [playerFilter, setPlayerFilter] = useState<'all' | 'active' | 'revoked' | 'none'>('all')
+  const [showPlayerForm, setShowPlayerForm] = useState(false)
 
   const [confirm, setConfirm] = useState<{ kind: 'decision' | 'player'; id: string; name: string } | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
@@ -168,7 +214,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
       const payload = await response.json().catch(() => ({})) as { decision?: CouncilDecision; error?: string }
       if (!response.ok || !payload.decision) throw new Error(payload.error ?? 'Не удалось создать решение.')
       setDecisions((current) => [payload.decision!, ...current])
-      setDraftTitle(''); setDraftBody('')
+      setDraftTitle(''); setDraftBody(''); setShowDecisionForm(false)
     } catch (reason) { setCouncilError(reason instanceof Error ? reason.message : 'Не удалось создать решение.') } finally { setSubmittingDecision(false) }
   }
 
@@ -198,7 +244,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
       const payload = await response.json().catch(() => ({})) as { player?: RegistryPlayer; error?: string }
       if (!response.ok || !payload.player) throw new Error(payload.error ?? 'Не удалось зарегистрировать игрока.')
       setPlayers((current) => [payload.player!, ...current])
-      setNickname(''); setMinecraftUuid(''); setPlayerNote(''); setIssuePassport(true)
+      setNickname(''); setMinecraftUuid(''); setPlayerNote(''); setIssuePassport(true); setShowPlayerForm(false)
     } catch (reason) { setPlayersError(reason instanceof Error ? reason.message : 'Не удалось зарегистрировать игрока.') } finally { setSubmittingPlayer(false) }
   }
 
@@ -252,6 +298,28 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
     } catch (reason) { setPasswordState('error'); setPasswordError(reason instanceof Error ? reason.message : 'Не удалось обновить пароль.') }
   }
 
+  const decisionAdopted = decisions.filter((item) => item.status === 'ADOPTED').length
+  const decisionDrafts = decisions.length - decisionAdopted
+  const decisionQ = decisionQuery.trim().toLowerCase()
+  const visibleDecisions = decisions.filter((item) => {
+    if (decisionFilter === 'adopted' && item.status !== 'ADOPTED') return false
+    if (decisionFilter === 'draft' && item.status !== 'DRAFT') return false
+    if (!decisionQ) return true
+    return item.title.toLowerCase().includes(decisionQ) || item.body.toLowerCase().includes(decisionQ) || `вс-${String(item.number).padStart(4, '0')}`.includes(decisionQ)
+  })
+
+  const playersActive = players.filter((item) => item.passport?.status === 'ACTIVE').length
+  const playersRevoked = players.filter((item) => item.passport?.status === 'REVOKED').length
+  const playersNoPass = players.filter((item) => !item.passport).length
+  const playerQ = playerQuery.trim().toLowerCase()
+  const visiblePlayers = players.filter((item) => {
+    if (playerFilter === 'active' && item.passport?.status !== 'ACTIVE') return false
+    if (playerFilter === 'revoked' && item.passport?.status !== 'REVOKED') return false
+    if (playerFilter === 'none' && item.passport) return false
+    if (!playerQ) return true
+    return item.nickname.toLowerCase().includes(playerQ) || (item.minecraft_uuid ?? '').toLowerCase().includes(playerQ) || (item.passport?.number ?? '').toLowerCase().includes(playerQ) || (item.note ?? '').toLowerCase().includes(playerQ)
+  })
+
   return (
     <main className="sonar-workspace">
       <aside className={`sonar-sidebar ${isMenuOpen ? 'sonar-sidebar-open' : ''}`}>
@@ -284,7 +352,29 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
               <PelgariaMark />
             </div>
 
-            {isChairman && (
+            {!isPlayersLoading && players.length > 0 && (
+              <StatStrip items={[
+                { icon: 'users', label: 'Всего игроков', value: players.length, tone: 'accent' },
+                { icon: 'passport', label: 'Активные паспорта', value: playersActive, tone: 'ok' },
+                { icon: 'revoke', label: 'Отозваны', value: playersRevoked, tone: 'warn' },
+                { icon: 'archive', label: 'Без паспорта', value: playersNoPass, tone: 'muted' },
+              ]} />
+            )}
+
+            {!isPlayersLoading && players.length > 0 && (
+              <div className="s-toolbar">
+                <SearchBox value={playerQuery} onChange={setPlayerQuery} placeholder="Поиск по нику, UUID, номеру паспорта или заметке" />
+                <FilterChips value={playerFilter} onChange={setPlayerFilter} options={[
+                  { id: 'all', label: 'Все', count: players.length },
+                  { id: 'active', label: 'Активные', count: playersActive },
+                  { id: 'revoked', label: 'Отозваны', count: playersRevoked },
+                  { id: 'none', label: 'Без паспорта', count: playersNoPass },
+                ]} />
+                {isChairman && <button type="button" className={`s-btn ${showPlayerForm ? 's-btn--ghost' : 's-btn--accent'} s-toolbar-cta`} onClick={() => setShowPlayerForm((value) => !value)}><WorkspaceIcon name={showPlayerForm ? 'close' : 'plus'} /> {showPlayerForm ? 'Свернуть' : 'Новый игрок'}</button>}
+              </div>
+            )}
+
+            {isChairman && (showPlayerForm || players.length === 0) && (
               <section className="s-card s-create">
                 <div className="s-create-head"><p>Новая запись</p><h2>Зарегистрировать игрока</h2></div>
                 <div className="s-form-grid">
@@ -303,10 +393,12 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
 
             <div className="s-list">
               {isPlayersLoading ? (
-                <div className="s-empty">Загружаем реестр игроков…</div>
+                <><div className="s-skeleton" /><div className="s-skeleton" /><div className="s-skeleton" /></>
               ) : players.length === 0 ? (
                 <div className="s-empty"><WorkspaceIcon name="archive" /><b>Реестр пуст</b><span>Первый игрок получит первый паспорт нового Пельграда.</span></div>
-              ) : players.map((player) => {
+              ) : visiblePlayers.length === 0 ? (
+                <div className="s-empty"><WorkspaceIcon name="search" /><b>Ничего не найдено</b><span>Измените поисковый запрос или фильтр.</span></div>
+              ) : visiblePlayers.map((player) => {
                 const status = player.passport?.status
                 return (
                   <article className="s-record s-record--player" key={player.id}>
@@ -348,7 +440,27 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
               <CouncilMark />
             </div>
 
-            {isChairman && (
+            {!isCouncilLoading && decisions.length > 0 && (
+              <StatStrip items={[
+                { icon: 'scroll', label: 'Всего решений', value: decisions.length, tone: 'accent' },
+                { icon: 'check', label: 'Принято', value: decisionAdopted, tone: 'ok' },
+                { icon: 'clock', label: 'Черновики', value: decisionDrafts, tone: 'muted' },
+              ]} />
+            )}
+
+            {!isCouncilLoading && decisions.length > 0 && (
+              <div className="s-toolbar">
+                <SearchBox value={decisionQuery} onChange={setDecisionQuery} placeholder="Поиск по заголовку, тексту или номеру ВС" />
+                <FilterChips value={decisionFilter} onChange={setDecisionFilter} options={[
+                  { id: 'all', label: 'Все', count: decisions.length },
+                  { id: 'adopted', label: 'Принятые', count: decisionAdopted },
+                  { id: 'draft', label: 'Черновики', count: decisionDrafts },
+                ]} />
+                {isChairman && <button type="button" className={`s-btn ${showDecisionForm ? 's-btn--ghost' : 's-btn--accent'} s-toolbar-cta`} onClick={() => setShowDecisionForm((value) => !value)}><WorkspaceIcon name={showDecisionForm ? 'close' : 'plus'} /> {showDecisionForm ? 'Свернуть' : 'Новое решение'}</button>}
+              </div>
+            )}
+
+            {isChairman && (showDecisionForm || decisions.length === 0) && (
               <section className="s-card s-create">
                 <div className="s-create-head"><p>Новое решение</p><h2>Зафиксировать курс</h2></div>
                 <div className="s-form-grid">
@@ -365,10 +477,12 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
 
             <div className="s-list" aria-live="polite">
               {isCouncilLoading ? (
-                <div className="s-empty">Загружаем журнал решений…</div>
+                <><div className="s-skeleton" /><div className="s-skeleton" /><div className="s-skeleton" /></>
               ) : decisions.length === 0 ? (
                 <div className="s-empty"><WorkspaceIcon name="council" /><b>Журнал пока чист</b><span>Первое решение станет точкой отсчёта нового Пельграда.</span></div>
-              ) : decisions.map((decision) => (
+              ) : visibleDecisions.length === 0 ? (
+                <div className="s-empty"><WorkspaceIcon name="search" /><b>Ничего не найдено</b><span>Измените поисковый запрос или фильтр.</span></div>
+              ) : visibleDecisions.map((decision) => (
                 <article className={`s-record s-record--decision ${decision.status === 'ADOPTED' ? 'is-adopted' : ''}`} key={decision.id}>
                   <div className="s-decision-side">
                     <span className="s-decision-no">ВС-{String(decision.number).padStart(4, '0')}</span>
