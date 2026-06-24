@@ -1,15 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="background" x1="76" y1="54" x2="438" y2="458" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#071a38"/>
-      <stop offset=".58" stop-color="#103f87"/>
-      <stop offset="1" stop-color="#1c6dd4"/>
-    </linearGradient>
-    <linearGradient id="symbol" x1="256" y1="100" x2="256" y2="412" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff"/>
-      <stop offset="1" stop-color="#d2ebff"/>
+    <linearGradient id="ocean" x1="90" y1="70" x2="422" y2="442" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b2d68"/>
+      <stop offset="1" stop-color="#1769ca"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="118" fill="url(#background)"/>
-  <path d="M224 96H288V160H352V224H416V288H352V352H288V416H224V352H160V288H96V224H160V160H224Z" fill="url(#symbol)"/>
+  <rect width="512" height="512" rx="118" fill="url(#ocean)"/>
+  <circle cx="256" cy="256" r="151" fill="none" stroke="#fff" stroke-width="25"/>
+  <path d="M105 256H407M256 105C300 147 324 200 324 256C324 312 300 365 256 407M256 105C212 147 188 200 188 256C188 312 212 365 256 407M132 185C168 207 211 219 256 219C301 219 344 207 380 185M132 327C168 305 211 293 256 293C301 293 344 305 380 327" fill="none" stroke="#fff" stroke-width="21" stroke-linecap="round"/>
+  <circle cx="382" cy="131" r="18" fill="#a8d8ff"/>
 </svg>

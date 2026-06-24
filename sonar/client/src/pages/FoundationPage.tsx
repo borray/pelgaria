@@ -1,4 +1,6 @@
 import { PelgariaMark } from '../components/brand/PelgariaMark'
+import { PelgradMark } from '../components/brand/PelgradMark'
+import { CouncilMark } from '../components/brand/CouncilMark'
 import { SonarMark } from '../components/brand/SonarMark'
 
 const institutions = [
@@ -10,7 +12,11 @@ const institutions = [
 
 const externalUnits = ['Гарнизон', 'Разведкорпус', 'Запретная Гвардия']
 
-export function FoundationPage() {
+type FoundationPageProps = {
+  onOpenSonar: () => void
+}
+
+export function FoundationPage({ onOpenSonar }: FoundationPageProps) {
   return (
     <main className="foundation-page">
       <div className="foundation-atmosphere" aria-hidden="true">
@@ -25,7 +31,10 @@ export function FoundationPage() {
           <span><PelgariaMark /></span>
           <strong>ПЕЛЬГАРИЯ</strong>
         </a>
-        <div className="foundation-status"><i /> Основание мира · 20.06.2026</div>
+        <div className="foundation-header-actions">
+          <div className="foundation-status"><i /> Основание мира · 20.06.2026</div>
+          <button className="foundation-sonar-link" type="button" onClick={onOpenSonar}>Открыть СОНАР <span aria-hidden="true">↗</span></button>
+        </div>
       </header>
 
       <section className="foundation-hero" id="top">
@@ -52,7 +61,7 @@ export function FoundationPage() {
         </article>
         <article className="foundation-zone foundation-zone-state">
           <span className="foundation-zone-index">02</span>
-          <div className="foundation-state-mark">ПГ</div>
+          <PelgradMark className="foundation-state-mark" />
           <div><small>Государственное ядро</small><h2>Пельград</h2><p>Административная RP-республика Верховного Совета, гражданской жизни и понятных правил.</p></div>
         </article>
         <article className="foundation-zone foundation-zone-outside">
@@ -68,7 +77,7 @@ export function FoundationPage() {
           <h2>Верховный Совет держит курс,<br />ведомства делают мир живым.</h2>
         </div>
         <div className="foundation-council">
-          <div className="foundation-council-title"><span>ВС</span><div><small>Высший орган власти</small><strong>Верховный Совет Пельграда</strong></div></div>
+          <div className="foundation-council-title"><span><CouncilMark /></span><div><small>Высший орган власти</small><strong>Верховный Совет Пельграда</strong></div></div>
           <p>Председатель Верховного Совета отвечает за устойчивость проекта. Совет утверждает направление развития, структуру власти и важные решения.</p>
         </div>
         <div className="foundation-institutions">
@@ -90,7 +99,7 @@ export function FoundationPage() {
           <strong>Система Организации Надзора и Администрирования Реестра</strong>
           <span>Система начинается заново по этой концепции. Старые функции выведены из работы, чтобы новая государственная реальность не выросла из случайных компромиссов.</span>
         </div>
-        <aside><i /> Чистый лист<br /><small>Новый цикл проектирования</small></aside>
+        <aside><i /> Чистый лист<br /><small>Новый цикл проектирования</small><button type="button" onClick={onOpenSonar}>Войти в систему</button></aside>
       </section>
 
       <section className="foundation-boundary">

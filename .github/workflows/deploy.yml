@@ -1,4 +1,4 @@
-name: Deploy Pelgaria Foundation
+name: Deploy Pelgaria SONAR
 
 on:
   push:
@@ -16,13 +16,13 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Build foundation server
+      - name: Build SONAR server
         working-directory: sonar/server
         run: |
           npm ci
           npm run build
 
-      - name: Build public foundation
+      - name: Build public site and SONAR
         working-directory: sonar/client
         run: |
           npm ci
@@ -35,14 +35,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Upload foundation
+      - name: Upload SONAR
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/sonar/app/dist /home/sonar/app/public"
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" sonar/server/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/dist/
           rsync -az -e "ssh -i ~/.ssh/deploy_key" sonar/server/package.json sonar/server/package-lock.json ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" sonar/client/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/sonar/app/public/
 
-      - name: Restart foundation
+      - name: Restart SONAR
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
             set -e
@@ -59,11 +59,11 @@ jobs:
             pm2 save
           ENDSSH
 
-      - name: Verify foundation API
+      - name: Verify SONAR API
         run: |
           for attempt in {1..12}; do
-            if curl --fail --silent --show-error https://pg-bridge.ru/api/health | grep -q '"phase":"foundation"'; then
-              echo "Pelgaria foundation is online"
+            if curl --fail --silent --show-error https://pg-bridge.ru/api/health | grep -q '"phase":"sonar-alpha"'; then
+              echo "Pelgaria SONAR is online"
               exit 0
             fi
             sleep 5
