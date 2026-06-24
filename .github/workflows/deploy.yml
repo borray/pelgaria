@@ -63,7 +63,6 @@ jobs:
               pm2 start dist/index.js --name sonar --env production
             fi
             pm2 save
-            pm2 logs sonar --nostream --lines 30 || true
           ENDSSH
 
       - name: Verify SONAR API
