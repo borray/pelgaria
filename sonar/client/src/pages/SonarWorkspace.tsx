@@ -72,6 +72,10 @@ function ModuleCard({ icon, title, description, status }: { icon: IconName; titl
 export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAccount; onExit: () => void; onLogout: () => void }) {
   const [section, setSection] = useState<WorkspaceSection>('overview')
   const [isMenuOpen, setMenuOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordState, setPasswordState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [passwordError, setPasswordError] = useState('')
 
   const navigate = (next: WorkspaceSection) => {
     setSection(next)
@@ -80,6 +84,28 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
 
   const activeItem = navigation.find((item) => item.id === section)!
   const sectionDetails = section === 'overview' ? null : sectionCopy[section]
+
+  const changePassword = async () => {
+    if (passwordState === 'saving') return
+    setPasswordState('saving')
+    setPasswordError('')
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      const body = await response.json().catch(() => ({})) as { error?: string }
+      if (!response.ok) throw new Error(body.error ?? 'Не удалось обновить пароль.')
+      setCurrentPassword('')
+      setNewPassword('')
+      setPasswordState('saved')
+    } catch (reason) {
+      setPasswordState('error')
+      setPasswordError(reason instanceof Error ? reason.message : 'Не удалось обновить пароль.')
+    }
+  }
 
   return (
     <main className="sonar-workspace">
@@ -117,6 +143,18 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
             <h1>{sectionDetails.title}</h1>
             <div className="sonar-stage-copy"><span>Новый контур</span><p>{sectionDetails.description}</p></div>
             <div className="sonar-stage-next"><WorkspaceIcon name="check" /><span>{sectionDetails.next}</span></div>
+            {section === 'system' && (
+              <section className="sonar-password-panel" aria-label="Безопасность учётной записи">
+                <div><p>Учётная запись</p><h2>Сменить пароль</h2><span>Используйте новый пароль длиной не менее 12 символов. Остальные сеансы будут завершены.</span></div>
+                <div className="sonar-password-fields">
+                  <label>Текущий пароль<input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} /></label>
+                  <label>Новый пароль<input type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /></label>
+                  <button type="button" onClick={changePassword} disabled={!currentPassword || newPassword.length < 12 || passwordState === 'saving'}>{passwordState === 'saving' ? 'Обновляем...' : 'Обновить пароль'}</button>
+                  {passwordState === 'saved' && <p className="sonar-password-success">Пароль обновлён.</p>}
+                  {passwordState === 'error' && <p className="sonar-password-error">{passwordError}</p>}
+                </div>
+              </section>
+            )}
           </section>
         ) : (
           <>
