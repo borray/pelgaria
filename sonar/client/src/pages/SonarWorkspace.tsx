@@ -23,20 +23,51 @@ const navigation: Array<{ id: WorkspaceSection; label: string; icon: IconName }>
   { id: 'system', label: 'Система', icon: 'settings' },
 ]
 
-const sectionCopy: Record<Exclude<WorkspaceSection, 'overview' | 'council' | 'registry'>, { eyebrow: string; title: string; description: string; next: string }> = {
-  institutions: {
-    eyebrow: 'Структура Пельграда',
-    title: 'Ведомства',
-    description: 'Внутренний Контур, Палата развития, Гражданская канцелярия и Комитет Внешнего Сдерживания будут оформлены как самостоятельные рабочие пространства.',
-    next: 'Сейчас формируется общая модель полномочий и ответственности.',
+const institutionCards: Array<{ title: string; short: string; duty: string; records: string[]; tone: 'blue' | 'green' | 'amber' | 'red' }> = [
+  {
+    title: 'Верховный Совет',
+    short: 'курс и решения',
+    duty: 'утверждает структуру власти, принимает решения, назначает ответственных и держит систему управляемой.',
+    records: ['решения ВС', 'назначения', 'структура ведомств', 'важные обращения'],
+    tone: 'blue',
   },
-  system: {
-    eyebrow: 'Состояние контура',
-    title: 'Система',
-    description: 'СОНАР разворачивается заново. Здесь фиксируются границы текущего этапа, чтобы незавершённые идеи не выглядели готовыми функциями.',
-    next: 'Старые модули не подключаются к новому контуру.',
+  {
+    title: 'Гражданская канцелярия',
+    short: 'люди и документы',
+    duty: 'оформляет гражданскую жизнь: игроков, паспорта, статусы, первичные обращения и базовые записи.',
+    records: ['паспорта', 'статусы игроков', 'регистрация', 'гражданские заявления'],
+    tone: 'green',
   },
-}
+  {
+    title: 'Палата развития',
+    short: 'город и ресурсы',
+    duty: 'ведёт развитие Пельграда: участки, строительство, инфраструктуру, экономику и казну.',
+    records: ['участки', 'строения', 'налоги', 'инфраструктурные заявки'],
+    tone: 'amber',
+  },
+  {
+    title: 'Внутренний Контур',
+    short: 'порядок внутри',
+    duty: 'разбирает жалобы, нарушения, конфликты, наказания и контроль действий госслужащих.',
+    records: ['жалобы', 'дела', 'наказания', 'служебные проверки'],
+    tone: 'red',
+  },
+  {
+    title: 'Комитет Внешнего Сдерживания',
+    short: 'границы и угрозы',
+    duty: 'наблюдает за Внешними Землями и не даёт свободе превратиться в угрозу Пельграду.',
+    records: ['внешние группы', 'инциденты', 'статусы угроз', 'операции'],
+    tone: 'blue',
+  },
+]
+
+const operatingStatuses = [
+  ['Сессия', 'активна'],
+  ['Публичная проверка', 'доступна'],
+  ['Совет', 'журнал работает'],
+  ['Реестр игроков', 'паспорта и QR'],
+  ['Ведомства', 'структура заложена'],
+]
 
 const UUID_PATTERN = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}$/i
 
@@ -244,7 +275,6 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
 
   const navigate = (next: WorkspaceSection) => { setSection(next); setMenuOpen(false) }
   const activeItem = navigation.find((item) => item.id === section)!
-  const sectionDetails = section === 'institutions' || section === 'system' ? sectionCopy[section] : null
 
   useEffect(() => {
     if (section !== 'council') return
@@ -573,14 +603,48 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
               ))}
             </div>
           </section>
-        ) : sectionDetails ? (
-          <section className="sonar-stage">
-            <div className="sonar-stage-icon"><WorkspaceIcon name={activeItem.icon} /></div>
-            <p>{sectionDetails.eyebrow}</p>
-            <h1>{sectionDetails.title}</h1>
-            <div className="sonar-stage-copy"><span>Новый контур</span><p>{sectionDetails.description}</p></div>
-            <div className="sonar-stage-next"><WorkspaceIcon name="check" /><span>{sectionDetails.next}</span></div>
-            {section === 'system' && (
+        ) : section === 'institutions' ? (
+          <section className="sonar-departments-page">
+            <div className="sonar-workspace-heading">
+              <div><p>Структура Пельграда</p><h1>Ведомственный контур</h1><span>Каждый орган получает ясную зону ответственности и типы записей, которые должны проходить через СОНАР.</span></div>
+              <div className="sonar-heading-seal"><WorkspaceIcon name="building" /></div>
+            </div>
+            <div className="sonar-department-grid">
+              {institutionCards.map((item) => (
+                <article className={`sonar-department-card is-${item.tone}`} key={item.title}>
+                  <div><span>{item.short}</span><h2>{item.title}</h2><p>{item.duty}</p></div>
+                  <ul>{item.records.map((record) => <li key={record}>{record}</li>)}</ul>
+                </article>
+              ))}
+            </div>
+            <section className="sonar-procedure-board">
+              <div><p>Базовая процедура</p><h2>Любое действие должно оставить след.</h2></div>
+              <ol>
+                <li><b>Принять</b><span>получить обращение, решение, инцидент или заявку</span></li>
+                <li><b>Классифицировать</b><span>определить ведомство, статус и ответственного</span></li>
+                <li><b>Зафиксировать</b><span>создать запись в СОНАР и связать документы</span></li>
+                <li><b>Закрыть</b><span>оставить итог, дату, исполнителя и следующий шаг</span></li>
+              </ol>
+            </section>
+          </section>
+        ) : section === 'system' ? (
+          <section className="sonar-system-page">
+            <div className="sonar-workspace-heading">
+              <div><p>Служебная устойчивость</p><h1>Состояние системы</h1><span>Здесь собраны базовые признаки готовности СОНАР и управление безопасностью текущей учётной записи.</span></div>
+              <div className="sonar-heading-seal"><WorkspaceIcon name="settings" /></div>
+            </div>
+            <div className="sonar-system-grid">
+              <section className="sonar-system-card">
+                <p>Операционный статус</p>
+                <div className="sonar-system-list">
+                  {operatingStatuses.map(([label, value]) => <span key={label}><b>{label}</b><i>{value}</i></span>)}
+                </div>
+              </section>
+              <section className="sonar-system-card sonar-system-card--dark">
+                <p>Правило контура</p>
+                <h2>СОНАР не заменяет RP, он делает его проверяемым.</h2>
+                <span>Система должна фиксировать решения, документы, статусы и ответственность без превращения проекта в мёртвую бюрократию.</span>
+              </section>
               <section className="sonar-password-panel" aria-label="Безопасность учётной записи">
                 <div><p>Учётная запись</p><h2>Сменить пароль</h2><span>Используйте новый пароль длиной не менее 12 символов. Остальные сеансы будут завершены.</span></div>
                 <div className="sonar-password-fields">
@@ -591,7 +655,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
                   {passwordState === 'error' && <p className="sonar-password-error">{passwordError}</p>}
                 </div>
               </section>
-            )}
+            </div>
           </section>
         ) : (
           <>
