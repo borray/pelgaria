@@ -596,34 +596,34 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
         ) : (
           <>
             <section className="sonar-hero">
-              <div><p>Система Организации Надзора и Администрирования Реестра</p><h1>СОНАР<br /><em>нового цикла.</em></h1><span>Рабочая среда Пельграда создаётся заново: меньше показной бюрократии, больше ясности о том, что действительно существует и работает.</span></div>
-              <div className="sonar-hero-signal" aria-hidden="true"><span /><span /><span /><b><SonarMark /></b></div>
+              <div className="sonar-stars" aria-hidden="true">{Array.from({ length: 26 }, (_, index) => <i key={index} />)}</div>
+              <div className="sonar-hero-copy"><p>Система Организации Надзора и Администрирования Реестра</p><h1>СОНАР<br /><em>фиксирует реальность.</em></h1><span>Рабочий контур Пельграда: решения Совета, паспорта, обращения, статусы игроков и ведомственная работа собираются в одну понятную картину.</span></div>
+              <div className="sonar-hero-console">
+                <div className="sonar-hero-console-head"><span>PG-CORE</span><b>online</b></div>
+                <div className="sonar-hero-signal" aria-hidden="true"><span /><span /><span /><b><SonarMark /></b></div>
+                <div className="sonar-hero-console-line"><strong>Принцип</strong><p>Если событие не зафиксировано в СОНАР, оно требует подтверждения.</p></div>
+              </div>
             </section>
-            <section className="sonar-readiness">
-              <div><p>Этап 01</p><h2>Основание системы</h2><span>Структура определена. Операционные модули запускаются последовательно.</span></div>
-              <div className="sonar-readiness-list"><p><i /><b>Мир и государство</b><span>Зафиксированы</span></p><p><i /><b>Верховный Совет</b><span>В работе</span></p><p><i /><b>Реестр игроков</b><span>В работе</span></p></div>
+            <section className="sonar-mission">
+              <article>
+                <p>Текущий цикл</p>
+                <h2>Основание порядка</h2>
+                <span>СОНАР больше не выглядит как набор разрозненных страниц: обзор показывает, зачем система существует и куда идти дальше.</span>
+              </article>
+              <div className="sonar-mission-grid">
+                <button type="button" onClick={() => navigate('council')}><WorkspaceIcon name="council" /><span><b>Решение Совета</b><small>зафиксировать курс Пельграда</small></span></button>
+                <button type="button" onClick={() => navigate('registry')}><WorkspaceIcon name="passport" /><span><b>Паспорт игрока</b><small>оформить гражданскую запись</small></span></button>
+                <button type="button" onClick={() => navigate('institutions')}><WorkspaceIcon name="building" /><span><b>Ведомство</b><small>понять, кто за что отвечает</small></span></button>
+                <button type="button" onClick={() => navigate('system')}><WorkspaceIcon name="settings" /><span><b>Контур доступа</b><small>учётная запись и безопасность</small></span></button>
+              </div>
             </section>
-            <section className="sonar-modules">
-              <div className="sonar-section-head"><div><p>Первые модули</p><h2>Система растёт<br />по реальным потребностям.</h2></div><span>01 / 04</span></div>
-              <div className="sonar-module-grid">
-                <button type="button" className="sonar-module-card s-module-link" onClick={() => navigate('council')}>
-                  <div className="sonar-module-icon"><WorkspaceIcon name="council" /></div>
-                  <div className="sonar-module-head"><h3>Верховный Совет</h3><span>Открыто</span></div>
-                  <p>Решения, состав и направление развития Пельграда.</p>
-                  <div className="sonar-module-foot"><span>Перейти</span><WorkspaceIcon name="arrow" /></div>
-                </button>
-                <button type="button" className="sonar-module-card s-module-link" onClick={() => navigate('registry')}>
-                  <div className="sonar-module-icon"><WorkspaceIcon name="archive" /></div>
-                  <div className="sonar-module-head"><h3>Реестр игроков</h3><span>Открыто</span></div>
-                  <p>Игроки, паспорта и подписанные QR-документы.</p>
-                  <div className="sonar-module-foot"><span>Перейти</span><WorkspaceIcon name="arrow" /></div>
-                </button>
-                <article className="sonar-module-card">
-                  <div className="sonar-module-icon"><WorkspaceIcon name="building" /></div>
-                  <div className="sonar-module-head"><h3>Ведомства</h3><span>Подготовка</span></div>
-                  <p>Понятная структура полномочий и ответственности.</p>
-                  <div className="sonar-module-foot"><span>Планирование</span><WorkspaceIcon name="arrow" /></div>
-                </article>
+            <section className="sonar-operating-map">
+              <div className="sonar-section-head"><div><p>Живая схема</p><h2>Что СОНАР держит<br />в рабочем поле.</h2></div><span>04 / 04</span></div>
+              <div className="sonar-operating-grid">
+                <article><span>01</span><h3>Верховный Совет</h3><p>Черновики и принятые решения становятся официальной линией управления.</p></article>
+                <article><span>02</span><h3>Гражданская канцелярия</h3><p>Игроки, паспорта и гражданские статусы получают проверяемую запись.</p></article>
+                <article><span>03</span><h3>Внутренний Контур</h3><p>Жалобы, нарушения и наказания должны быть видны как цепочка событий.</p></article>
+                <article><span>04</span><h3>Внешнее Сдерживание</h3><p>Внешние группы переходят между статусами от наблюдения до угрозы.</p></article>
               </div>
             </section>
           </>
