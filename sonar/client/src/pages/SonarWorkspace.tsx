@@ -69,6 +69,26 @@ const operatingStatuses = [
   ['Ведомства', 'структура заложена'],
 ]
 
+const commandCards: Array<{ section: WorkspaceSection; icon: IconName; title: string; text: string; meta: string }> = [
+  { section: 'council', icon: 'council', title: 'Открыть журнал решений', text: 'Принять черновик, найти постановление или оформить новый курс.', meta: 'Совет' },
+  { section: 'registry', icon: 'passport', title: 'Работать с игроком', text: 'Найти запись, выдать паспорт, отозвать документ или обновить UUID.', meta: 'Реестр' },
+  { section: 'institutions', icon: 'building', title: 'Проверить зону ответственности', text: 'Быстро понять, какое ведомство должно вести обращение.', meta: 'Ведомства' },
+  { section: 'system', icon: 'settings', title: 'Проверить контур доступа', text: 'Состояние системы, безопасность учётной записи и правила работы.', meta: 'Система' },
+]
+
+const pulseItems = [
+  ['Запись', 'каждое действие оставляет проверяемый след'],
+  ['Документ', 'паспорт и решение имеют номер, автора и статус'],
+  ['Доступ', 'служебные действия отделены от публичной проверки'],
+]
+
+const workflowSteps = [
+  ['01', 'Принять сигнал', 'обращение, поручение, инцидент или решение попадает в рабочий контур'],
+  ['02', 'Уточнить статус', 'оператор выбирает ведомство, ответственного и следующий шаг'],
+  ['03', 'Зафиксировать', 'СОНАР сохраняет запись, документ, дату и служебный контекст'],
+  ['04', 'Закрыть цикл', 'решение принято, паспорт выдан, дело переведено в проверяемое состояние'],
+]
+
 const UUID_PATTERN = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}$/i
 
 function WorkspaceIcon({ name }: { name: IconName }) {
@@ -240,6 +260,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   const [section, setSection] = useState<WorkspaceSection>('overview')
   const [isMenuOpen, setMenuOpen] = useState(false)
   const [isEggOpen, setEggOpen] = useState(false)
+  const [isFocusMode, setFocusMode] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [passwordState, setPasswordState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -417,7 +438,7 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
   })
 
   return (
-    <main className="sonar-workspace">
+    <main className={`sonar-workspace ${isFocusMode ? 'is-focus-mode' : ''}`}>
       <aside className={`sonar-sidebar ${isMenuOpen ? 'sonar-sidebar-open' : ''}`}>
         <div className="sonar-sidebar-top">
           <div className="sonar-brand">
@@ -441,7 +462,13 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
         <header className="sonar-topbar">
           <button className="sonar-menu" type="button" onClick={() => setMenuOpen(true)} aria-label="Открыть меню"><WorkspaceIcon name="menu" /></button>
           <div className="sonar-breadcrumb"><span>СОНАР</span><i /> <b>{activeItem.label}</b></div>
-          <div className="sonar-top-actions"><span className="sonar-online"><i /> Контур доступен</span><span className="sonar-account"><b>{account.login}</b><small>{isChairman ? 'Председатель' : 'Оператор'}</small></span><button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button><button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button></div>
+          <div className="sonar-top-actions">
+            <span className="sonar-online"><i /> Контур доступен</span>
+            <span className="sonar-account"><b>{account.login}</b><small>{isChairman ? 'Председатель' : 'Оператор'}</small></span>
+            <button className={`sonar-focus-toggle ${isFocusMode ? 'is-active' : ''}`} type="button" onClick={() => setFocusMode((value) => !value)}>{isFocusMode ? 'Обычный режим' : 'Фокус'}</button>
+            <button className="sonar-logout" type="button" onClick={onLogout}>Выйти</button>
+            <button className="sonar-back" type="button" onClick={onExit}>Пельгария <WorkspaceIcon name="arrow" /></button>
+          </div>
         </header>
 
         {section === 'registry' ? (
@@ -659,35 +686,38 @@ export function SonarWorkspace({ account, onExit, onLogout }: { account: SonarAc
           </section>
         ) : (
           <>
-            <section className="sonar-hero">
-              <div className="sonar-stars" aria-hidden="true">{Array.from({ length: 26 }, (_, index) => <i key={index} />)}</div>
-              <div className="sonar-hero-copy"><p>Система Организации Надзора и Администрирования Реестра</p><h1>СОНАР<br /><em>фиксирует реальность.</em></h1><span>Рабочий контур Пельграда: решения Совета, паспорта, обращения, статусы игроков и ведомственная работа собираются в одну понятную картину.</span></div>
-              <div className="sonar-hero-console">
-                <div className="sonar-hero-console-head"><span>PG-CORE</span><b>online</b></div>
-                <div className="sonar-hero-signal" aria-hidden="true"><span /><span /><span /><b><SonarMark /></b></div>
-                <div className="sonar-hero-console-line"><strong>Принцип</strong><p>Если событие не зафиксировано в СОНАР, оно требует подтверждения.</p></div>
+            <section className="sonar-command-hero">
+              <div className="sonar-stars" aria-hidden="true">{Array.from({ length: 34 }, (_, index) => <i key={index} />)}</div>
+              <div className="sonar-command-copy">
+                <p>Система Организации Надзора и Администрирования Реестра</p>
+                <h1>СОНАР держит Пельград в рабочем состоянии.</h1>
+                <span>Командный контур для решений, паспортов, ведомств и служебной устойчивости. Минимум лишнего текста, максимум быстрых действий и проверяемых записей.</span>
+                <div className="sonar-command-actions">
+                  <button type="button" onClick={() => navigate('registry')}><WorkspaceIcon name="passport" /> Найти игрока</button>
+                  <button type="button" onClick={() => navigate('council')}><WorkspaceIcon name="council" /> Открыть Совет</button>
+                </div>
+              </div>
+              <div className="sonar-command-console" aria-label="Состояние контура">
+                <div className="sonar-console-top"><span>PG-CORE</span><b>online</b></div>
+                <div className="sonar-radar" aria-hidden="true"><span /><span /><span /><b><SonarMark /></b></div>
+                {pulseItems.map(([label, text]) => <div className="sonar-pulse-row" key={label}><strong>{label}</strong><p>{text}</p></div>)}
               </div>
             </section>
-            <section className="sonar-mission">
-              <article>
-                <p>Текущий цикл</p>
-                <h2>Основание порядка</h2>
-                <span>СОНАР больше не выглядит как набор разрозненных страниц: обзор показывает, зачем система существует и куда идти дальше.</span>
-              </article>
-              <div className="sonar-mission-grid">
-                <button type="button" onClick={() => navigate('council')}><WorkspaceIcon name="council" /><span><b>Решение Совета</b><small>зафиксировать курс Пельграда</small></span></button>
-                <button type="button" onClick={() => navigate('registry')}><WorkspaceIcon name="passport" /><span><b>Паспорт игрока</b><small>оформить гражданскую запись</small></span></button>
-                <button type="button" onClick={() => navigate('institutions')}><WorkspaceIcon name="building" /><span><b>Ведомство</b><small>понять, кто за что отвечает</small></span></button>
-                <button type="button" onClick={() => navigate('system')}><WorkspaceIcon name="settings" /><span><b>Контур доступа</b><small>учётная запись и безопасность</small></span></button>
-              </div>
+
+            <section className="sonar-command-grid" aria-label="Быстрые действия">
+              {commandCards.map((card) => (
+                <button type="button" className="sonar-command-card" key={card.title} onClick={() => navigate(card.section)}>
+                  <span className="sonar-command-icon"><WorkspaceIcon name={card.icon} /></span>
+                  <span><small>{card.meta}</small><b>{card.title}</b><i>{card.text}</i></span>
+                  <WorkspaceIcon name="arrow" />
+                </button>
+              ))}
             </section>
-            <section className="sonar-operating-map">
-              <div className="sonar-section-head"><div><p>Живая схема</p><h2>Что СОНАР держит<br />в рабочем поле.</h2></div><span>04 / 04</span></div>
-              <div className="sonar-operating-grid">
-                <article><span>01</span><h3>Верховный Совет</h3><p>Черновики и принятые решения становятся официальной линией управления.</p></article>
-                <article><span>02</span><h3>Гражданская канцелярия</h3><p>Игроки, паспорта и гражданские статусы получают проверяемую запись.</p></article>
-                <article><span>03</span><h3>Внутренний Контур</h3><p>Жалобы, нарушения и наказания должны быть видны как цепочка событий.</p></article>
-                <article><span>04</span><h3>Внешнее Сдерживание</h3><p>Внешние группы переходят между статусами от наблюдения до угрозы.</p></article>
+
+            <section className="sonar-workflow">
+              <div className="sonar-section-head"><div><p>Рабочий цикл</p><h2>От события до проверяемой записи.</h2></div><span>04 / 04</span></div>
+              <div className="sonar-workflow-grid">
+                {workflowSteps.map(([index, title, text]) => <article key={index}><span>{index}</span><h3>{title}</h3><p>{text}</p></article>)}
               </div>
             </section>
           </>
